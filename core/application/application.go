@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 
 	uv "github.com/charmbracelet/ultraviolet"
@@ -14,22 +15,17 @@ import (
 // Application state, like so:
 //
 //	type MyApplication struct {
-//	    *gt.Application
-//	    myappstate string
-//	}
-//
-//	gtapp := gt.NewApplication()
-//	myapp := MyApplication{gtapp}
-//
-//	if err := myapp.Start(); err != nil {
-//	    log.Fatal(err)
+//	 	*gt.Application
+//	 	myappstate string
 //	}
 type Application struct {
 	term *uv.Terminal
 
-	// optional name of the application, used as a title for the outer
-	// containing box for the TUI program.
-	appName string
+	// name is an optional name for the application, used as a title for the
+	// outer containing box for the TUI program.
+	name string
+	// log is the application-level `log/slog.Logger`
+	log *slog.Logger
 
 	// root is the top-level renderable element in the Application. This is a
 	// Box that consumes the entire screen real-estate. Use WithRoot to
@@ -40,9 +36,10 @@ type Application struct {
 	rootBounds *uv.Rectangle
 }
 
-// SetName sets the Application's optional
+// SetName sets the Application's optional name, which by default also sets the
+// terminal's screen title.
 func (a *Application) SetName(name string) {
-	a.appName = name
+	a.name = name
 }
 
 // SetRootWithBounds sets the Application's top-level renderable element with a
@@ -61,7 +58,7 @@ func (a *Application) SetRoot(root uv.Drawable) {
 }
 
 // draw renders the Application to the Terminal screen.
-func (a *Application) draw() {
+func (a *Application) draw(ctx context.Context) {
 	if a.term == nil {
 		panic("called Application.draw() with nil terminal.")
 	}
@@ -77,13 +74,13 @@ func (a *Application) draw() {
 
 // Start starts up the Application and its event loop, blocking until the event
 // loop is closed.
-func (a *Application) Start() error {
+func (a *Application) Start(ctx context.Context) error {
 	if a == nil {
 		return fmt.Errorf("cannot start nil Application.")
 	}
 	t := uv.NewTerminal(os.Stdin, os.Stdout, os.Environ())
-	if a.appName != "" {
-		t.SetTitle(a.appName)
+	if a.name != "" {
+		t.SetTitle(a.name)
 	}
 
 start:
@@ -98,7 +95,8 @@ start:
 
 	a.term = t
 
-	ctx, cancel := context.WithCancel(context.Background())
+	var cancel func()
+	ctx, cancel = context.WithCancel(ctx)
 	defer cancel()
 
 	evch := make(chan uv.Event)
@@ -132,7 +130,7 @@ start:
 			}
 		}
 
-		a.draw()
+		a.draw(ctx)
 	}
 
 	if err := t.Shutdown(context.Background()); err != nil {

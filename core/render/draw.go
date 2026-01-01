@@ -12,3 +12,9 @@ func Clear(buf uv.Screen, area uv.Rectangle) {
 		}
 	}
 }
+
+// Overlapping returns the rectangle representing the overlapping area of the
+// two supplied rectangles.
+func Overlapping(a, b uv.Rectangle) uv.Rectangle {
+	return a.Intersect(b)
+}

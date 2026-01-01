@@ -7,6 +7,7 @@ import (
 	"github.com/jaypipes/gt"
 	gtapp "github.com/jaypipes/gt/core/application"
 	gtbox "github.com/jaypipes/gt/core/box"
+	gtctx "github.com/jaypipes/gt/core/context"
 )
 
 const (
@@ -18,12 +19,12 @@ type myApp struct {
 }
 
 func main() {
-	app := myApp{gtapp.New()}
-	app.SetName(myAppName)
-
-	// A rectangle, anchored at cell (10,10) that is 40 cells wide and 20 cells
-	// high.
-	bounds := uv.Rect(10, 10, 40, 20)
+	// create a new context.Context from environs variables
+	ctx := gtctx.FromEnv()
+	// create a new myApp that wraps the gt.Application
+	app := myApp{
+		gtapp.New(ctx, gtapp.WithName(myAppName)),
+	}
 
 	// gt.Box is a simple component that draws a box on the screen.
 	box := gtbox.New(
@@ -32,6 +33,10 @@ func main() {
 		gtbox.WithBounds(0, 0, 100, 20),
 		gtbox.WithBorder(uv.RoundedBorder()),
 	)
+
+	// A rectangle, anchored at cell (10,10) that is 40 cells wide and 20 cells
+	// high.
+	rootBounds := uv.Rect(10, 10, 40, 20)
 
 	// By specifying a a bounding box (bounds) when setting the Application
 	// root element, we trigger gt to draw the box component in a viewport that
@@ -45,9 +50,9 @@ func main() {
 	//
 	// Play around with the anchoring cell values and widths/heights and see
 	// the effect on the rendered box.
-	app.SetRootWithBounds(box, bounds)
+	app.SetRootWithBounds(box, rootBounds)
 
-	if err := app.Start(); err != nil {
+	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)
 	}
 }
