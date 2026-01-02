@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	myAppName = "myapp"
+	myAppName = "root with bounds demo"
 )
 
 type myApp struct {
