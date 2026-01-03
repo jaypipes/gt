@@ -6,9 +6,21 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"runtime/debug"
 
 	uv "github.com/charmbracelet/ultraviolet"
+
+	"github.com/jaypipes/gt/core/canvas"
+	"github.com/jaypipes/gt/core/types"
 )
+
+// New returns a new Application.
+func New(
+	ctx context.Context,
+) *Application {
+	a := &Application{}
+	return a
+}
 
 // Application wraps the terminal screen and contains the main event-processing
 // loop. It is intended to be wrapped in a struct that houses your own
@@ -27,13 +39,8 @@ type Application struct {
 	// log is the application-level `log/slog.Logger`
 	log *slog.Logger
 
-	// root is the top-level renderable element in the Application. This is a
-	// Box that consumes the entire screen real-estate. Use WithRoot to
-	// override this default renderable element.
-	root uv.Drawable
-	// rootBounds is the optional bounding box to draw the root renderable
-	// element on the screen. If nil, the terminal's bounding box is used.
-	rootBounds *uv.Rectangle
+	// canvas helps to render the Application to a screen.
+	canvas *canvas.Canvas
 }
 
 // SetName sets the Application's optional name, which by default also sets the
@@ -42,19 +49,31 @@ func (a *Application) SetName(name string) {
 	a.name = name
 }
 
-// SetRootWithBounds sets the Application's top-level renderable element with a
-// bounding box.
-func (a *Application) SetRootWithBounds(
-	root uv.Drawable,
-	bounds uv.Rectangle,
-) {
-	a.root = root
-	a.rootBounds = &bounds
+// Canvas returns the Application's Canvas.
+func (a *Application) Canvas() *canvas.Canvas {
+	if a.canvas == nil {
+		a.canvas = canvas.New()
+	}
+	return a.canvas
 }
 
-// SetRoot sets the Application's top-level renderable element.
-func (a *Application) SetRoot(root uv.Drawable) {
-	a.root = root
+// SetRoot instructs the Application which Renderable to put at the root of the
+// render tree (the Canvas).
+func (a *Application) SetRoot(r types.Renderable) {
+	c := a.Canvas()
+	c.SetRoot(r)
+}
+
+// SetRootWithBounds instructs the Application which Renderable to put at the
+// root of the render tree (the Canvas) and a bounding box to use for the
+// Canvas.
+func (a *Application) SetRootWithBounds(
+	r types.Renderable,
+	bounds types.Rectangle,
+) {
+	c := a.Canvas()
+	c.SetRoot(r)
+	c.SetBounds(bounds)
 }
 
 // draw renders the Application to the Terminal screen.
@@ -62,11 +81,7 @@ func (a *Application) draw(ctx context.Context) {
 	if a.term == nil {
 		panic("called Application.draw() with nil terminal.")
 	}
-	bounds := a.term.Bounds()
-	if a.rootBounds != nil {
-		bounds = *a.rootBounds
-	}
-	a.root.Draw(a.term, bounds)
+	a.canvas.Render(ctx, a.term)
 	if err := a.term.Display(); err != nil {
 		log.Fatal(err)
 	}
@@ -79,15 +94,21 @@ func (a *Application) Start(ctx context.Context) error {
 		return fmt.Errorf("cannot start nil Application.")
 	}
 	t := uv.NewTerminal(os.Stdin, os.Stdout, os.Environ())
-	if a.name != "" {
-		t.SetTitle(a.name)
-	}
+	//if a.name != "" {
+	//	t.SetTitle(a.name)
+	//}
 
-start:
 	// By entering alt screen we take control of the output of the terminal
 	// which means when we exit the application, the terminal screen will be
 	// returned to its original state.
 	t.EnterAltScreen()
+	defer func() {
+		if r := recover(); r != nil {
+			_ = t.Teardown()
+			fmt.Fprintf(os.Stderr, "recovered from panic: %v", r)
+			debug.PrintStack()
+		}
+	}()
 
 	if err := t.Start(); err != nil {
 		return fmt.Errorf("failed to start terminal program: %w", err)
@@ -95,25 +116,17 @@ start:
 
 	a.term = t
 
-	var cancel func()
-	ctx, cancel = context.WithCancel(ctx)
-	defer cancel()
-
-	evch := make(chan uv.Event)
-	go func() {
-		defer close(evch)
-		_ = t.StreamEvents(ctx, evch)
-	}()
-
-	for ev := range evch {
+loop:
+	for ev := range t.Events() {
 		switch ev := ev.(type) {
 		case uv.WindowSizeEvent:
 			t.Resize(ev.Width, ev.Height)
 			t.Erase()
 		case uv.KeyPressEvent:
-			if ev.MatchStrings("q", "ctrl+c") {
-				cancel() // This will stop the loop
-			} else if ev.MatchString("ctrl+z") {
+			switch {
+			case ev.MatchString("q", "ctrl+c"):
+				break loop
+			case ev.MatchString("ctrl+z"):
 				t.Erase()
 				if err := t.Display(); err != nil {
 					log.Fatal(err)
@@ -122,11 +135,9 @@ start:
 					log.Fatal("failed to shutdown terminal")
 				}
 
-				cancel()
-
 				uv.Suspend()
 
-				goto start
+				goto loop
 			}
 		}
 

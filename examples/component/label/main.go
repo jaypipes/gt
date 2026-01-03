@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 
-	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/jaypipes/gt"
 	gtlabel "github.com/jaypipes/gt/component/label"
 	gtapp "github.com/jaypipes/gt/core/application"
@@ -22,25 +21,28 @@ func main() {
 	// create a new context.Context from environs variables
 	ctx := gt.ContextFromEnv()
 	// create a new myApp that wraps the gt.Application
-	app := myApp{
-		gtapp.New(ctx, gtapp.WithName(myAppName)),
-	}
+	app := myApp{gtapp.New(ctx)}
+	app.SetName(myAppName)
 
 	// gt.Label is a simple component that writes lines of text to a box
 	// that is drawn on the screen.
-	label := gtlabel.New(
-		// A rectangle, anchored at cell (0,0) that is 100 cells wide and 20
-		// cells high.
-		gtlabel.WithBounds(0, 0, 100, 20),
-		// Give the label box a rounded border.
-		gtlabel.WithBorder(uv.RoundedBorder()),
-		// Set the source of data that will be displayed.
-		gtlabel.WithContent(history),
-		// Enable wrapping on the text
-		gtlabel.WithWrap(true),
-	)
+	label := gtlabel.New(history)
+	// Constrain the label to 100 cells wide and 20 lines high
+	label.SetSize(100, 20)
+	// pad the left and right of the label by two cells
+	label.SetPadding(gt.PadLR(2, 2))
+	// Offset the label 1 cell below and 1 cell to the right of the anchor
+	// point (0, 0) of the containing box. The containing box in this case is
+	// the canvas's inner bounding rectangle.
+	label.SetRelativePosition(1, 1)
+	// Give the label box a rounded border.
+	label.SetBorder(gt.RoundedBorder())
+	// Enable wrapping on the text
+	label.SetWrap(true)
 
-	app.SetRoot(label)
+	canvas := app.Canvas()
+	canvas.SetBorder(gt.ThickBorder())
+	canvas.SetRoot(label)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)
