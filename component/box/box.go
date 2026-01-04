@@ -1,7 +1,7 @@
 package box
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/jaypipes/gt/core/element"
 	"github.com/jaypipes/gt/core/render"
@@ -13,8 +13,8 @@ const (
 )
 
 // New returns a new instance of a Box.
-func New(id string) *Box {
-	e := element.New(ElementClass)
+func New(ctx context.Context, id string) *Box {
+	e := element.New(ctx, ElementClass)
 	e.SetID(id)
 	return &Box{Element: *e}
 }
@@ -26,7 +26,8 @@ type Box struct {
 
 // Draw implements the uv.Renderable interface
 func (b *Box) Draw(screen types.Screen, area types.Rectangle) {
-	fmt.Printf("Box(%s).Draw: bounding box %s\n", b.ID(), area)
+	ctx := context.TODO()
+	b.Debug(ctx, "Box(%s).Draw: bounding box %s\n", b.ID(), area)
 	// determine the overlapping bounding element and clear its cells before
 	// rendering the element.
 	bb := render.Overlapping(area, b.Bounds())
@@ -35,7 +36,7 @@ func (b *Box) Draw(screen types.Screen, area types.Rectangle) {
 	// If we have a border, draw it around the outer bounding box.
 	border := b.Border()
 	if border != nil {
-		fmt.Printf("Box(%s).Draw: drawing border around %s\n", b.ID(), area)
+		b.Debug(ctx, "Box(%s).Draw: drawing border around %s\n", b.ID(), area)
 		border.Draw(screen, bb)
 	}
 	b.Element.Draw(screen, area)

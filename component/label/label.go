@@ -1,6 +1,7 @@
 package label
 
 import (
+	"context"
 	"fmt"
 
 	uv "github.com/charmbracelet/ultraviolet"
@@ -16,9 +17,10 @@ const (
 
 // New returns a new Label instance.
 func New[T []byte | string | *uv.StyledString](
+	ctx context.Context,
 	content T,
 ) *Label {
-	e := element.New(ElementClass)
+	e := element.New(ctx, ElementClass)
 	c := &Label{Element: *e}
 	c.SetContent(content)
 	return c

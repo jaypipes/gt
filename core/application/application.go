@@ -1,6 +1,7 @@
 package application
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -10,15 +11,55 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 
+	gtctx "github.com/jaypipes/gt/core/context"
 	"github.com/jaypipes/gt/core/document"
 	"github.com/jaypipes/gt/core/types"
 )
+
+// simpleHandler is a custom log handler that outputs simple LEVEL: MSG
+// formatted log records to stderr.
+type simpleHandler struct {
+	slog.Handler
+	l *log.Logger
+}
+
+func (h *simpleHandler) Handle(
+	ctx context.Context,
+	r slog.Record,
+) error {
+	level := r.Level.String() + ":"
+
+	h.l.Printf("%-6s %s", level, r.Message)
+
+	return nil
+}
 
 // New returns a new Application.
 func New(
 	ctx context.Context,
 ) *Application {
-	a := &Application{}
+	d := document.New(ctx)
+	lbuf := &bytes.Buffer{}
+	a := &Application{
+		document:  d,
+		logBuffer: lbuf,
+		logLevel:  new(slog.LevelVar),
+	}
+	level := gtctx.LogLevel(ctx)
+	a.logLevel.Set(level)
+
+	logger := slog.New(
+		&simpleHandler{
+			Handler: slog.NewTextHandler(
+				lbuf,
+				&slog.HandlerOptions{
+					Level: a.logLevel,
+				},
+			),
+			l: log.New(lbuf, "", 0),
+		},
+	)
+	d.SetLogger(logger)
 	return a
 }
 
@@ -36,8 +77,14 @@ type Application struct {
 	// name is an optional name for the application, used as a title for the
 	// outer containing box for the TUI program.
 	name string
-	// log is the application-level `log/slog.Logger`
-	log *slog.Logger
+
+	// logBuffer is where the default logger writes log records to. we capture
+	// log records here instead of outputting to stderr, which interferes with
+	// terminal rendering.
+	logBuffer *bytes.Buffer
+	// logLevel is a pointer to a slog.LevelVar so we can dynamically modify
+	// the level of the logger used in the Application's Document.
+	logLevel *slog.LevelVar
 
 	// document contains the tree of elements to render the Application to a
 	// screen.
@@ -48,14 +95,6 @@ type Application struct {
 // terminal's screen title.
 func (a *Application) SetName(name string) {
 	a.name = name
-}
-
-// Document returns the Application's Document.
-func (a *Application) Document() *document.Document {
-	if a.document == nil {
-		a.document = document.New()
-	}
-	return a.document
 }
 
 // SetRoot instructs the Application which Element to put at the root of the
@@ -77,12 +116,17 @@ func (a *Application) SetRootWithBounds(
 	d.SetBounds(bounds)
 }
 
+// Document returns the Application's Document.
+func (a *Application) Document() *document.Document {
+	return a.document
+}
+
 // draw renders the Application to the Terminal screen.
 func (a *Application) draw(ctx context.Context) {
 	if a.term == nil {
 		panic("called Application.draw() with nil terminal.")
 	}
-	doc := a.Document()
+	doc := a.document
 	doc.Render(ctx, a.term)
 	if err := a.term.Display(); err != nil {
 		log.Fatal(err)
@@ -148,6 +192,9 @@ loop:
 
 	if err := t.Shutdown(context.Background()); err != nil {
 		log.Fatal(err)
+	}
+	if a.logLevel.Level() < slog.LevelInfo {
+		fmt.Fprintf(os.Stderr, "%s", a.logBuffer.String())
 	}
 	return nil
 }

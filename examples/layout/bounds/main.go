@@ -22,7 +22,7 @@ func main() {
 	app.SetName(myAppName)
 
 	// gt.Box is a simple component that draws a box on the screen.
-	box := gt.NewBox("mybox")
+	box := gt.NewBox(ctx, "mybox")
 	// We will constrain the box to a bounding box (viewport) that is a
 	// rectangle, anchored at cell (0,0) that is 100 cells wide and 20 cells
 	// high.

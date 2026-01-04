@@ -7,10 +7,15 @@ import (
 	"github.com/jaypipes/gt/core/types"
 )
 
+const (
+	ElementClass = "gt.document"
+	ElementID    = "#document"
+)
+
 // New returns a new Document instance.
-func New() *Document {
-	e := element.New("gt.document")
-	e.SetID("#document")
+func New(ctx context.Context) *Document {
+	e := element.New(ctx, ElementClass)
+	e.SetID(ElementID)
 	return &Document{Element: *e}
 }
 

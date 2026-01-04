@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	envKeyDebug     = "GT_DEBUG"
 	envKeyLogLevel  = "GT_LOG_LEVEL"
 	envKeyLogLogfmt = "GT_LOG_LOGFMT"
 )
@@ -29,17 +30,20 @@ var (
 			},
 		),
 	)
-	defaultLogger = slog.New(
-		&simpleHandler{
-			Handler: slog.NewTextHandler(
-				os.Stderr,
-				&slog.HandlerOptions{
-					Level: logLevelVar,
-				},
-			),
-			l: log.New(os.Stderr, "", 0),
-		},
-	)
+	defaultLogger = slog.New(slog.DiscardHandler)
+	/*
+		defaultLogger = slog.New(
+			&simpleHandler{
+				Handler: slog.NewTextHandler(
+					os.Stderr,
+					&slog.HandlerOptions{
+						Level: logLevelVar,
+					},
+				),
+				l: log.New(os.Stderr, "", 0),
+			},
+		)
+	*/
 )
 
 // simpleHandler is a custom log handler that outputs simple LEVEL: MSG
@@ -105,6 +109,9 @@ func LogLevel(ctx context.Context) slog.Level {
 // EnvOrDefaultLogLevel return true if ghw should not output warnings
 // based on the GHW_LOG_LEVEL environs variable.
 func EnvOrDefaultLogLevel() slog.Level {
+	if _, exists := os.LookupEnv(envKeyDebug); exists {
+		return slog.LevelDebug
+	}
 	if ll, exists := os.LookupEnv(envKeyLogLevel); exists {
 		switch strings.ToLower(ll) {
 		case "debug":
