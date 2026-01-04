@@ -5,9 +5,9 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 
+	"github.com/jaypipes/gt/component/box"
 	"github.com/jaypipes/gt/component/label"
 	"github.com/jaypipes/gt/core/application"
-	"github.com/jaypipes/gt/core/box"
 	gtcontext "github.com/jaypipes/gt/core/context"
 	"github.com/jaypipes/gt/core/types"
 )
@@ -35,16 +35,16 @@ var (
 // Convenience wrappers around common ultraviolet and core image package
 // structs/funcs
 type (
-	Rectangle    = types.Rectangle
-	Point        = types.Point
-	Size         = types.Size
-	Padding      = types.Padding
-	Constraint   = types.Constraint
-	Fixed        = types.Fixed
-	Percent      = types.Percent
-	Border       = types.Border
-	Side         = types.Side
-	StyledString = types.StyledString
+	Rectangle      = types.Rectangle
+	Point          = types.Point
+	Size           = types.Size
+	Padding        = types.Padding
+	SizeConstraint = types.SizeConstraint
+	Fixed          = types.Fixed
+	Percent        = types.Percent
+	Border         = types.Border
+	Side           = types.Side
+	StyledString   = types.StyledString
 )
 
 var (

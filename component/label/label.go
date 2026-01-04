@@ -5,23 +5,28 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 
-	"github.com/jaypipes/gt/core/box"
+	"github.com/jaypipes/gt/core/element"
 	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/core/types"
+)
+
+const (
+	ElementClass = "gt.label"
 )
 
 // New returns a new Label instance.
 func New[T []byte | string | *uv.StyledString](
 	content T,
 ) *Label {
-	c := &Label{}
+	e := element.New(ElementClass)
+	c := &Label{Element: *e}
 	c.SetContent(content)
 	return c
 }
 
 // Label is a [uv.Drawable] that renders some text to the screen.
 type Label struct {
-	box.Box
+	element.Element
 	// ss is the string content of the Label.
 	ss *uv.StyledString
 }
@@ -61,7 +66,7 @@ func (c *Label) SetWrap(enabled bool) {
 func (c *Label) Draw(buf uv.Screen, bounds types.Rectangle) {
 	outer := c.Bounds()
 	outerClipped := render.Overlapping(bounds, outer)
-	c.Box.Draw(buf, outerClipped)
+	c.Element.Draw(buf, outerClipped)
 	if c.ss != nil {
 		inner := c.InnerBounds()
 		innerClipped := render.Overlapping(bounds, inner)

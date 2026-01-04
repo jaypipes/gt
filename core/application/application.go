@@ -10,7 +10,7 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 
-	"github.com/jaypipes/gt/core/canvas"
+	"github.com/jaypipes/gt/core/document"
 	"github.com/jaypipes/gt/core/types"
 )
 
@@ -39,8 +39,9 @@ type Application struct {
 	// log is the application-level `log/slog.Logger`
 	log *slog.Logger
 
-	// canvas helps to render the Application to a screen.
-	canvas *canvas.Canvas
+	// document contains the tree of elements to render the Application to a
+	// screen.
+	document *document.Document
 }
 
 // SetName sets the Application's optional name, which by default also sets the
@@ -49,31 +50,31 @@ func (a *Application) SetName(name string) {
 	a.name = name
 }
 
-// Canvas returns the Application's Canvas.
-func (a *Application) Canvas() *canvas.Canvas {
-	if a.canvas == nil {
-		a.canvas = canvas.New()
+// Document returns the Application's Document.
+func (a *Application) Document() *document.Document {
+	if a.document == nil {
+		a.document = document.New()
 	}
-	return a.canvas
+	return a.document
 }
 
-// SetRoot instructs the Application which Renderable to put at the root of the
-// render tree (the Canvas).
-func (a *Application) SetRoot(r types.Renderable) {
-	c := a.Canvas()
-	c.SetRoot(r)
+// SetRoot instructs the Application which Element to put at the root of the
+// render tree (the Document).
+func (a *Application) SetRoot(el types.Element) {
+	d := a.Document()
+	d.SetRoot(el)
 }
 
-// SetRootWithBounds instructs the Application which Renderable to put at the
-// root of the render tree (the Canvas) and a bounding box to use for the
-// Canvas.
+// SetRootWithBounds instructs the Application which Element to put at the
+// root of the render tree (the Document) and a bounding box to use for the
+// Document.
 func (a *Application) SetRootWithBounds(
-	r types.Renderable,
+	el types.Element,
 	bounds types.Rectangle,
 ) {
-	c := a.Canvas()
-	c.SetRoot(r)
-	c.SetBounds(bounds)
+	d := a.Document()
+	d.SetRoot(el)
+	d.SetBounds(bounds)
 }
 
 // draw renders the Application to the Terminal screen.
@@ -81,7 +82,8 @@ func (a *Application) draw(ctx context.Context) {
 	if a.term == nil {
 		panic("called Application.draw() with nil terminal.")
 	}
-	a.canvas.Render(ctx, a.term)
+	doc := a.Document()
+	doc.Render(ctx, a.term)
 	if err := a.term.Display(); err != nil {
 		log.Fatal(err)
 	}
