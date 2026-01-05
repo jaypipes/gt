@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/jaypipes/gt/core/element"
-	"github.com/jaypipes/gt/core/render"
+	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/types"
 )
 
@@ -25,20 +25,10 @@ type Box struct {
 }
 
 // Draw implements the uv.Renderable interface
-func (b *Box) Draw(screen types.Screen, area types.Rectangle) {
-	ctx := context.TODO()
-	b.Debug(ctx, "Box(%s).Draw: bounding box %s\n", b.ID(), area)
-	// determine the overlapping bounding element and clear its cells before
-	// rendering the element.
-	bb := render.Overlapping(area, b.Bounds())
-	render.Clear(screen, bb)
-
-	// If we have a border, draw it around the outer bounding box.
-	border := b.Border()
-	if border != nil {
-		b.Debug(ctx, "Box(%s).Draw: drawing border around %s\n", b.ID(), area)
-		border.Draw(screen, bb)
-	}
+func (b *Box) Prerender(ctx context.Context, screen types.Screen, area types.Rectangle) {
+	gtlog.Debug(ctx, "Box(%s).Prerender: bounding box %s\n", b.ID(), area)
+	// Draw the border, if any, and clear the inner bounding box of this
+	// Element.
 	b.Element.Draw(screen, area)
 }
 

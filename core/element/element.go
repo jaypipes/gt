@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jaypipes/gt/core"
+	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/node"
 	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/core/types"
@@ -55,7 +56,7 @@ func (e *Element) Class() string {
 // SetBounds propogates a bounding box constraint down to all child elements.
 func (e *Element) SetBounds(bounds types.Rectangle) {
 	ctx := context.TODO()
-	e.Debug(ctx, "Element([%s]%s).SetBounds: bounding box %s\n", e.class, e.id, bounds)
+	gtlog.Debug(ctx, "Element([%s]%s).SetBounds: bounding box %s\n", e.class, e.id, bounds)
 	e.Bounded.SetBounds(bounds)
 	propogate := func(ctx context.Context, child types.Node) {
 		el, ok := child.(types.Element)
@@ -127,7 +128,7 @@ func (e *Element) InnerBounds() types.Rectangle {
 // Draw implements the uv.Renderable interface
 func (e *Element) Draw(screen types.Screen, area types.Rectangle) {
 	ctx := context.TODO()
-	e.Debug(ctx, "Element([%s]%s).Draw: bounding box %s\n", e.class, e.id, area)
+	gtlog.Debug(ctx, "Element([%s]%s).Draw: bounding box %s\n", e.class, e.id, area)
 	// determine the overlapping bounding element and clear its cells before
 	// rendering the element.
 	bb := render.Overlapping(area, e.Bounds())
@@ -136,7 +137,7 @@ func (e *Element) Draw(screen types.Screen, area types.Rectangle) {
 	// If we have a border, draw it around the outer bounding box.
 	border := e.Border()
 	if border != nil {
-		e.Debug(ctx, "Element([%s]%s).Draw: drawing border around %s\n", e.class, e.id, area)
+		gtlog.Debug(ctx, "Element([%s]%s).Draw: drawing border around %s\n", e.class, e.id, area)
 		border.Draw(screen, bb)
 	}
 }
@@ -152,14 +153,14 @@ func (e *Element) Render(
 	// element is responsible for propogating this positioning change to any
 	// child elements.
 	inner := e.InnerBounds()
-	e.Debug(ctx, "Element([%s]%s).Render: outer bounds: %s, inner bounds: %s, children: %d\n", e.class, e.id, bounds, inner, len(e.Children()))
+	gtlog.Debug(ctx, "Element([%s]%s).Render: outer bounds: %s, inner bounds: %s, children: %d\n", e.class, e.id, bounds, inner, len(e.Children()))
 	render := func(ctx context.Context, child types.Node) {
-		el, ok := child.(types.Element)
+		el, ok := child.(types.Prerender)
 		if !ok {
 			// it's not an Element, so do nothing...
 			return
 		}
-		el.Render(ctx, screen)
+		el.Prerender(ctx, screen, inner)
 	}
 	e.Draw(screen, inner)
 	e.VisitChildren(ctx, render)

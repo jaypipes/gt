@@ -2,29 +2,20 @@ package node
 
 import (
 	"context"
-	"log/slog"
 	"sync"
 
 	"github.com/samber/lo"
 
-	"github.com/jaypipes/gt/core"
-	gtctx "github.com/jaypipes/gt/core/context"
 	"github.com/jaypipes/gt/core/types"
 )
 
 // New returns a new instance of a Node
 func New(ctx context.Context) *Node {
-	log := gtctx.Logger(ctx)
-	n := &Node{mu: new(sync.RWMutex)}
-	if log != nil {
-		n.SetLogger(log)
-	}
-	return n
+	return &Node{mu: new(sync.RWMutex)}
 }
 
 // Node describes an element in the tree of elements contained in the Canvas.
 type Node struct {
-	core.Logged
 	mu *sync.RWMutex
 	// index is the index of this Node in the parent's children.
 	index  int
@@ -32,19 +23,6 @@ type Node struct {
 	// children is the collection of Nodes that are the direct children of this
 	// Node, if any.
 	children []types.Node
-}
-
-// Logger returns the Node's Logger. If the Node's Logger is nil, fetches the
-// parent's Logger if present.
-func (n *Node) Logger() *slog.Logger {
-	log := n.Logged.Logger()
-	if log != nil {
-		return log
-	}
-	if n.parent != nil {
-		return n.parent.Logger()
-	}
-	return nil
 }
 
 // Parent returns the Node that is the parent of this Node, or nil if this

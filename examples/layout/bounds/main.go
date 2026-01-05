@@ -17,6 +17,7 @@ type myApp struct {
 func main() {
 	// create a new context.Context from environs variables
 	ctx := gt.ContextFromEnv()
+	gt.Debug(ctx, "before NewApplication")
 	// create a new myApp that wraps the gt.Application
 	app := myApp{gt.NewApplication(ctx)}
 	app.SetName(myAppName)

@@ -2,6 +2,8 @@ package context
 
 import (
 	"context"
+
+	gtlog "github.com/jaypipes/gt/core/log"
 )
 
 type ContextKey string
@@ -22,12 +24,8 @@ func New(mods ...ContextModifier) context.Context {
 // option values
 func FromEnv() context.Context {
 	ctx := context.Background()
-	ll := EnvOrDefaultLogLevel()
-	logLevelVar.Set(ll)
-	ctx = context.WithValue(ctx, logLevelKey, ll)
-	useLogfmt := EnvOrDefaultLogLogfmt()
-	if useLogfmt {
-		ctx = WithLogLogfmt()(ctx)
-	}
+	level := EnvOrDefaultLogLevel()
+	gtlog.SetLevel(level)
+	ctx = context.WithValue(ctx, logLevelKey, level)
 	return ctx
 }

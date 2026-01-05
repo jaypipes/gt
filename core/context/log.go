@@ -2,96 +2,28 @@ package context
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"log/slog"
 	"os"
-	"runtime"
 	"strings"
-	"time"
+
+	gtlog "github.com/jaypipes/gt/core/log"
 )
 
 const (
-	envKeyDebug     = "GT_DEBUG"
-	envKeyLogLevel  = "GT_LOG_LEVEL"
-	envKeyLogLogfmt = "GT_LOG_LOGFMT"
+	envKeyDebug    = "GT_DEBUG"
+	envKeyLogLevel = "GT_LOG_LEVEL"
 )
 
 var (
 	logLevelKey     = ContextKey("gt.log.level")
 	defaultLogLevel = slog.LevelWarn
-	logLevelVar     = new(slog.LevelVar)
-	loggerKey       = ContextKey("gt.logger")
-	logfmtLogger    = slog.New(
-		slog.NewTextHandler(
-			os.Stderr,
-			&slog.HandlerOptions{
-				Level: logLevelVar,
-			},
-		),
-	)
-	defaultLogger = slog.New(slog.DiscardHandler)
-	/*
-		defaultLogger = slog.New(
-			&simpleHandler{
-				Handler: slog.NewTextHandler(
-					os.Stderr,
-					&slog.HandlerOptions{
-						Level: logLevelVar,
-					},
-				),
-				l: log.New(os.Stderr, "", 0),
-			},
-		)
-	*/
 )
-
-// simpleHandler is a custom log handler that outputs simple LEVEL: MSG
-// formatted log records to stderr.
-type simpleHandler struct {
-	slog.Handler
-	l *log.Logger
-}
-
-func (h *simpleHandler) Handle(
-	ctx context.Context,
-	r slog.Record,
-) error {
-	level := r.Level.String() + ":"
-
-	h.l.Printf("%-6s %s", level, r.Message)
-
-	return nil
-}
 
 // WithLogLevel allows overriding the default log level of WARN.
 func WithLogLevel(level slog.Level) ContextModifier {
 	return func(ctx context.Context) context.Context {
-		logLevelVar.Set(level)
+		gtlog.SetLevel(level)
 		return context.WithValue(ctx, logLevelKey, level)
-	}
-}
-
-// WithLogLogfmt sets the log output to the logfmt standard.
-func WithLogLogfmt() ContextModifier {
-	return func(ctx context.Context) context.Context {
-		return context.WithValue(ctx, loggerKey, logfmtLogger)
-	}
-}
-
-// EnvOrDefaultLogLogfmt return true if ghw should use logfmt standard output
-// format based on the GHW_LOG_LOGFMT environs variable.
-func EnvOrDefaultLogLogfmt() bool {
-	if _, exists := os.LookupEnv(envKeyLogLogfmt); exists {
-		return true
-	}
-	return false
-}
-
-// WithLogger allows overriding the default logger
-func WithLogger(logger *slog.Logger) ContextModifier {
-	return func(ctx context.Context) context.Context {
-		return context.WithValue(ctx, loggerKey, logger)
 	}
 }
 
@@ -129,78 +61,7 @@ func EnvOrDefaultLogLevel() slog.Level {
 	return defaultLogLevel
 }
 
-// Logger gets a context's logger override or the default if none is set.
-func Logger(ctx context.Context) *slog.Logger {
-	if ctx == nil {
-		return defaultLogger
-	}
-	if v := ctx.Value(loggerKey); v != nil {
-		return v.(*slog.Logger)
-	}
-	return defaultLogger
-}
-
 // WithDebug enables verbose debugging output.
 func WithDebug() ContextModifier {
 	return WithLogLevel(slog.LevelDebug)
-}
-
-// Info outputs an INFO-level log message to the logger configured in the
-// supplied context.
-func Info(ctx context.Context, format string, args ...any) {
-	logger := Logger(ctx)
-	if logger == nil || !logger.Enabled(ctx, slog.LevelInfo) {
-		return
-	}
-	var stack [1]uintptr
-	runtime.Callers(2, stack[:]) // skip [Callers, Info]
-	r := slog.NewRecord(
-		time.Now(),
-		slog.LevelInfo,
-		strings.TrimSpace(
-			fmt.Sprintf(format, args...),
-		),
-		stack[0],
-	)
-	_ = logger.Handler().Handle(ctx, r)
-}
-
-// Warn outputs an WARN-level log message to the logger configured in the
-// supplied context.
-func Warn(ctx context.Context, format string, args ...any) {
-	logger := Logger(ctx)
-	if logger == nil || !logger.Enabled(ctx, slog.LevelWarn) {
-		return
-	}
-	var stack [1]uintptr
-	runtime.Callers(2, stack[:]) // skip [Callers, Warn]
-	r := slog.NewRecord(
-		time.Now(),
-		slog.LevelWarn,
-		strings.TrimSpace(
-			fmt.Sprintf(format, args...),
-		),
-		stack[0],
-	)
-	_ = logger.Handler().Handle(ctx, r)
-}
-
-// Debug outputs an DEBUG-level log message to the logger configured in the
-// supplied context.
-func Debug(ctx context.Context, format string, args ...any) {
-	logger := Logger(ctx)
-	if logger == nil || !logger.Enabled(ctx, slog.LevelDebug) {
-		return
-	}
-	var stack [1]uintptr
-	runtime.Callers(2, stack[:]) // skip [Callers, Debug]
-	r := slog.NewRecord(
-		time.Now(),
-		slog.LevelDebug,
-		strings.TrimSpace(
-			fmt.Sprintf(format, args...),
-		),
-		stack[0],
-	)
-	_ = logger.Handler().Handle(ctx, r)
 }

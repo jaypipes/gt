@@ -4,7 +4,6 @@ import "context"
 
 // Node describes an element in the tree of elements contained in the Canvas.
 type Node interface {
-	Logged
 	// Parent returns the Node that is the parent of this Node, or nil if this
 	// is a root Node.
 	Parent() Node

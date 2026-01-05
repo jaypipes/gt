@@ -6,10 +6,17 @@ import (
 	uv "github.com/charmbracelet/ultraviolet"
 
 	"github.com/jaypipes/gt/component/box"
-	"github.com/jaypipes/gt/component/label"
+	"github.com/jaypipes/gt/component/span"
 	"github.com/jaypipes/gt/core/application"
 	gtcontext "github.com/jaypipes/gt/core/context"
+	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/types"
+)
+
+var (
+	Debug = gtlog.Debug
+	Info  = gtlog.Info
+	Warn  = gtlog.Warn
 )
 
 var ContextFromEnv = gtcontext.FromEnv
@@ -26,10 +33,10 @@ var (
 	NewBox = box.New
 )
 
-type Label = label.Label
+type Span = span.Span[string]
 
 var (
-	NewLabel = label.New[string]
+	NewSpan = span.New[string]
 )
 
 // Convenience wrappers around common ultraviolet and core image package
