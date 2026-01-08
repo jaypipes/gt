@@ -22,12 +22,16 @@ func New[T types.Text](
 	content T,
 ) *Span[T] {
 	e := element.New(ctx, ElementClass)
-	return &Span[T]{Element: *e, textContent: content}
+	d := &Span[T]{
+		Element: e, textContent: content,
+	}
+	d.SetDisplay(types.DisplayInline)
+	return d
 }
 
-// Span is an Element that can contain some text to the screen.
+// Span is an Element that uses the inline display mode by default.
 type Span[T types.Text] struct {
-	element.Element
+	*element.Element
 	// textContent is the unstyled text content of the Span.
 	textContent T
 	// wrap indicates the text content should be wrapped.

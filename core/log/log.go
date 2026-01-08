@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	DefaultLogLevel      = slog.LevelWarn
-	defaultLogBufferSize = 10 * 1024 // 10KiB
+	DefaultLogLevel        = slog.LevelWarn
+	defaultLogBufferSize   = 10 * 1024 // 10KiB
+	defaultLogRecordPrefix = "(gt) "
 )
 
 var (
@@ -44,7 +45,8 @@ func init() {
 		defaultLogger = slog.New(slog.DiscardHandler)
 	*/
 	defaultLogger = slog.New(
-		simple.New("(gt)",
+		simple.New(
+			defaultLogRecordPrefix,
 			logBuf,
 			&slog.HandlerOptions{
 				Level: logLevelVar,

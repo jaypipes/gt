@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jaypipes/gt/core/element"
+	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/core/types"
 )
 
@@ -16,13 +17,13 @@ const (
 func New(ctx context.Context) *Document {
 	e := element.New(ctx, ElementClass)
 	e.SetID(ElementID)
-	return &Document{Element: *e}
+	return &Document{Element: e}
 }
 
 // Document is the virtual representation of the tree of elements that will be
 // rendered to a Screen.
 type Document struct {
-	element.Element
+	*element.Element
 }
 
 // ElementByID returns the Element with the specified ID or nil if the
@@ -42,12 +43,6 @@ func (d *Document) ElementsByClass(class string) []types.Element {
 func (d *Document) SetRoot(el types.Element) {
 	d.RemoveAllChildren()
 	d.PushChild(el)
-	// Propogate the outer bounds even if the user called SetBounds() before
-	// SetRoot()...
-	bounds := d.Bounds()
-	if !bounds.Empty() {
-		d.SetBounds(bounds)
-	}
 }
 
 // Render ensures that any bounds placed on the Document are applied to all the
@@ -58,11 +53,15 @@ func (d *Document) Render(
 ) {
 	// If the document has had no bounds set, adopt the screen's max width and
 	// height.
-	bounds := d.Bounds()
-	if bounds.Empty() {
-		bounds = screen.Bounds()
-		d.SetBounds(bounds)
+	outer := d.Bounds()
+	if outer.Empty() {
+		outer = screen.Bounds()
+		d.SetBounds(outer)
 	}
+	for _, child := range d.Children() {
+		render.Plot(ctx, child)
+	}
+	render.Plot(ctx, d)
 	d.Element.Render(ctx, screen)
 }
 

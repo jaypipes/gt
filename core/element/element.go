@@ -2,35 +2,58 @@ package element
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
 	"github.com/jaypipes/gt/core"
 	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/node"
 	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/core/types"
+	"github.com/samber/lo"
 )
 
 // New returns a new instance of an Element with the specified type/class.
 func New(ctx context.Context, class string) *Element {
-	n := node.New(ctx)
 	return &Element{
-		Node:  *n,
 		class: class,
 	}
 }
 
 // Element is a specialized type of Node that can be sized and styled.
 type Element struct {
-	core.Bordered
-	core.Bounded
-	node.Node
-	core.Padded
-	core.Positioned
-	core.Sized
+	core.Plotted
+	sync.RWMutex
 	// id is the unique identifier for the Element.
 	id string
 	// class is the Element's type/class, e.g. "gt.label" or "gt.canvas"
 	class string
+	// index is the index of this Node in the parent's children.
+	index  int
+	parent types.Element
+	// children is the collection of Nodes that are the direct children of this
+	// Node, if any.
+	children []types.Element
+}
+
+// Tag returns a string with the Element's type/class and ID
+func (e *Element) Tag() string {
+	return fmt.Sprintf("<%s:%s>", e.class, e.id)
+}
+
+func (e *Element) String() string {
+	parentStr := "nil"
+	if e.parent != nil {
+		parentStr = e.parent.Tag()
+	}
+	idStr := e.id
+	if idStr != "" {
+		idStr = "none"
+	}
+	return fmt.Sprintf(
+		"<%s id=%s index=%d parent=%s children=%d %s>",
+		e.class, idStr, e.index, parentStr,
+		len(e.children), e.Plotted.String(),
+	)
 }
 
 // SetID sets the Element's unique identifier.
@@ -53,82 +76,13 @@ func (e *Element) Class() string {
 	return e.class
 }
 
-// SetBounds propogates a bounding box constraint down to all child elements.
-func (e *Element) SetBounds(bounds types.Rectangle) {
-	ctx := context.TODO()
-	gtlog.Debug(ctx, "Element([%s]%s).SetBounds: bounding box %s\n", e.class, e.id, bounds)
-	e.Bounded.SetBounds(bounds)
-	propogate := func(ctx context.Context, child types.Node) {
-		el, ok := child.(types.Element)
-		if !ok {
-			// it might be a Bounded (which doesn't propogate bounds to
-			// children...
-			bounded, ok := child.(types.Bounded)
-			if !ok {
-				// Not a bounded or element, just ignore
-				return
-			}
-			bounded.SetBounds(bounds)
-		}
-		el.SetBounds(bounds)
-	}
-	e.VisitChildren(ctx, propogate)
-}
-
-// Bounds returns the minimum bounding box within which the Element's content is
-// contained.
-func (e *Element) Bounds() types.Rectangle {
-	bounds := e.Bounded.Bounds()
-	size := e.Sized.Size()
-	if bounds.Empty() {
-		bounds.Max.X = size.W
-		bounds.Max.Y = size.H
-	} else if !size.Empty() {
-		// Set the width and height of the bounding box to the smaller of the
-		// bounds width/height itself or the size that has been set on the box.
-		bw := bounds.Dx()
-		if bw > size.W {
-			bounds.Max.X = bounds.Min.X + size.W
-		}
-		bh := bounds.Dy()
-		if bh > size.H {
-			bounds.Max.Y = bounds.Min.Y + size.H
-		}
-	}
-
-	if e.Fixed() {
-		fixed := e.FixedPosition()
-		bounds.Min.X = fixed.X
-		bounds.Min.Y = fixed.Y
-	} else {
-		offset := e.RelativePosition()
-		bounds.Min.X += offset.X
-		bounds.Min.Y += offset.Y
-		bounds.Max.X += offset.X
-		bounds.Max.Y += offset.Y
-	}
-	return bounds
-}
-
-// InnerBounds returns the inner bounding box for the Element, which accounts for
-// any border and padding.
-func (e *Element) InnerBounds() types.Rectangle {
-	outer := e.Bounds()
-	border := e.Border()
-	if border != nil {
-		outer.Min.X++
-		outer.Min.Y++
-		outer.Max.X--
-		outer.Max.Y--
-	}
-
-	return e.Padding().Bounds(outer)
-}
-
 // Draw implements the uv.Renderable interface
 func (e *Element) Draw(screen types.Screen, area types.Rectangle) {
 	ctx := context.TODO()
-	gtlog.Debug(ctx, "Element([%s]%s).Draw: bounding box %s\n", e.class, e.id, area)
+	gtlog.Debug(
+		ctx, "Element.Draw[%s]: area %s\n",
+		e, area,
+	)
 	// determine the overlapping bounding element and clear its cells before
 	// rendering the element.
 	bb := render.Overlapping(area, e.Bounds())
@@ -137,7 +91,10 @@ func (e *Element) Draw(screen types.Screen, area types.Rectangle) {
 	// If we have a border, draw it around the outer bounding box.
 	border := e.Border()
 	if border != nil {
-		gtlog.Debug(ctx, "Element([%s]%s).Draw: drawing border around %s\n", e.class, e.id, area)
+		gtlog.Debug(
+			ctx, "Element([%s]%s).Draw: drawing border around %s\n",
+			e.class, e.id, area,
+		)
 		border.Draw(screen, bb)
 	}
 }
@@ -147,23 +104,167 @@ func (e *Element) Render(
 	ctx context.Context,
 	screen types.Screen,
 ) {
-	bounds := e.Bounds()
-
-	// Position the root element within the inner bounding box. The root
-	// element is responsible for propogating this positioning change to any
-	// child elements.
-	inner := e.InnerBounds()
-	gtlog.Debug(ctx, "Element([%s]%s).Render: outer bounds: %s, inner bounds: %s, children: %d\n", e.class, e.id, bounds, inner, len(e.Children()))
-	render := func(ctx context.Context, child types.Node) {
-		el, ok := child.(types.Prerender)
-		if !ok {
-			// it's not an Element, so do nothing...
-			return
-		}
-		el.Prerender(ctx, screen, inner)
+	propogate := func(ctx context.Context, child types.Element) {
+		child.Render(ctx, screen)
 	}
-	e.Draw(screen, inner)
-	e.VisitChildren(ctx, render)
+	e.Draw(screen, e.Bounds())
+	e.VisitChildren(ctx, propogate)
+}
+
+// Parent returns the Node that is the parent of this Node, or nil if this
+// is a root Node.
+func (e *Element) Parent() types.Element {
+	e.RLock()
+	defer e.RUnlock()
+	return e.parent
+}
+
+// SetParent sets the Node's parent and index of the Node within the parent's
+// children.
+func (e *Element) SetParent(parent types.Element, childIndex int) {
+	e.Lock()
+	defer e.Unlock()
+	e.setParentNoLock(parent, childIndex)
+}
+
+// setParentNoLock sets the Element's parent and index of the Element within the
+// parent's children but does not lock the structure.
+func (e *Element) setParentNoLock(parent types.Element, childIndex int) {
+	e.parent = parent
+	e.index = childIndex
+}
+
+// Children returns a slice of Elements that are children of this Element.
+func (e *Element) Children() []types.Element {
+	e.RLock()
+	defer e.RUnlock()
+	return e.children
+}
+
+// HasChildren returns whether the Element has children.
+func (e *Element) HasChildren() bool {
+	e.RLock()
+	defer e.RUnlock()
+	return len(e.children) > 0
+}
+
+// FirstChild returns the Node that is the first child of this Element, or nil
+// if there are no children.
+func (e *Element) FirstChild() types.Element {
+	e.RLock()
+	defer e.RUnlock()
+	if len(e.children) == 0 {
+		return nil
+	}
+	return e.children[0]
+}
+
+// LastChild returns the Element that is the last child of this Element, or nil
+// if there are no children.
+func (e *Element) LastChild() types.Element {
+	e.RLock()
+	defer e.RUnlock()
+	if len(e.children) == 0 {
+		return nil
+	}
+	return e.children[len(e.children)-1]
+}
+
+// NextSibling() returns the Element that is the next child of this Element's
+// parent, or nil if there is none.
+func (e *Element) NextSibling() types.Element {
+	e.RLock()
+	defer e.RUnlock()
+	if e.parent == nil {
+		return nil
+	}
+	return e.parent.ChildAt(e.index + 1)
+}
+
+// PreviousSibling returns the Element that is the previous child of the
+// Element's parent, or nil if this Element is the first child of the parent
+// Element.
+func (e *Element) PreviousSibling() types.Element {
+	e.RLock()
+	defer e.RUnlock()
+	if e.parent == nil || e.index == 0 {
+		return nil
+	}
+	return e.parent.ChildAt(e.index - 1)
+}
+
+// ChildAt returns the child element at the supplied zero-based index, or nil
+// if the index is out of bounds.
+func (e *Element) ChildAt(index int) types.Element {
+	e.RLock()
+	defer e.RUnlock()
+	if len(e.children) < (index + 1) {
+		return nil
+	}
+	return e.children[index]
+}
+
+// PushChild adds a new child Element to the Element at the end of Element's
+// set of children.
+func (e *Element) PushChild(child types.Element) {
+	e.Lock()
+	defer e.Unlock()
+	child.SetParent(e, len(e.children))
+	e.pushChildNoLock(child)
+}
+
+// pushChildNoLock adds a new child Element to the Element at the end of
+// Element's set of children but does not lock the structure.
+func (e *Element) pushChildNoLock(child types.Element) {
+	if e.children == nil {
+		e.children = []types.Element{child}
+		return
+	}
+	e.children = append(e.children, child)
+}
+
+// PopChild removes the last child Element from the Element's children and
+// returns it. Returns nil if Element has no children.
+func (e *Element) PopChild() types.Element {
+	e.Lock()
+	defer e.Unlock()
+	return e.popChildNoLock()
+}
+
+// popChildNoLock removes the last child Element from the Element's children
+// and returns it. Returns nil if Element has no children but does not lock the
+// structure.
+func (e *Element) popChildNoLock() types.Element {
+	if e.children == nil {
+		return nil
+	}
+	child := e.children[len(e.children)-1]
+	e.children = e.children[0 : len(e.children)-1]
+	return child
+}
+
+// RemoveAllChildren removes all child Elements from the Element.
+func (e *Element) RemoveAllChildren() {
+	e.Lock()
+	defer e.Unlock()
+	e.removeAllChildrenNoLock()
+}
+
+// removeAllChildrenNoLock removes all child Elements from the Element but does
+// not lock the structure.
+func (e *Element) removeAllChildrenNoLock() {
+	e.children = nil
+}
+
+// VisitChildren executes a callback function against each child Element.
+func (e *Element) VisitChildren(
+	ctx context.Context,
+	fn func(context.Context, types.Element),
+) {
+	lo.ForEach(e.children, func(child types.Element, _ int) {
+		fn(ctx, child)
+		child.VisitChildren(ctx, fn)
+	})
 }
 
 var _ types.Renderable = (*Element)(nil)

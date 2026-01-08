@@ -12,15 +12,15 @@ type Padding struct {
 	R int
 }
 
-// InnerBounds returns the inner bounding box adjusted for the various padding
+// AdjustBounds adjusts the supplied bounding box for the various padding
 // sizes.
-func (p Padding) Bounds(from Rectangle) Rectangle {
-	inner := from
-	inner.Min.X += p.L
-	inner.Min.Y += p.T
-	inner.Max.X -= p.R
-	inner.Max.Y -= p.B
-	return inner
+func (p Padding) AdjustBounds(from Rectangle) Rectangle {
+	adjusted := from
+	adjusted.Min.X += p.L
+	adjusted.Min.Y += p.T
+	adjusted.Max.X -= p.R
+	adjusted.Max.Y -= p.B
+	return adjusted
 }
 
 // Pad is a convenience function that returns a new Padding.

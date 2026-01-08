@@ -5,12 +5,12 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 
-	"github.com/jaypipes/gt/component/box"
-	"github.com/jaypipes/gt/component/span"
 	"github.com/jaypipes/gt/core/application"
 	gtcontext "github.com/jaypipes/gt/core/context"
+	"github.com/jaypipes/gt/core/document"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/types"
+	"github.com/jaypipes/gt/element/span"
 )
 
 var (
@@ -23,14 +23,10 @@ var ContextFromEnv = gtcontext.FromEnv
 
 type Application = application.Application
 
+type Document = document.Document
+
 var (
 	NewApplication = application.New
-)
-
-type Box = box.Box
-
-var (
-	NewBox = box.New
 )
 
 type Span = span.Span[string]
@@ -51,7 +47,17 @@ type (
 	Percent        = types.Percent
 	Border         = types.Border
 	Side           = types.Side
-	StyledString   = types.StyledString
+	Style          = types.Style
+	Text           = types.Text
+)
+
+const (
+	UnderlineNone   = types.UnderlineNone
+	UnderlineSingle = types.UnderlineSingle
+	UnderlineDouble = types.UnderlineDouble
+	UnderlineCurly  = types.UnderlineCurly
+	UnderlineDotted = types.UnderlineDotted
+	UnderlineDashed = types.UnderlineDashed
 )
 
 var (
@@ -79,6 +85,4 @@ var (
 	HiddenBorder         = uv.HiddenBorder
 	MarkdownBorder       = uv.MarkdownBorder
 	ASCIIBorder          = uv.ASCIIBorder
-
-	NewStyledString = uv.NewStyledString
 )

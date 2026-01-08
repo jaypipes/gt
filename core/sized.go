@@ -1,6 +1,8 @@
 package core
 
 import (
+	"fmt"
+
 	"github.com/jaypipes/gt/core/types"
 )
 
@@ -14,17 +16,26 @@ type Sized struct {
 	hconstraint *types.SizeConstraint
 }
 
-// SetSize sets the Sized's size.
+func (s *Sized) String() string {
+	if s.size.Empty() {
+		return "size=none"
+	}
+	return fmt.Sprintf("size=%s", s.size)
+}
+
+// SetSize sets the Sized's size and marks the Sized as having a fixed width
+// and height.
 func (s *Sized) SetSize(width, height int) {
 	s.size = types.Size{W: width, H: height}
 }
 
-// SetWidth sets the Sized's width.
+// SetWidth sets the Sized's width and marks the Sized as having a fixed width.
 func (s *Sized) SetWidth(width int) {
 	s.size.H = width
 }
 
-// SetHeight sets the Sized's height.
+// SetHeight sets the Sized's height and marks the Sized as having a fixed
+// height.
 func (s *Sized) SetHeight(height int) {
 	s.size.H = height
 }
@@ -39,19 +50,29 @@ func (s *Sized) SetHeightConstraint(con types.SizeConstraint) {
 	s.hconstraint = &con
 }
 
-// Height returns the height of the Sized.
+// Height returns the current height of the Sized.
 func (s *Sized) Height() int {
 	return s.size.H
 }
 
-// Width returns the width of the Sized.
+// Width returns the current width of the Sized.
 func (s *Sized) Width() int {
 	return s.size.W
 }
 
-// Size returns the bounding box for the Sized
+// Size returns the current width and height for the Sized.
 func (s *Sized) Size() types.Size {
 	return s.size
+}
+
+// FixedWidth returns true if the Sized is using a fixed width.
+func (s *Sized) FixedWidth() bool {
+	return s.size.W != 0
+}
+
+// FixedHeight returns true if the Sized is using a fixed height.
+func (s *Sized) FixedHeight() bool {
+	return s.size.H != 0
 }
 
 // WidthConstraint returns any optional size constraint for the Sized's width.
