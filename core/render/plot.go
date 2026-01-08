@@ -7,28 +7,23 @@ import (
 	"github.com/jaypipes/gt/core/types"
 )
 
-// Plot calculates the bounding box of a supplied element.  It traverses the
+// Plot calculates the bounding box of a supplied element. It traverses the
 // tree of elements rooted at the supplied element and calculates the anchor
 // position, width and height of the element.
 //
-// If the element is using absolute positioning and a fixed size, returns the
-// bounding box anchored at the absolute coordinates and the bottom-right
-// coordinates calculated by adding the fixed width and height to the anchor
-// point. If the element is using absolute positioning but relative sizing, we
-// calculate the bottom-right coordinates relative to any supplied parent or
-// previous sibling.
-//
-// If the element is not using absolute positioning, the anchor point is
-// calculated relative to the supplied parent or previous sibling. If the
-// element is using relative sizing, the bottom-right coordinates are
-// calculated relative to any supplied parent or previous sibling.
+// If the element is using absolute positioning and a fixed size, its bounding
+// box is anchored at the absolute coordinates. If the element is using
+// relative positioning, the anchor point is calculated relative to the parent
+// or previous sibling.
 func Plot(
 	ctx context.Context,
 	el types.Element,
 ) {
 	parent := el.Parent()
 	if parent == nil {
-		// We don't plot the Document...
+		for _, child := range el.Children() {
+			Plot(ctx, child)
+		}
 		return
 	}
 	prevSibling := el.PreviousSibling()
@@ -136,6 +131,11 @@ func Plot(
 	bounds.Min.X = anchor.X
 	bounds.Min.Y = anchor.Y
 
+	// We default the bottom right corner of the bounding box to the anchor
+	// point and expand from there.
+	bounds.Max.X = anchor.X
+	bounds.Max.Y = anchor.Y
+
 	// Then we calculate the width and height, which will inform us what our
 	// bottom-right coordinates will be.
 	if display != types.DisplayInline && el.FixedWidth() {
@@ -146,7 +146,7 @@ func Plot(
 			el.Tag(), w,
 		)
 		bounds.Max.X += w
-	} else {
+	} else if display == types.DisplayBlock {
 		// Calculate the width of this Plotted based on whether there is a
 		// width constraint. If there is no constraint, the element receives
 		// the remainder of the horizontal space in the parent's bounding box.
@@ -183,17 +183,24 @@ func Plot(
 			el.Tag(), h,
 		)
 		bounds.Max.Y += h
-	} else {
+	} else if display == types.DisplayBlock {
 		// Calculate the height of this Plotted based on whether there is a
 		// height constraint. If there is no constraint, the element receives
 		// the remainder of the vertical space in the parent's bounding box.
-		ph := parent.InnerBounds().Dy()
-		remainder := ph - bounds.Dy()
+		// The remainder of the vertical space in the bounding box can be
+		// calculated by subtracting the previous sibling's Max.Y from the
+		// parent's inner bounds Max.Y.
+		parentMaxY := parent.InnerBounds().Max.Y
+		prevSibMaxY := parent.InnerBounds().Min.Y
+		if prevSibling != nil {
+			prevSibMaxY = prevSibling.MaxY()
+		}
+		remainder := parentMaxY - prevSibMaxY
 		gtlog.Debug(
 			ctx,
 			"render.Plot[%s]: calculated height remainder of %d "+
-				"from parent height of %d",
-			el.Tag(), remainder, ph,
+				"from parent max.y of %d and prevsib max.y of %d",
+			el.Tag(), remainder, parentMaxY, prevSibMaxY,
 		)
 		hc := el.HeightConstraint()
 		if hc != nil {

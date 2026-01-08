@@ -6,7 +6,6 @@ import (
 	uv "github.com/charmbracelet/ultraviolet"
 
 	"github.com/jaypipes/gt/core/element"
-	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/core/text"
 	"github.com/jaypipes/gt/core/types"
@@ -50,15 +49,14 @@ func (s *Div[T]) SetWrap(enabled bool) {
 	s.wrap = enabled
 }
 
-// Draw renders the Div to the given buffer at the specified area.
-func (s *Div[T]) Prerender(ctx context.Context, buf types.Screen, area types.Rectangle) {
-	gtlog.Debug(ctx, "Div(%s).Prerender: bounding box %s\n", s.ID(), area)
+// Draw renders the Div to the given screen in the specified bounding box.
+func (s *Div[T]) Draw(screen types.Screen, bounds types.Rectangle) {
 	// Draw the border, if any, and clear the inner bounding box of this
 	// Element.
-	s.Element.Draw(buf, area)
+	s.Element.Draw(screen, bounds)
 	inner := s.InnerBounds()
-	innerClipped := render.Overlapping(area, inner)
+	innerClipped := render.Overlapping(bounds, inner)
 	ss := uv.NewStyledString(text.String(s.textContent))
 	ss.Wrap = s.wrap
-	ss.Draw(buf, innerClipped)
+	ss.Draw(screen, innerClipped)
 }

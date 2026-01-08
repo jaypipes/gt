@@ -6,8 +6,6 @@ import (
 	"sync"
 
 	"github.com/jaypipes/gt/core"
-	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/core/types"
 	"github.com/samber/lo"
 )
@@ -77,25 +75,11 @@ func (e *Element) Class() string {
 }
 
 // Draw implements the uv.Renderable interface
-func (e *Element) Draw(screen types.Screen, area types.Rectangle) {
-	ctx := context.TODO()
-	gtlog.Debug(
-		ctx, "Element.Draw[%s]: area %s\n",
-		e, area,
-	)
-	// determine the overlapping bounding element and clear its cells before
-	// rendering the element.
-	bb := render.Overlapping(area, e.Bounds())
-	render.Clear(screen, bb)
-
+func (e *Element) Draw(screen types.Screen, bounds types.Rectangle) {
 	// If we have a border, draw it around the outer bounding box.
 	border := e.Border()
 	if border != nil {
-		gtlog.Debug(
-			ctx, "Element([%s]%s).Draw: drawing border around %s\n",
-			e.class, e.id, area,
-		)
-		border.Draw(screen, bb)
+		border.Draw(screen, bounds)
 	}
 }
 

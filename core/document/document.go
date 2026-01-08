@@ -58,11 +58,14 @@ func (d *Document) Render(
 		outer = screen.Bounds()
 		d.SetBounds(outer)
 	}
-	for _, child := range d.Children() {
-		render.Plot(ctx, child)
-	}
+	// calculate the position and sizing for each element in the DOM.
 	render.Plot(ctx, d)
-	d.Element.Render(ctx, screen)
+
+	// clear the outer bounds before rendering the DOM.
+	render.Clear(screen, outer)
+
+	// draw each element in the DOM
+	render.Draw(ctx, d, screen)
 }
 
 var _ types.Document = (*Document)(nil)
