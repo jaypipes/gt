@@ -69,4 +69,3 @@ func (d *Document) Render(
 }
 
 var _ types.Document = (*Document)(nil)
-var _ types.Renderable = (*Document)(nil)

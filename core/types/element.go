@@ -1,10 +1,15 @@
 package types
 
-import "context"
+import (
+	"context"
+
+	uv "github.com/charmbracelet/ultraviolet"
+)
 
 // Element is a specialized type of Node that can be sized and styled.
 type Element interface {
-	Renderable
+	uv.Drawable
+	Plotted
 	// SetID sets the Element's unique identifier.
 	SetID(string)
 	// ID returns the Element's unique identifier.

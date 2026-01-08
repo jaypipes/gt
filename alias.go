@@ -35,6 +35,36 @@ var (
 	NewSpan = span.New[string]
 )
 
+type Alignment types.Alignment
+
+const (
+	AlignmentAuto         = types.AlignmentAuto
+	AlignmentTop          = types.AlignmentTop
+	AlignmentBottom       = types.AlignmentBottom
+	AlignmentLeft         = types.AlignmentLeft
+	AlignmentRight        = types.AlignmentRight
+	AlignmentCenter       = types.AlignmentCenter
+	AlignmentMiddle       = types.AlignmentMiddle
+	AlignmentTopLeft      = types.AlignmentTopLeft
+	AlignmentTopRight     = types.AlignmentTopRight
+	AlignmentTopCenter    = types.AlignmentTopCenter
+	AlignmentBottomLeft   = types.AlignmentBottomLeft
+	AlignmentBottomRight  = types.AlignmentBottomRight
+	AlignmentBottomCenter = types.AlignmentBottomCenter
+	AlignmentMiddleLeft   = types.AlignmentMiddleLeft
+	AlignmentMiddleRight  = types.AlignmentMiddleRight
+	AlignmentMiddleCenter = types.AlignmentMiddleCenter
+)
+
+type Whitespace types.Whitespace
+
+const (
+	WhitespaceNormal    = types.WhitespaceNormal
+	WhitespacePreserve  = types.WhitespacePreserve
+	WhitespaceWrapNever = types.WhitespaceWrapNever
+	WhitespaceWrapLine  = types.WhitespaceWrapLine
+)
+
 // Convenience wrappers around common ultraviolet and core image package
 // structs/funcs
 type (

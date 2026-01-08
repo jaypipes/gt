@@ -6,6 +6,7 @@ import (
 	"github.com/jaypipes/gt"
 	gtapp "github.com/jaypipes/gt/core/application"
 	gtdiv "github.com/jaypipes/gt/element/div"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 const (
@@ -19,6 +20,8 @@ type myApp struct {
 }
 
 func main() {
+	pink, _ := colorful.Hex("#ffc0cb")
+	yellow, _ := colorful.Hex("#ffff00")
 	// create a new context.Context from environs variables
 	ctx := gt.ContextFromEnv()
 	// create a new myApp that wraps the gt.Application
@@ -38,8 +41,8 @@ func main() {
 	// container.
 	divA := gtdiv.New(ctx, shortText)
 	divA.SetID("A")
-	// Give the div a rounded border.
 	divA.SetBorder(gt.RoundedBorder())
+	divA.SetBorderForegroundColor(yellow)
 	// An Element's padding can be controlled with the `gt.Element.SetPadding`
 	// method. Here, we pad the left and right of the fixed div by two cells
 	divA.SetPadding(gt.PadLR(2, 2))
@@ -63,9 +66,20 @@ func main() {
 	// default sizing of `gt.Div` elements.
 	divB := gtdiv.New(ctx, longText)
 	divB.SetID("B")
-	// Give divB a double-lined border to make it distinguishable from divA on
-	// the screen.
-	divB.SetBorder(gt.DoubleBorder())
+	divB.SetBorder(gt.RoundedBorder())
+	divB.SetBorderForegroundColor(pink)
+	// gt Elements all have a whitepace mode that controls how text is wrapped
+	// and whether sequences of whitespace characters are collapsed.
+	//
+	// A gt.Div's default whitespace mode is "WhitespaceNormal", which means
+	// that sequences of whitespace characters are collapsed and text will wrap
+	// when necessary and when line breaks (i.e. \n or \r\n) are found.
+	//
+	// We can call `gt.Element.SetWhitespace()` to change this whitespace mode.
+	// Here, we will set divB's whitespace mode to WhitespaceWrapNever, which
+	// will force the text in divB to be clipped at the container's right
+	// margin.
+	divB.SetWhitespace(gt.WhitespaceWrapNever)
 	// Add divB to our Application's Document as a sibling of divA.
 	doc.PushChild(divB)
 

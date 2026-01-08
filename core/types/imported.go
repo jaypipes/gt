@@ -2,6 +2,7 @@ package types
 
 import (
 	"image"
+	"image/color"
 
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
@@ -10,6 +11,7 @@ import (
 // Convenience wrappers around common ultraviolet and other package
 // structs/funcs
 type (
+	Color     = color.Color
 	Rectangle = image.Rectangle
 	Point     = image.Point
 

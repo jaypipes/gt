@@ -20,6 +20,7 @@ func New(ctx context.Context, class string) *Element {
 // Element is a specialized type of Node that can be sized and styled.
 type Element struct {
 	core.Plotted
+	core.Whitespaced
 	sync.RWMutex
 	// id is the unique identifier for the Element.
 	id string
@@ -76,23 +77,7 @@ func (e *Element) Class() string {
 
 // Draw implements the uv.Renderable interface
 func (e *Element) Draw(screen types.Screen, bounds types.Rectangle) {
-	// If we have a border, draw it around the outer bounding box.
-	border := e.Border()
-	if border != nil {
-		border.Draw(screen, bounds)
-	}
-}
-
-// Render renders the Element to the given buffer at the specified area.
-func (e *Element) Render(
-	ctx context.Context,
-	screen types.Screen,
-) {
-	propogate := func(ctx context.Context, child types.Element) {
-		child.Render(ctx, screen)
-	}
-	e.Draw(screen, e.Bounds())
-	e.VisitChildren(ctx, propogate)
+	e.Bordered.Draw(screen, bounds)
 }
 
 // Parent returns the Node that is the parent of this Node, or nil if this
@@ -251,5 +236,4 @@ func (e *Element) VisitChildren(
 	})
 }
 
-var _ types.Renderable = (*Element)(nil)
 var _ types.Element = (*Element)(nil)

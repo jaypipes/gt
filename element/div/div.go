@@ -51,12 +51,13 @@ func (s *Div[T]) SetWrap(enabled bool) {
 
 // Draw renders the Div to the given screen in the specified bounding box.
 func (s *Div[T]) Draw(screen types.Screen, bounds types.Rectangle) {
-	// Draw the border, if any, and clear the inner bounding box of this
-	// Element.
 	s.Element.Draw(screen, bounds)
 	inner := s.InnerBounds()
 	innerClipped := render.Overlapping(bounds, inner)
 	ss := uv.NewStyledString(text.String(s.textContent))
-	ss.Wrap = s.wrap
+	ws := s.Whitespace()
+	if ws&types.WhitespaceWrapNever == 0 {
+		ss.Wrap = true
+	}
 	ss.Draw(screen, innerClipped)
 }

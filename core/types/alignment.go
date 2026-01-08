@@ -1,7 +1,7 @@
 package types
 
 // Alignment is an alignment mode
-type Alignment int
+type Alignment uint16
 
 const (
 	// AlignmentAuto is the default alignment, which means the parent's alignment
