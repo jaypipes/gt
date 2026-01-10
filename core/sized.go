@@ -31,7 +31,7 @@ func (s *Sized) SetSize(width, height int) {
 
 // SetWidth sets the Sized's width and marks the Sized as having a fixed width.
 func (s *Sized) SetWidth(width int) {
-	s.size.H = width
+	s.size.W = width
 }
 
 // SetHeight sets the Sized's height and marks the Sized as having a fixed

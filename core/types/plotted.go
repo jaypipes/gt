@@ -2,9 +2,10 @@ package types
 
 // Plotted describes something that can be plotted on a Screen.
 type Plotted interface {
+	Aligned
 	Bounded
-	Sized
 	Displayed
+	Sized
 	// Anchor sets the Plotted's anchor point (i.e. its top-left grid
 	// coordinates) and marks the Plotted as using absolute positioning.
 	Anchor(Point)

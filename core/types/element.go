@@ -10,6 +10,7 @@ import (
 type Element interface {
 	uv.Drawable
 	Plotted
+	Styled
 	// SetID sets the Element's unique identifier.
 	SetID(string)
 	// ID returns the Element's unique identifier.

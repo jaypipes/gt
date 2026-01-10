@@ -10,6 +10,8 @@ import (
 	"github.com/jaypipes/gt/core/document"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/types"
+	"github.com/jaypipes/gt/element/div"
+	"github.com/jaypipes/gt/element/hr"
 	"github.com/jaypipes/gt/element/span"
 )
 
@@ -29,10 +31,22 @@ var (
 	NewApplication = application.New
 )
 
-type Span = span.Span[string]
+type Div = div.Div
 
 var (
-	NewSpan = span.New[string]
+	NewDiv = div.New
+)
+
+type HR = hr.HR
+
+var (
+	NewHR = hr.New
+)
+
+type Span = span.Span
+
+var (
+	NewSpan = span.New
 )
 
 type Alignment types.Alignment

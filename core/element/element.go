@@ -20,6 +20,7 @@ func New(ctx context.Context, class string) *Element {
 // Element is a specialized type of Node that can be sized and styled.
 type Element struct {
 	core.Plotted
+	core.Styled
 	core.Whitespaced
 	sync.RWMutex
 	// id is the unique identifier for the Element.
