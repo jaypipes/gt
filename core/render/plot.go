@@ -39,13 +39,15 @@ func Plot(
 			el.Tag(), anchor,
 		)
 	} else {
-		// start with our relative offset
-		anchor = el.TL()
+		// anchor at our parent's top left and add our relative offset
+		anchor = parent.TL()
+		offset := el.TL()
 		gtlog.Debug(
 			ctx,
-			"render.Plot[%s]: anchor to relative position with offset %s",
-			el.Tag(), anchor,
+			"render.Plot[%s]: adding offset %s to parent anchor %s",
+			el.Tag(), offset, anchor,
 		)
+		anchor.Add(offset)
 
 		// We place our anchor position depending on the display mode of the
 		// current element. If the display mode is inline or inline-block, we
@@ -216,6 +218,25 @@ func Plot(
 				el.Tag(), remainder,
 			)
 			bounds.Max.Y += remainder
+		}
+	}
+
+	// Make sure that the parent bounds is never exceeded by a child.
+	parentInner := parent.InnerBounds()
+	if !bounds.In(parentInner) {
+		gtlog.Debug(
+			ctx,
+			"render.Plot[%s]: plotted bounds %s exceeds parent inner "+
+				"bounds %s. constraining to parent inner bounds.",
+			el.Tag(), bounds, parentInner,
+		)
+		if bounds.Dx() > parentInner.Dx() {
+			bounds.Min.X = parentInner.Min.X
+			bounds.Max.X = parentInner.Max.X
+		}
+		if bounds.Dy() > parentInner.Dy() {
+			bounds.Min.Y = parentInner.Min.Y
+			bounds.Max.Y = parentInner.Max.Y
 		}
 	}
 

@@ -24,9 +24,6 @@ type Plotted struct {
 	Displayed
 	Padded
 	Sized
-	// position is the anchoring coordinates (i.e. the (Min.X, Min.Y)) of the
-	// absolute or relative position for the Plotted.
-	position types.Point
 	// absolute is true if the Plotted is using absolute coordinates, false if
 	// using relative positioning.
 	absolute bool
@@ -34,8 +31,8 @@ type Plotted struct {
 
 func (p *Plotted) String() string {
 	return fmt.Sprintf(
-		"position=%s absolute=%t %s %s %s %s",
-		p.position, p.absolute,
+		"absolute=%t %s %s %s %s",
+		p.absolute,
 		p.Bounded.String(), p.Sized.String(),
 		p.Displayed.String(), p.Aligned.String(),
 	)
@@ -44,7 +41,10 @@ func (p *Plotted) String() string {
 // Anchor sets the Plotted's anchor point (i.e. its top-left grid coordinates)
 // and marks the Plotted as using absolute positioning.
 func (p *Plotted) Anchor(pt types.Point) {
-	p.position = pt
+	bounds := p.Bounds()
+	bounds.Min.X = pt.X
+	bounds.Min.Y = pt.Y
+	p.SetBounds(bounds)
 	p.absolute = true
 }
 

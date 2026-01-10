@@ -34,19 +34,12 @@ type Div[T types.Text] struct {
 	*element.Element
 	// textContent is the unstyled text content of the Div.
 	textContent T
-	// wrap indicates the text content should be wrapped.
-	wrap bool
 }
 
 // SetContent sets the Div's content to the supplied thing. The supplied
 // thing can be []byte, string, or *uv.StyledString
 func (s *Div[T]) SetContent(content T) {
 	s.textContent = content
-}
-
-// SetWrap sets the Div's wrapping behaviour.
-func (s *Div[T]) SetWrap(enabled bool) {
-	s.wrap = enabled
 }
 
 // Draw renders the Div to the given screen in the specified bounding box.

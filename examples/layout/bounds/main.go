@@ -4,6 +4,9 @@ import (
 	"log"
 
 	"github.com/jaypipes/gt"
+	gtapp "github.com/jaypipes/gt/core/application"
+	gtspan "github.com/jaypipes/gt/element/span"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 const (
@@ -15,32 +18,43 @@ type myApp struct {
 }
 
 func main() {
+	yellow, _ := colorful.Hex("#ffff00")
 	// create a new context.Context from environs variables
 	ctx := gt.ContextFromEnv()
-	gt.Debug(ctx, "before NewApplication")
 	// create a new myApp that wraps the gt.Application
-	app := myApp{gt.NewApplication(ctx)}
+	app := myApp{gtapp.New(ctx)}
 	app.SetName(myAppName)
 
-	// gt.Box is a simple component that draws a box on the screen.
-	box := gt.NewBox(ctx, "mybox")
-	// We will constrain the box to a bounding box (viewport) that is a
-	// rectangle, anchored at cell (0,0) that is 100 cells wide and 20 cells
-	// high.
-	box.SetBounds(gt.Rect(0, 0, 100, 20))
-	// Make a rounded border around the box
-	box.SetBorder(gt.RoundedBorder())
-	// By default, the width and height of the box will be width and height of
-	// its bounding box, if set. We can change this using the SetSize() method,
-	// however note that the width and height specified in SetSize() will never
-	// exceed any bounding box's width and height.
-	//
-	// Play around with these values and see the effect on the rendered box.
-	box.SetSize(80, 20)
+	// gt.Document represents the Document Object Model (DOM) for your
+	// Application's display views.
+	doc := app.Document()
+	// You can set an outer border on your Application by setting a border on
+	// the Document.
+	doc.SetBorder(gt.ThickBorder())
 
-	// We make the bounding box of the Document (the outermost renderable of the
-	// Application) a rectangle, anchored at cell (10,10) that is 40 cells wide
-	// and 20 cells high.
+	// gt.Span is a simple element that behaves like an HTML <span> element,
+	// meaning that by default, the element will be rendered inline with either
+	// the previous sibling element, or if no previous sibling, the parent
+	// container. By default, Spans have a dynamic width and height, where the
+	// width of the Span defaults to the width of the Span's text contents (in
+	// cells on the screen) and the height of the Span is the natural number of
+	// lines that the text content will wrap within the Span's parent
+	// container.
+	span := gtspan.New(ctx, "some text")
+	// To demonstrate how bounds work, we will give this Span a fixed width and
+	// height instead of using the default width and height of a Span. The
+	// `gt.Element.SetSize()` method allows you to set the fixed width and
+	// height of an element.
+	span.SetSize(60, 10)
+	// Make a rounded yellow border around the span
+	span.SetBorder(gt.RoundedBorder())
+	span.SetBorderForegroundColor(yellow)
+	doc.PushChild(span)
+
+	// We make the bounding box of the Application's Document (the outermost
+	// renderable of the Application) a rectangle with the top-left coordinates
+	// at (10,10) and the bottom-right coordinates at (40,20). In other words,
+	// a rectangle anchored at (10,10) that is 30 cells wide and 10 cells high.
 	docBounds := gt.Rect(10, 10, 40, 20)
 
 	// By specifying a bounding box (bounds) on the Application's Document, we
@@ -55,9 +69,16 @@ func main() {
 	//
 	// Play around with the anchoring cell values and widths/heights and see
 	// the effect on the rendered box.
-	doc := app.Document()
 	doc.SetBounds(docBounds)
-	doc.SetRoot(box)
+
+	// Note that instead of specifying the bounding box using SetBounds(), we
+	// could have specified the anchor point of (10,10) using:
+	//
+	//doc.Anchor(gt.Pt(10, 10))
+	//
+	// and set the document's width and height:
+	//
+	//doc.SetSize(30, 10)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)

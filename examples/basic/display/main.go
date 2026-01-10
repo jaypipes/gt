@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	myAppName = "basic demo of display, border and padding properties"
+	myAppName = "basic demo of display, border, whitespace and padding properties"
 	shortText = "Short text"
 	longText  = `Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.`
 )
@@ -20,8 +20,9 @@ type myApp struct {
 }
 
 func main() {
-	pink, _ := colorful.Hex("#ffc0cb")
+	red, _ := colorful.Hex("#ff0000")
 	yellow, _ := colorful.Hex("#ffff00")
+	lightblue, _ := colorful.Hex("#add8e6")
 	// create a new context.Context from environs variables
 	ctx := gt.ContextFromEnv()
 	// create a new myApp that wraps the gt.Application
@@ -41,7 +42,14 @@ func main() {
 	// container.
 	divA := gtdiv.New(ctx, shortText)
 	divA.SetID("A")
+	// An Element's border can be controlled with the `gt.Element.SetBorder`
+	// method, which accepts as a parameter a `gt.Border` struct. A `gt.Border`
+	// struct is returned from helper functions like `gt.RoundedBorder`.
 	divA.SetBorder(gt.RoundedBorder())
+	// You can give your border a foreground color with the
+	// `gt.Element.SetBorderForegroundColor` method. Note that a border's
+	// foreground color is the color of the character symbols that comprise the
+	// border itself.
 	divA.SetBorderForegroundColor(yellow)
 	// An Element's padding can be controlled with the `gt.Element.SetPadding`
 	// method. Here, we pad the left and right of the fixed div by two cells
@@ -67,7 +75,14 @@ func main() {
 	divB := gtdiv.New(ctx, longText)
 	divB.SetID("B")
 	divB.SetBorder(gt.RoundedBorder())
-	divB.SetBorderForegroundColor(pink)
+	divB.SetBorderForegroundColor(red)
+	// You can give your border a background color with the
+	// `gt.Element.SetBorderBackgroundColor` method. A border's background
+	// color is the background color of the cells that comprise the border.
+	divB.SetBorderBackgroundColor(lightblue)
+	// Give divB a top/bottom padding of 2 lines and a left/right padding of 4
+	// cells.
+	divB.SetPadding(gt.Pad(2, 2, 4, 4))
 	// gt Elements all have a whitepace mode that controls how text is wrapped
 	// and whether sequences of whitespace characters are collapsed.
 	//

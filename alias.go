@@ -102,6 +102,7 @@ var (
 
 var (
 	Rect = image.Rect
+	Pt   = image.Pt
 
 	Ration = uv.Ratio
 
