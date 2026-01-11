@@ -2,6 +2,7 @@ package span
 
 import (
 	"context"
+	"strings"
 
 	uv "github.com/charmbracelet/ultraviolet"
 
@@ -40,12 +41,43 @@ func (s *Span) SetSize(width, height int) {
 	s.SetDisplay(types.DisplayInlineBlock)
 }
 
+// SetWidth sets the fixed width of the Span and also sets the display mode to
+// "inline-block".
+func (s *Span) SetWidth(width int) {
+	s.Sized.SetWidth(width)
+	s.SetDisplay(types.DisplayInlineBlock)
+}
+
+// SetHeight sets the fixed height of the Span and also sets the display mode
+// to "inline-block".
+func (s *Span) SetHeight(height int) {
+	s.Sized.SetHeight(height)
+	s.SetDisplay(types.DisplayInlineBlock)
+}
+
+// Height returns the height of the Span. If a fixed height has not been set,
+// the height defaults to the number of lines of text content, or 1 if there is
+// no text content.
+func (s *Span) Height() int {
+	h := s.Sized.Height()
+	if h != 0 {
+		return h
+	}
+	return strings.Count(s.Content(), "\n") + 1
+}
+
 // Draw renders the Span to the given screen in the specified bounding box.
 func (s *Span) Draw(screen types.Screen, bounds types.Rectangle) {
+	ctx := context.TODO()
 	s.Element.Draw(screen, bounds)
 	inner := s.InnerBounds()
 	innerClipped := render.Overlapping(bounds, inner)
-	ss := uv.NewStyledString(s.Content())
+	content := render.AlignString(
+		ctx, s.Content(), inner, s.Alignment(),
+	)
+	style := s.Style()
+	content = style.Styled(content)
+	ss := uv.NewStyledString(content)
 	ws := s.Whitespace()
 	if ws&types.WhitespaceWrapNever == 0 {
 		ss.Wrap = true

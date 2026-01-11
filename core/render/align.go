@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/x/ansi"
 
+	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/types"
 )
 
@@ -17,6 +18,10 @@ func AlignString(
 	bounds types.Rectangle,
 	align types.Alignment,
 ) string {
+	gtlog.Debug(
+		ctx, "render.Align: bounds=%s alignment=%s",
+		bounds, align,
+	)
 	width := bounds.Dx()
 	height := bounds.Dy()
 
@@ -39,7 +44,7 @@ func AlignString(
 			// pad the string with new lines at the top and bottom of the bounding
 			// box
 			linesToPadTop := linesToPad / 2
-			linesToPadBottom := linesToPadTop
+			linesToPadBottom := linesToPad / 2
 			// handle overflow/underflow from integer division rounding...
 			totalLines := numLines + linesToPadTop + linesToPadBottom
 			if totalLines > height {
@@ -70,17 +75,22 @@ func AlignString(
 				b.WriteString(line)
 			} else if align&types.AlignmentCenter != 0 {
 				cellsToPadLeft := cellsToPad / 2
-				cellsToPadRight := cellsToPadLeft
+				cellsToPadRight := cellsToPad / 2
 				// handle overflow/underflow from integer division rounding...
 				totalCells := numCells + cellsToPadLeft + cellsToPadRight
-				if totalCells > height {
-					cellsToPadLeft--
-				} else if totalCells < height {
+				if totalCells > width {
+					cellsToPadRight--
+				} else if totalCells < width {
 					cellsToPadRight++
 				}
-				b.WriteString(strings.Repeat("\n", cellsToPadLeft))
-				b.WriteString(content)
-				b.WriteString(strings.Repeat("\n", cellsToPadRight))
+				gtlog.Debug(
+					ctx, "render.Align(center): numCells=%d cellsToPad=%d "+
+						"cellsToPadLeft=%d cellsToPadRight=%d",
+					numCells, cellsToPad, cellsToPadLeft, cellsToPadRight,
+				)
+				b.WriteString(strings.Repeat(" ", cellsToPadLeft))
+				b.WriteString(line)
+				b.WriteString(strings.Repeat(" ", cellsToPadRight))
 			} else {
 				b.WriteString(line)
 				b.WriteString(strings.Repeat(" ", cellsToPad))

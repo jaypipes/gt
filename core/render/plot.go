@@ -32,22 +32,15 @@ func Plot(
 
 	// First we calculate the anchoring coordinates (top-left of our bounding
 	// box)
-	anchor := el.TL()
+	var anchor types.Point
 	if el.AbsolutePositioned() {
+		anchor = el.TL()
 		gtlog.Debug(
 			ctx, "render.Plot[%s]: anchor to absolute position %s",
 			el.Tag(), anchor,
 		)
 	} else {
 		// anchor at our parent's top left and add our relative offset
-		anchor = parent.TL()
-		offset := el.TL()
-		gtlog.Debug(
-			ctx,
-			"render.Plot[%s]: adding offset %s to parent anchor %s",
-			el.Tag(), offset, anchor,
-		)
-		anchor.Add(offset)
 
 		// We place our anchor position depending on the display mode of the
 		// current element. If the display mode is inline or inline-block, we
@@ -58,6 +51,12 @@ func Plot(
 		// element on the left margin of the parent and the bottom margin of
 		// the previous sibling.
 		if prevSibling == nil || display == types.DisplayBlock {
+			anchor = parent.TL()
+			gtlog.Debug(
+				ctx,
+				"render.Plot[%s]: anchoring to parent top left %s",
+				el.Tag(), anchor,
+			)
 			leftMargin := parent.LeftMargin()
 			gtlog.Debug(
 				ctx,
@@ -67,14 +66,13 @@ func Plot(
 			)
 			anchor.X += leftMargin
 		} else {
-			psWidth := prevSibling.Width()
+			anchor = prevSibling.TR()
 			gtlog.Debug(
 				ctx,
-				"render.Plot[%s]: moving x by %d "+
-					"(width of previous sibling)",
-				el.Tag(), psWidth,
+				"render.Plot[%s]: anchoring to top right of "+
+					"previous sibling %s",
+				el.Tag(), anchor,
 			)
-			anchor.X += psWidth
 		}
 
 		// For elements with inline or inline-block display mode, we set the
@@ -124,6 +122,15 @@ func Plot(
 				anchor.Y += topMargin
 			}
 		}
+
+		offset := el.TL()
+		gtlog.Debug(
+			ctx,
+			"render.Plot[%s]: adding offset %s to anchor %s",
+			el.Tag(), offset, anchor,
+		)
+		anchor.Add(offset)
+
 		gtlog.Debug(
 			ctx,
 			"render.Plot[%s]: calculated anchor position %s",
@@ -177,7 +184,7 @@ func Plot(
 		}
 	}
 
-	if display != types.DisplayInline && el.FixedHeight() {
+	if el.FixedHeight() {
 		h := el.Height()
 		gtlog.Debug(
 			ctx,
@@ -219,6 +226,17 @@ func Plot(
 			)
 			bounds.Max.Y += remainder
 		}
+	} else {
+		// el.Height() returns the "natural" height of the element. For things
+		// like a Span, the natural height will be the number of newlines in
+		// the Span's text content.
+		h := el.Height()
+		gtlog.Debug(
+			ctx,
+			"render.Plot[%s]: using natural height %d",
+			el.Tag(), h,
+		)
+		bounds.Max.Y += h
 	}
 
 	// Make sure that the parent bounds is never exceeded by a child.
