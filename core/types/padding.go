@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 // Padding contains padding amounts for a box
 type Padding struct {
 	// T is the top padding, in lines.
@@ -21,6 +23,26 @@ func (p Padding) AdjustBounds(from Rectangle) Rectangle {
 	adjusted.Max.X -= p.R
 	adjusted.Max.Y -= p.B
 	return adjusted
+}
+
+// Horizontal returns the total left-right padding
+func (p Padding) Horizontal() int {
+	return p.L + p.R
+}
+
+// Vertical returns the total top-bottom padding
+func (p Padding) Vertical() int {
+	return p.T + p.B
+}
+
+// Empty returns true if there's no padding
+func (p Padding) Empty() bool {
+	return p.T == 0 && p.B == 0 && p.L == 0 && p.R == 0
+}
+
+// String returns a string representation of the Padding.
+func (p Padding) String() string {
+	return fmt.Sprintf("t:%d,b:%d,l:%d,r:%d", p.T, p.B, p.L, p.R)
 }
 
 // Pad is a convenience function that returns a new Padding.

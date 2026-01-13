@@ -35,33 +35,38 @@ type Span struct {
 }
 
 // SetSize sets the fixed width and height of the Span and also sets the
-// display mode to "inline-block".
+// display mode to `inline-block`.
 func (s *Span) SetSize(width, height int) {
 	s.Sized.SetSize(width, height)
 	s.SetDisplay(types.DisplayInlineBlock)
 }
 
 // SetWidth sets the fixed width of the Span and also sets the display mode to
-// "inline-block".
+// `inline-block`.
 func (s *Span) SetWidth(width int) {
 	s.Sized.SetWidth(width)
 	s.SetDisplay(types.DisplayInlineBlock)
 }
 
 // SetHeight sets the fixed height of the Span and also sets the display mode
-// to "inline-block".
+// to `inline-block`.
 func (s *Span) SetHeight(height int) {
 	s.Sized.SetHeight(height)
 	s.SetDisplay(types.DisplayInlineBlock)
 }
 
-// Height returns the height of the Span. If a fixed height has not been set,
-// the height defaults to the number of lines of text content, or 1 if there is
-// no text content.
+// Height returns the height of the Span.
+//
+// If a fixed height has been set and the display mode is `block`, we use the
+// fixed height.
+//
+// If a fixed height has not been set or the display mode is not `block`, the
+// height defaults to the number of lines of text content, or 1 if there is no
+// text content.
 func (s *Span) Height() int {
-	h := s.Sized.Height()
-	if h != 0 {
-		return h
+	display := s.Display()
+	if display == types.DisplayBlock && s.FixedHeight() {
+		return s.Sized.Height()
 	}
 	return strings.Count(s.Content(), "\n") + 1
 }

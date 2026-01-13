@@ -27,8 +27,8 @@ type Sized interface {
 	// FixedHeight returns true if the Sized is using a fixed height.
 	FixedHeight() bool
 	// WidthConstraint returns the width size constraint of the Sized, if any.
-	WidthConstraint() *SizeConstraint
+	WidthConstraint() SizeConstraint
 	// HeightConstraint returns the height size constraint of the Sized, if
 	// any.
-	HeightConstraint() *SizeConstraint
+	HeightConstraint() SizeConstraint
 }

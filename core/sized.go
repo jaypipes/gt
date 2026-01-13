@@ -11,9 +11,9 @@ type Sized struct {
 	// size is the size of the Sized.
 	size types.Size
 	// wconstraint is the optional width size constraint of the Sized.
-	wconstraint *types.SizeConstraint
+	wconstraint types.SizeConstraint
 	// wconstraint is the optional height size constraint of the Sized.
-	hconstraint *types.SizeConstraint
+	hconstraint types.SizeConstraint
 }
 
 func (s *Sized) String() string {
@@ -42,12 +42,12 @@ func (s *Sized) SetHeight(height int) {
 
 // SetWidthConstraint sets the Sized's width size constraint.
 func (s *Sized) SetWidthConstraint(con types.SizeConstraint) {
-	s.wconstraint = &con
+	s.wconstraint = con
 }
 
 // SetHeightConstraint sets the Sized's height size constraint.
 func (s *Sized) SetHeightConstraint(con types.SizeConstraint) {
-	s.hconstraint = &con
+	s.hconstraint = con
 }
 
 // Height returns the current height of the Sized.
@@ -76,13 +76,13 @@ func (s *Sized) FixedHeight() bool {
 }
 
 // WidthConstraint returns any optional size constraint for the Sized's width.
-func (s *Sized) WidthConstraint() *types.SizeConstraint {
+func (s *Sized) WidthConstraint() types.SizeConstraint {
 	return s.wconstraint
 }
 
 // HeightConstraint returns any optional size constraint for the Sized's
 // height.
-func (s *Sized) HeightConstraint() *types.SizeConstraint {
+func (s *Sized) HeightConstraint() types.SizeConstraint {
 	return s.hconstraint
 }
 

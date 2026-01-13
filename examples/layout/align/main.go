@@ -5,6 +5,7 @@ import (
 
 	"github.com/jaypipes/gt"
 	gtapp "github.com/jaypipes/gt/core/application"
+	gtdiv "github.com/jaypipes/gt/element/div"
 	gtspan "github.com/jaypipes/gt/element/span"
 	"github.com/lucasb-eyer/go-colorful"
 )
@@ -18,6 +19,7 @@ func main() {
 	yellow, _ := colorful.Hex("#ffff00")
 	pink, _ := colorful.Hex("#ffcccc")
 	lightblue, _ := colorful.Hex("#add8e6")
+	lightgreen, _ := colorful.Hex("#d1ffbd")
 
 	ctx := gt.ContextFromEnv()
 	app := myApp{gtapp.New(ctx)}
@@ -45,9 +47,16 @@ func main() {
 	spanC.SetBackgroundColor(lightblue)
 	spanC.SetAlignment(gt.AlignmentRight)
 
+	divD := gtdiv.New(ctx, "D")
+	divD.SetID("D")
+	divD.SetForegroundColor(black)
+	divD.SetBackgroundColor(lightgreen)
+	divD.SetAlignment(gt.AlignmentCenter)
+
 	doc.PushChild(spanA)
 	doc.PushChild(spanB)
 	doc.PushChild(spanC)
+	doc.PushChild(divD)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)

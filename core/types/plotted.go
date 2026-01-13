@@ -5,6 +5,7 @@ type Plotted interface {
 	Aligned
 	Bounded
 	Displayed
+	Padded
 	Sized
 	// Anchor sets the Plotted's anchor point (i.e. its top-left grid
 	// coordinates) and marks the Plotted as using absolute positioning.

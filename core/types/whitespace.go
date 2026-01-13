@@ -1,5 +1,7 @@
 package types
 
+import "strings"
+
 // Whitespace is a mode for handling wrapping and whitespaces.
 type Whitespace uint8
 
@@ -17,3 +19,20 @@ const (
 	// or \r\n)
 	WhitespaceWrapLine = 1 << 2
 )
+
+func (w Whitespace) String() string {
+	if w == WhitespaceNormal {
+		return "normal"
+	}
+	s := ""
+	if w&WhitespacePreserve != 0 {
+		s += "preserve"
+	}
+	if w&WhitespaceWrapNever != 0 {
+		s += "-wrap-never"
+	}
+	if w&WhitespaceWrapLine != 0 {
+		s += "-wrap-line"
+	}
+	return strings.TrimPrefix(s, "-")
+}

@@ -28,7 +28,10 @@ func AlignString(
 	var b strings.Builder
 	// We know that the returned string is going to be equal to the number of
 	// cells in the bounding area.
-	b.Grow(width * height)
+	area := width * height
+	if area > 0 {
+		b.Grow(area)
+	}
 
 	// First we process the vertical alignment of the supplied string and then
 	// we will pad each individual line of the vertically-aligned string in
@@ -83,11 +86,6 @@ func AlignString(
 				} else if totalCells < width {
 					cellsToPadRight++
 				}
-				gtlog.Debug(
-					ctx, "render.Align(center): numCells=%d cellsToPad=%d "+
-						"cellsToPadLeft=%d cellsToPadRight=%d",
-					numCells, cellsToPad, cellsToPadLeft, cellsToPadRight,
-				)
 				b.WriteString(strings.Repeat(" ", cellsToPadLeft))
 				b.WriteString(line)
 				b.WriteString(strings.Repeat(" ", cellsToPadRight))
