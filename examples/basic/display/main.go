@@ -54,6 +54,11 @@ func main() {
 	// An Element's padding can be controlled with the `gt.Element.SetPadding`
 	// method. Here, we pad the left and right of the fixed div by two cells
 	divA.SetPadding(gt.PadLR(2, 2))
+	// An Element's horizontal and vertical alignment is controlled with the
+	// `gt.Element.SetAlignment` method. Here, we place the text "Short text"
+	// vertically in the middle and horizontally in the center of the
+	// container.
+	divA.SetAlignment(gt.AlignmentMiddleCenter)
 	// If a Div's width and height are set to a fixed size (using
 	// `gt.Element.SetSize`), the Div's width and height will no longer adjust
 	// dynamically to the containing element's bounding box.
@@ -66,7 +71,7 @@ func main() {
 	//
 	// By calling SetSize to give divA a fixed width of 30 cells and a height
 	// of 5 lines, we override this dynamic sizing behaviour.
-	divA.SetSize(30, 5)
+	divA.SetSize(gt.FixedArea(30, 5))
 	// Add divA to our Application's Document.
 	doc.PushChild(divA)
 
@@ -82,7 +87,7 @@ func main() {
 	divB.SetBorderBackgroundColor(lightblue)
 	// Give divB a top/bottom padding of 2 lines and a left/right padding of 4
 	// cells.
-	divB.SetPadding(gt.Pad(2, 2, 4, 4))
+	divB.SetPadding(gt.PadTBLR(2, 2, 4, 4))
 	// gt Elements all have a whitepace mode that controls how text is wrapped
 	// and whether sequences of whitespace characters are collapsed.
 	//
@@ -91,10 +96,12 @@ func main() {
 	// when necessary and when line breaks (i.e. \n or \r\n) are found.
 	//
 	// We can call `gt.Element.SetWhitespace()` to change this whitespace mode.
-	// Here, we will set divB's whitespace mode to WhitespaceWrapNever, which
-	// will force the text in divB to be clipped at the container's right
-	// margin.
-	divB.SetWhitespace(gt.WhitespaceWrapNever)
+	//
+	// Uncomment the below line to set divB's whitespace mode to
+	// WhitespaceWrapNever, which will force the text in divB to be clipped at
+	// the container's right margin.
+	// divB.SetWhitespace(gt.WhitespaceWrapNever)
+
 	// Add divB to our Application's Document as a sibling of divA.
 	doc.PushChild(divB)
 

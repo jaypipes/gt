@@ -3,32 +3,38 @@ package types
 // Sized describes something with a width (in cells) and height (in lines).
 type Sized interface {
 	String() string
-	// SetSize sets the Sized's size and marks the Sized as having a fixed
-	// width and height.
-	SetSize(int, int)
-	// SetWidth sets the Sized's width in cells and marks the Sized as having a
-	// fixed width.
-	SetWidth(int)
-	// SetHeight sets the Sized's height in lines and marks the Sized as having
-	// a fixed height.
-	SetHeight(int)
-	// SetWidthConstraint sets the Sized's width size constraint.
-	SetWidthConstraint(SizeConstraint)
-	// SetHeightConstraint sets the Sized's height size constraint.
-	SetHeightConstraint(SizeConstraint)
-	// Width returns the current width of the Sized.
-	Width() int
-	// Height returns the current height of the Sized.
-	Height() int
-	// Size returns the current width and height for the Sized.
-	Size() Size
-	// FixedWidth returns true if the Sized is using a fixed width.
-	FixedWidth() bool
-	// FixedHeight returns true if the Sized is using a fixed height.
-	FixedHeight() bool
-	// WidthConstraint returns the width size constraint of the Sized, if any.
-	WidthConstraint() SizeConstraint
-	// HeightConstraint returns the height size constraint of the Sized, if
-	// any.
-	HeightConstraint() SizeConstraint
+	// SetSize constrains the size of the Sized.
+	SetSize(SizeConstraint)
+	// SetWidth constrains the width of the Sized.
+	SetWidth(DimensionConstraint)
+	// SetMinWidth sets the minimum width of the Sized.
+	SetMinWidth(Dimension)
+	// SetHeight constrains the height of the Sized.
+	SetHeight(DimensionConstraint)
+	// SetMinHeight sets the minimum height of the Sized.
+	SetMinHeight(Dimension)
+	// HasFixedWidth returns true if the Sized has a fixed width.
+	HasFixedWidth() bool
+	// Width returns the Sized's width.
+	Width() Dimension
+	// FixedWidth returns the Sized's fixed width. If the Sized does not have a
+	// fixed width constraint, returns 0.
+	FixedWidth() Dimension
+	// MinWidth returns the Sized's minimum width.
+	MinWidth() Dimension
+	// WidthConstraint returns any DimensionConstraint set for the Sized's
+	// width.
+	WidthConstraint() DimensionConstraint
+	// HasFixedHeight returns true if the Sized has a fixed height.
+	HasFixedHeight() bool
+	// Height returns the Sized's height.
+	Height() Dimension
+	// FixedHeight returns the Sized's fixed height. If the Sized does not have
+	// a fixed height constraint, returns 0.
+	FixedHeight() Dimension
+	// MinHeight returns the Sized's minimum height.
+	MinHeight() Dimension
+	// HeightConstraint returns any DimensionConstraint set for the Sized's
+	// height.
+	HeightConstraint() DimensionConstraint
 }

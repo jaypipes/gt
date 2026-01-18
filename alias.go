@@ -5,6 +5,7 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 
+	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/application"
 	gtcontext "github.com/jaypipes/gt/core/context"
 	"github.com/jaypipes/gt/core/document"
@@ -79,20 +80,28 @@ const (
 	WhitespaceWrapLine  = types.WhitespaceWrapLine
 )
 
-// Convenience wrappers around common ultraviolet and core image package
-// structs/funcs
 type (
-	Rectangle      = types.Rectangle
-	Point          = types.Point
-	Size           = types.Size
-	Padding        = types.Padding
-	SizeConstraint = types.SizeConstraint
-	Fixed          = types.Fixed
-	Percent        = types.Percent
-	Border         = types.Border
-	Side           = types.Side
-	Style          = types.Style
-	Text           = types.Text
+	Rectangle           = types.Rectangle
+	Point               = types.Point
+	Size                = types.Size
+	Padding             = types.Padding
+	DimensionConstraint = types.DimensionConstraint
+	SizeConstraint      = types.SizeConstraint
+	Border              = types.Border
+	Side                = types.Side
+	Style               = types.Style
+	Text                = types.Text
+)
+
+var (
+	Fixed         = core.Fixed
+	FixedArea     = core.FixedArea
+	FixedWidth    = core.FixedWidth
+	FixedHeight   = core.FixedHeight
+	Percent       = core.Percent
+	PercentArea   = core.PercentArea
+	PercentWidth  = core.PercentWidth
+	PercentHeight = core.PercentHeight
 )
 
 const (
@@ -105,13 +114,14 @@ const (
 )
 
 var (
-	Pad   = types.Pad
-	PadL  = types.PadL
-	PadR  = types.PadR
-	PadLR = types.PadLR
-	PadT  = types.PadT
-	PadB  = types.PadB
-	PadTB = types.PadTB
+	Pad     = types.Pad
+	PadTBLR = types.PadTBLR
+	PadL    = types.PadL
+	PadR    = types.PadR
+	PadLR   = types.PadLR
+	PadT    = types.PadT
+	PadB    = types.PadB
+	PadTB   = types.PadTB
 )
 
 var (

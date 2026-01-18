@@ -36,9 +36,8 @@ func Draw(
 	el types.Element,
 	screen types.Screen,
 ) {
-	bounds := el.Bounds()
 	gtlog.Debug(ctx, "render.Draw[%s]", el.Tag())
-	el.Draw(screen, bounds)
+	el.Draw(screen, el.Bounds())
 	for _, child := range el.Children() {
 		Draw(ctx, child, screen)
 	}

@@ -7,9 +7,9 @@ import (
 	"github.com/jaypipes/gt/core/types"
 )
 
-// Plot calculates the bounding box of a supplied element. It traverses the
-// tree of elements rooted at the supplied element and calculates the top left
-// and bottom right coordinates for the element.
+// Plot calculates the anchoring positioning coordinates of a supplied element.
+// It traverses the tree of elements rooted at the supplied element and
+// calculates the top left coordinates for the element.
 //
 // To calculate the top left (anchor point) coordinates of the element's
 // bounding box, we use the following algorithm:
@@ -18,13 +18,6 @@ import (
 // at the absolute coordinates. If the element is using relative positioning,
 // the anchor point is calculated based on the element's Display property and
 // is relative to the previous sibling or, if no previous sibling, the parent.
-//
-// To calculate the bottom right coordinates of the bounding box, we add the
-// element's width to its anchor point's X value and add the element's height
-// to its anchor point's Y value. As such, each element class is responsible
-// for properly calculating its own width and height depending on, for example,
-// whether there is a fixed width/height, what the element's Display property
-// is, and whether there are width or height constraints.
 func Plot(
 	ctx context.Context,
 	el types.Element,
@@ -46,19 +39,17 @@ func Plot(
 	// First we calculate the anchoring coordinates (top-left of our bounding
 	// box)
 	var anchor types.Point
-	if el.AbsolutePositioned() {
+	if el.HasAbsolutePosition() {
 		anchor = el.TL()
 		gtlog.Debug(
 			ctx, "render.Plot[%s]: anchor to absolute position %s",
 			el.Tag(), anchor,
 		)
 	} else {
-		// anchor at our parent's top left and add our relative offset
-
 		// We place our anchor position depending on the display mode of the
 		// current element. If the display mode is inline or inline-block, we
 		// place our element directly to the right of the previous sibling or,
-		// if no previous sibling, the left margin of the parent.
+		// if no previous sibling, the left edge of the parent.
 		//
 		// If the display mode of the current element is block, we anchor our
 		// element on the left margin of the parent and the bottom margin of
@@ -100,34 +91,18 @@ func Plot(
 			nextY := nextLineY(el)
 			gtlog.Debug(
 				ctx,
-				"render.Plot[%s]: block display, setting anchor y to %d "+
-					"(max.y of previous siblings + 1 or parent inner bounds)",
+				"render.Plot[%s]: block display, setting y to next line y %d "+
+					"(max.y of previous siblings or parent inner bounds)",
 				el.Tag(), nextY,
 			)
 			anchor.Y = nextY
 		}
-
-		offset := el.TL()
-		if offset.X > 0 || offset.Y > 0 {
-			gtlog.Debug(
-				ctx,
-				"render.Plot[%s]: adding offset %s to anchor %s",
-				el.Tag(), offset, anchor,
-			)
-			anchor.Add(offset)
-		}
-
-		gtlog.Debug(
-			ctx,
-			"render.Plot[%s]: calculated anchor position %s",
-			el.Tag(), anchor,
-		)
 	}
-	bounds.Min.X = anchor.X
-	bounds.Min.Y = anchor.Y
+	// Set the top left corner of our bounding box to the anchor point.
+	bounds.Min = anchor
 
-	// Set the bottom right corner of the bounding box to the anchor point plus
-	// the element's width and height plus any padding and border.
+	// Set the bottom right corner of our bounding box to the anchor
+	// point plus the element's outer width and height.
 	width := el.Width()
 	height := el.Height()
 	gtlog.Debug(
@@ -135,8 +110,8 @@ func Plot(
 		"render.Plot[%s]: expanding bounds by adding width %d and height %d to anchor point",
 		el.Tag(), width, height,
 	)
-	bounds.Max.X = anchor.X + width
-	bounds.Max.Y = anchor.Y + height
+	bounds.Max.X = anchor.X + int(width)
+	bounds.Max.Y = anchor.Y + int(height)
 
 	/*
 		// Then we calculate the width and height, which will inform us what our
@@ -263,7 +238,7 @@ func Plot(
 	}
 }
 
-// nextLineY returns the maximum Y value of any previous sibling plus 1, or if
+// nextLineY returns the maximum Y value of any previous sibling, or if
 // no siblings, the parent inner bounds top-left coordinate's Y value.
 func nextLineY(el types.Element) int {
 	y := 0
@@ -273,7 +248,7 @@ func nextLineY(el types.Element) int {
 	}
 	prevSibling := el.PreviousSibling()
 	for prevSibling != nil {
-		y = max(y, prevSibling.BL().Y+1)
+		y = max(y, prevSibling.MaxY())
 		prevSibling = prevSibling.PreviousSibling()
 	}
 	return y

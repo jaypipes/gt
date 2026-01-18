@@ -20,6 +20,7 @@ func New(ctx context.Context, class string) *Element {
 // Element is a specialized type of Node that can be sized and styled.
 type Element struct {
 	core.Plotted
+	core.Sized
 	core.Styled
 	core.Whitespaced
 	sync.RWMutex
@@ -236,5 +237,3 @@ func (e *Element) VisitChildren(
 		child.VisitChildren(ctx, fn)
 	})
 }
-
-var _ types.Element = (*Element)(nil)

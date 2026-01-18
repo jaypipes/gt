@@ -6,4 +6,8 @@ type Contented interface {
 	SetContent(string)
 	// Content returns the Contented's raw string contents.
 	Content() string
+	// ContentWidth returns the width of the Contented's raw string contents.
+	ContentWidth() Dimension
+	// ContentHeight returns the height of the Contented's raw string contents.
+	ContentHeight() Dimension
 }

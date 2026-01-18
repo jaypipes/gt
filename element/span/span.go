@@ -36,22 +36,22 @@ type Span struct {
 
 // SetSize sets the fixed width and height of the Span and also sets the
 // display mode to `inline-block`.
-func (s *Span) SetSize(width, height int) {
-	s.Sized.SetSize(width, height)
+func (s *Span) SetSize(constraint types.SizeConstraint) {
+	s.Plotted.SetSize(constraint)
 	s.SetDisplay(types.DisplayInlineBlock)
 }
 
 // SetWidth sets the fixed width of the Span and also sets the display mode to
 // `inline-block`.
-func (s *Span) SetWidth(width int) {
-	s.Sized.SetWidth(width)
+func (s *Span) SetWidth(constraint types.DimensionConstraint) {
+	s.Plotted.SetWidth(constraint)
 	s.SetDisplay(types.DisplayInlineBlock)
 }
 
 // SetHeight sets the fixed height of the Span and also sets the display mode
 // to `inline-block`.
-func (s *Span) SetHeight(height int) {
-	s.Sized.SetHeight(height)
+func (s *Span) SetHeight(constraint types.DimensionConstraint) {
+	s.Plotted.SetHeight(constraint)
 	s.SetDisplay(types.DisplayInlineBlock)
 }
 
@@ -63,12 +63,12 @@ func (s *Span) SetHeight(height int) {
 // If a fixed height has not been set or the display mode is not `block`, the
 // height defaults to the number of lines of text content, or 1 if there is no
 // text content.
-func (s *Span) Height() int {
+func (s *Span) InnerHeight() types.Dimension {
 	display := s.Display()
-	if display == types.DisplayBlock && s.FixedHeight() {
-		return s.Sized.Height()
+	if display == types.DisplayBlock && s.HasFixedHeight() {
+		return s.FixedHeight()
 	}
-	return strings.Count(s.Content(), "\n") + 1
+	return types.Dimension(strings.Count(s.Content(), "\n") + 1)
 }
 
 // Draw renders the Span to the given screen in the specified bounding box.

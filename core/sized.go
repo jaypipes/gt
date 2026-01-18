@@ -1,89 +1,116 @@
 package core
 
 import (
-	"fmt"
-
 	"github.com/jaypipes/gt/core/types"
 )
 
-// Sized describes something that has a bounding box.
+// Sized describes something that can have its width and height set and
+// calculated/fetched.
 type Sized struct {
-	// size is the size of the Sized.
-	size types.Size
-	// wconstraint is the optional width size constraint of the Sized.
-	wconstraint types.SizeConstraint
-	// wconstraint is the optional height size constraint of the Sized.
-	hconstraint types.SizeConstraint
+	// minWidth is the minimum width of the Sized.
+	minWidth types.Dimension
+	// minHeight is the minimum height of the Sized.
+	minHeight types.Dimension
+	// widthConstraint is the constraint put on the width dimension
+	widthConstraint types.DimensionConstraint
+	// heightConstraint is the constraint put on the height dimension
+	heightConstraint types.DimensionConstraint
 }
 
-func (s *Sized) String() string {
-	if s.size.Empty() {
-		return "size=none"
+// SetSize constrains the size of the Plotted's inner bounding box.
+func (s *Sized) SetSize(constraint types.SizeConstraint) {
+	wc := constraint.Width()
+	if wc != nil {
+		s.widthConstraint = wc
 	}
-	return fmt.Sprintf("size=%s", s.size)
+	hc := constraint.Height()
+	if hc != nil {
+		s.heightConstraint = hc
+	}
 }
 
-// SetSize sets the Sized's size and marks the Sized as having a fixed width
-// and height.
-func (s *Sized) SetSize(width, height int) {
-	s.size = types.Size{W: width, H: height}
+// SetWidth constrains the width of the Sized.
+func (s *Sized) SetWidth(constraint types.DimensionConstraint) {
+	s.widthConstraint = constraint
 }
 
-// SetWidth sets the Sized's width and marks the Sized as having a fixed width.
-func (s *Sized) SetWidth(width int) {
-	s.size.W = width
+// SetMinWidth sets the minimum width of the Sized.
+func (s *Sized) SetMinWidth(w types.Dimension) {
+	s.minWidth = w
 }
 
-// SetHeight sets the Sized's height and marks the Sized as having a fixed
+// SetHeight constrains the height of the Sized.
+func (s *Sized) SetHeight(constraint types.DimensionConstraint) {
+	s.heightConstraint = constraint
+}
+
+// SetMinHeight sets the minimum height of the Sized.
+func (s *Sized) SetMinHeight(h types.Dimension) {
+	s.minHeight = h
+}
+
+// Width returns the Sized's width. This should always be overridden by
+// Element subclasses.
+func (s *Sized) Width() types.Dimension {
+	return types.Dimension(0)
+}
+
+// FixedWidth returns the Sized's fixed width. If the Sized does not have a
+// fixed width constraint, returns 0.
+func (s *Sized) FixedWidth() types.Dimension {
+	if !s.HasFixedWidth() {
+		return types.Dimension(0)
+	}
+	return types.Dimension(s.widthConstraint.(FixedConstraint))
+}
+
+// MinWidth returns the Sized's minimum width.
+func (s *Sized) MinWidth() types.Dimension {
+	return s.minWidth
+}
+
+// Height returns the Sized's height. This should always be overridden by
+// Element subclasses.
+func (s *Sized) Height() types.Dimension {
+	return types.Dimension(0)
+}
+
+// FixedHeight returns the Sized's fixed height. If the Sized does not have a
+// fixed height constraint, returns 0.
+func (s *Sized) FixedHeight() types.Dimension {
+	if !s.HasFixedHeight() {
+		return types.Dimension(0)
+	}
+	return types.Dimension(s.heightConstraint.(FixedConstraint))
+}
+
+// MinHeight returns the Sized's minimum height.
+func (s *Sized) MinHeight() types.Dimension {
+	return s.minHeight
+}
+
+// HasFixedWidth returns true if the Plotted's inner bounding box has a fixed
+// width.
+func (s *Sized) HasFixedWidth() bool {
+	_, ok := s.widthConstraint.(FixedConstraint)
+	return ok
+}
+
+// HasFixedHeight returns true if the Plotted's inner bounding box has a fixed
 // height.
-func (s *Sized) SetHeight(height int) {
-	s.size.H = height
-}
-
-// SetWidthConstraint sets the Sized's width size constraint.
-func (s *Sized) SetWidthConstraint(con types.SizeConstraint) {
-	s.wconstraint = con
-}
-
-// SetHeightConstraint sets the Sized's height size constraint.
-func (s *Sized) SetHeightConstraint(con types.SizeConstraint) {
-	s.hconstraint = con
-}
-
-// Height returns the current height of the Sized.
-func (s *Sized) Height() int {
-	return s.size.H
-}
-
-// Width returns the current width of the Sized.
-func (s *Sized) Width() int {
-	return s.size.W
-}
-
-// Size returns the current width and height for the Sized.
-func (s *Sized) Size() types.Size {
-	return s.size
-}
-
-// FixedWidth returns true if the Sized is using a fixed width.
-func (s *Sized) FixedWidth() bool {
-	return s.size.W != 0
-}
-
-// FixedHeight returns true if the Sized is using a fixed height.
-func (s *Sized) FixedHeight() bool {
-	return s.size.H != 0
+func (s *Sized) HasFixedHeight() bool {
+	_, ok := s.heightConstraint.(FixedConstraint)
+	return ok
 }
 
 // WidthConstraint returns any optional size constraint for the Sized's width.
-func (s *Sized) WidthConstraint() types.SizeConstraint {
-	return s.wconstraint
+// Returns nil when there is no width constraint.
+func (s *Sized) WidthConstraint() types.DimensionConstraint {
+	return s.widthConstraint
 }
 
 // HeightConstraint returns any optional size constraint for the Sized's
-// height.
-func (s *Sized) HeightConstraint() types.SizeConstraint {
-	return s.hconstraint
+// height. Returns nil when there is no height constraint.
+func (s *Sized) HeightConstraint() types.DimensionConstraint {
+	return s.heightConstraint
 }
-
-var _ types.Sized = (*Sized)(nil)

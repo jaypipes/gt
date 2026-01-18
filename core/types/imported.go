@@ -17,12 +17,9 @@ type (
 
 	Underline = ansi.Underline
 
-	Screen         = uv.Screen
-	SizeConstraint = uv.Constraint
-	Fixed          = uv.Fixed
-	Percent        = uv.Percent
-	Border         = uv.Border
-	Side           = uv.Side
+	Screen = uv.Screen
+	Border = uv.Border
+	Side   = uv.Side
 	// Style is semantically slightly different from uv.Style in that a Style
 	// can apply to an entire Element not just a single uv.Cell.
 	Style        = uv.Style

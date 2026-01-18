@@ -20,10 +20,12 @@ import (
 type Plotted struct {
 	Aligned
 	Bordered
-	Bounded
 	Displayed
 	Padded
 	Sized
+	// bounds is the outer bounding box and positioning coordinates of the
+	// Plotted
+	bounds types.Rectangle
 	// absolute is true if the Plotted is using absolute coordinates, false if
 	// using relative positioning.
 	absolute bool
@@ -31,30 +33,58 @@ type Plotted struct {
 
 func (p *Plotted) String() string {
 	return fmt.Sprintf(
-		"absolute=%t %s %s %s %s",
-		p.absolute,
-		p.Bounded.String(), p.Sized.String(),
-		p.Displayed.String(), p.Aligned.String(),
+		"absolute=%t bounds=%s %s %s",
+		p.absolute, p.bounds, p.Displayed.String(), p.Aligned.String(),
 	)
 }
 
-// Anchor sets the Plotted's anchor point (i.e. its top-left grid coordinates)
-// and marks the Plotted as using absolute positioning.
-func (p *Plotted) Anchor(pt types.Point) {
-	bounds := p.Bounds()
-	bounds.Min.X = pt.X
-	bounds.Min.Y = pt.Y
-	p.SetBounds(bounds)
+// Bounds returns the Plotted's outer bounding box.
+func (p *Plotted) Bounds() types.Rectangle {
+	return p.bounds
+}
+
+// SetBounds sets the Plotted's outer bounding box.
+func (p *Plotted) SetBounds(bounds types.Rectangle) {
+	p.bounds = bounds
+}
+
+// TL returns the Plotted's outer bounding box's top-left coordinates.
+func (p *Plotted) TL() types.Point {
+	return p.bounds.Min
+}
+
+// TR returns the Plotted's outer bounding box's top-right coordinates.
+func (p *Plotted) TR() types.Point {
+	return types.Point{
+		X: p.bounds.Max.X,
+		Y: p.bounds.Min.Y,
+	}
+}
+
+// MinY returns the Min Y (top) of the Plotted's outer bounding box.
+func (p *Plotted) MinY() int {
+	return p.bounds.Min.Y
+}
+
+// MaxY returns the Max Y (bottom) of the Plotted's outer bounding box.
+func (p *Plotted) MaxY() int {
+	return p.bounds.Max.Y
+}
+
+// SetAbsolutePosition sets the Plotted's outer bounding box's top-left
+// coordinates and marks the Plotted as using absolute positioning.
+func (p *Plotted) SetAbsolutePosition(pt types.Point) {
+	p.bounds.Min = pt
 	p.absolute = true
 }
 
-// AbsolutePositioned returns true if the Plotted used absolute positioning.
-func (p *Plotted) AbsolutePositioned() bool {
+// HasAbsolutePosition returns true if the Plotted used absolute positioning.
+func (p *Plotted) HasAbsolutePosition() bool {
 	return p.absolute
 }
 
-// InnerBounds returns the inner bounding box for the Plotted, which accounts
-// for any border and padding.
+// InnerBounds returns the inner bounding box for the Plotted, which is the
+// outer bounding box adjusted for any border and padding.
 func (p *Plotted) InnerBounds() types.Rectangle {
 	bounds := p.Bounds()
 	border := p.Border()
@@ -66,37 +96,3 @@ func (p *Plotted) InnerBounds() types.Rectangle {
 	}
 	return p.Padding().AdjustBounds(bounds)
 }
-
-// LeftMargin returns the distance, in cells, from the left edge of the
-// outer bounds to left edge of the inner bounds.
-func (p *Plotted) LeftMargin() int {
-	bounds := p.Bounds()
-	inner := p.InnerBounds()
-	return inner.Min.X - bounds.Min.X
-}
-
-// RightMargin returns the distance, in cells, from the right edge of the
-// outer bounds to right edge of the inner bounds.
-func (p *Plotted) RightMargin() int {
-	bounds := p.Bounds()
-	inner := p.InnerBounds()
-	return bounds.Max.X - inner.Max.X
-}
-
-// TopMargin returns the distance, in cells, from the top edge of the
-// outer bounds to top edge of the inner bounds.
-func (p *Plotted) TopMargin() int {
-	bounds := p.Bounds()
-	inner := p.InnerBounds()
-	return inner.Min.Y - bounds.Min.Y
-}
-
-// BottomMargin returns the distance, in cells, from the bottom edge of the
-// outer bounds to bottom edge of the inner bounds.
-func (p *Plotted) BottomMargin() int {
-	bounds := p.Bounds()
-	inner := p.InnerBounds()
-	return bounds.Max.Y - inner.Max.Y
-}
-
-var _ types.Plotted = (*Plotted)(nil)

@@ -5,14 +5,19 @@ import (
 	"github.com/jaypipes/gt/core/types"
 )
 
-// BorderHorizontalWidth returns the width, in cells, that the supplied Border
+// BorderHorizontalSpace returns the number of cells the supplied Border
 // consumes.
-func BorderHorizontalWidth(b types.Border) int {
-	return ansi.StringWidth(b.Left.Content) + ansi.StringWidth(b.Right.Content)
+func BorderHorizontalSpace(b types.Border) types.Dimension {
+	return types.Dimension(
+		ansi.StringWidth(b.Left.Content) +
+			ansi.StringWidth(b.Right.Content),
+	)
 }
 
-// BorderVerticalHeight returns the height, in lines, that the supplied Border
-// consumes.
-func BorderVerticalHeight(b types.Border) int {
-	return ansi.StringWidth(b.Top.Content) + ansi.StringWidth(b.Bottom.Content)
+// BorderVerticalSpace returns the number lines the supplied Border consumes.
+func BorderVerticalSpace(b types.Border) types.Dimension {
+	return types.Dimension(
+		ansi.StringWidth(b.Top.Content) +
+			ansi.StringWidth(b.Bottom.Content),
+	)
 }

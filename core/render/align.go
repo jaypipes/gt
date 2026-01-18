@@ -39,10 +39,10 @@ func AlignString(
 	numLines := strings.Count(content, "\n") + 1
 	if height >= numLines {
 		linesToPad := height - numLines
-		if align&types.AlignmentTop != 0 {
-			// pad the string with new lines to the bottom of the bounding box
-			b.WriteString(content)
+		if align&types.AlignmentBottom != 0 {
+			// pad the string with new lines to the top of the bounding box
 			b.WriteString(strings.Repeat("\n", linesToPad))
+			b.WriteString(content)
 		} else if align&types.AlignmentMiddle != 0 {
 			// pad the string with new lines at the top and bottom of the bounding
 			// box
@@ -59,9 +59,9 @@ func AlignString(
 			b.WriteString(content)
 			b.WriteString(strings.Repeat("\n", linesToPadBottom))
 		} else {
-			// pad the string with new lines to the top of the bounding box
-			b.WriteString(strings.Repeat("\n", linesToPad))
+			// pad the string with new lines to the bottom of the bounding box
 			b.WriteString(content)
+			b.WriteString(strings.Repeat("\n", linesToPad))
 		}
 	}
 	lines := strings.Split(b.String(), "\n")

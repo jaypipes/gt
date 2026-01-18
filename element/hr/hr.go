@@ -6,6 +6,7 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 
+	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/element"
 	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/core/types"
@@ -20,7 +21,7 @@ const (
 func New(ctx context.Context) *HR {
 	e := element.New(ctx, ElementClass)
 	h := &HR{Element: e}
-	h.SetHeight(1)
+	h.SetHeight(core.Fixed(1))
 	return h
 }
 
@@ -30,13 +31,6 @@ func New(ctx context.Context) *HR {
 // to 1. By default, the HR is centered within the parent container.
 type HR struct {
 	*element.Element
-}
-
-// SetSize sets the fixed width and height of the HR. Note that the height will
-// be height of the HR's bounding box, *not* the height of the horizontal ruler
-// line.
-func (h *HR) SetSize(width, height int) {
-	h.Sized.SetSize(width, height)
 }
 
 // Display always returns DisplayBlock since an HR always starts on a new line.
@@ -65,7 +59,7 @@ func (h *HR) Draw(screen types.Screen, bounds types.Rectangle) {
 	numCellsWide := h.Width()
 	inner := h.InnerBounds()
 	if numCellsWide == 0 {
-		numCellsWide = inner.Dx()
+		numCellsWide = types.Dimension(inner.Dx())
 	}
 
 	numLinesHigh := h.Height()
@@ -73,7 +67,7 @@ func (h *HR) Draw(screen types.Screen, bounds types.Rectangle) {
 
 	}
 
-	line := strings.Repeat(thinHorizontal, numCellsWide)
+	line := strings.Repeat(thinHorizontal, int(numCellsWide))
 	line = render.AlignString(
 		ctx, line, inner, h.Alignment(),
 	)
