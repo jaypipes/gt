@@ -107,7 +107,7 @@ func (b *Base) Width() types.Dimension {
 	if wc == nil {
 		gtlog.Debug(
 			ctx,
-			"Element.Width[%s]: display=%s width_constraint=nonb. "+
+			"Element.Width[%s]: display=%s width_constraint=none. "+
 				"width is parent inner bounds width of %d",
 			b.Tag(), display, parentWidth,
 		)

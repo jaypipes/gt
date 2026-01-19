@@ -22,6 +22,8 @@ func New(ctx context.Context) *HR {
 	b := base.New(ctx, ElementClass)
 	h := &HR{Base: b}
 	h.SetHeight(core.Fixed(1))
+	// An HR always starts on a new line.
+	h.SetDisplay(types.DisplayBlock)
 	return h
 }
 
@@ -31,11 +33,6 @@ func New(ctx context.Context) *HR {
 // to 1. By default, the HR is centered within the parent container.
 type HR struct {
 	base.Base
-}
-
-// Display always returns DisplayBlock since an HR always starts on a new line.
-func (h *HR) Display() types.Display {
-	return types.DisplayBlock
 }
 
 // InnerBounds returns the HR's inner bounding box. The bounding box within
@@ -52,21 +49,13 @@ func (h *HR) InnerBounds() types.Rectangle {
 	return inner
 }
 
-// Draw renders the HR to the given screen in the specified bounding box.
-func (h *HR) Draw(screen types.Screen, bounds types.Rectangle) {
-	ctx := context.TODO()
-
+// Render draws the HR to the supplied Screen.
+func (h *HR) Render(ctx context.Context, screen types.Screen) {
 	numCellsWide := h.Width()
 	inner := h.InnerBounds()
 	if numCellsWide == 0 {
 		numCellsWide = types.Dimension(inner.Dx())
 	}
-
-	numLinesHigh := h.Height()
-	if numLinesHigh == 0 {
-
-	}
-
 	line := strings.Repeat(thinHorizontal, int(numCellsWide))
 	line = render.AlignString(
 		ctx, line, inner, h.Alignment(),

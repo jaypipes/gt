@@ -32,7 +32,7 @@ type Div struct {
 	base.Base
 }
 
-// Render renders the Div to the given screen in the specified bounding box.
+// Render draws the Div to the supplied Screen.
 func (d *Div) Render(ctx context.Context, screen types.Screen) {
 	gtlog.Debug(ctx, "div.Div.Render[%s]", d)
 	bounds := d.Bounds()
