@@ -1,6 +1,8 @@
 package core
 
 import (
+	"fmt"
+
 	"github.com/jaypipes/gt/types"
 )
 
@@ -8,6 +10,10 @@ import (
 // available remaining amount of a dimension.
 func Percent(p uint) PercentConstraint {
 	return PercentConstraint(types.Dimension(p))
+}
+
+func (p PercentConstraint) String() string {
+	return fmt.Sprintf("percent(%d)", p)
 }
 
 // PercentConstraint implements DimensionConstraint a percentage of an
@@ -25,6 +31,10 @@ func (p PercentConstraint) Apply(d types.Dimension) types.Dimension {
 // Fixed returns a FixedConstraint representing a fixed amount of a dimension.
 func Fixed(p uint) FixedConstraint {
 	return FixedConstraint(types.Dimension(p))
+}
+
+func (f FixedConstraint) String() string {
+	return fmt.Sprintf("fixed(%d)", f)
 }
 
 // FixedConstraint implements DimensionConstraint and represents a fixed amount

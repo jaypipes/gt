@@ -69,7 +69,7 @@ func (b *Base) Width() types.Dimension {
 		fixedWidth := b.FixedWidth() + paddingHoriz + borderHoriz
 		gtlog.Debug(
 			ctx,
-			"Element.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
+			"base.Base.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
 				"using min(fixed_width=%d, parent_width=%d)",
 			b.Tag(), display, paddingHoriz, borderHoriz,
 			fixedWidth, parentWidth,
@@ -85,7 +85,7 @@ func (b *Base) Width() types.Dimension {
 		contentWidth += paddingHoriz + borderHoriz
 		gtlog.Debug(
 			ctx,
-			"Element.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
+			"base.Base.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
 				"using min(content_width=%d, parent_width=%d)",
 			b.Tag(), display, paddingHoriz, borderHoriz,
 			contentWidth, parentWidth,
@@ -107,7 +107,7 @@ func (b *Base) Width() types.Dimension {
 	if wc == nil {
 		gtlog.Debug(
 			ctx,
-			"Element.Width[%s]: display=%s width_constraint=none. "+
+			"base.Base.Width[%s]: display=%s width_constraint=none. "+
 				"width is parent inner bounds width of %d",
 			b.Tag(), display, parentWidth,
 		)
@@ -116,7 +116,7 @@ func (b *Base) Width() types.Dimension {
 	remainder := wc.Apply(types.Dimension(parentWidth))
 	gtlog.Debug(
 		ctx,
-		"Element.Width[%s]: display=%s "+
+		"base.Base.Width[%s]: display=%s "+
 			"width_constraint=%d padding_horiz=%d border_horiz=%d. "+
 			"calculated remainder of %d from parent width of %d",
 		b.Tag(), display, wc, paddingHoriz, borderHoriz,
@@ -147,18 +147,22 @@ func (b *Base) MinWidth() types.Dimension {
 
 // SetHeight constrains the height of the Element.
 func (b *Base) SetHeight(constraint types.DimensionConstraint) types.Element {
+	gtlog.Debug(
+		context.TODO(), "base.Base.SetHeight[%s](constraint=%s)",
+		b.Tag(), constraint,
+	)
 	b.heightConstraint = constraint
 	return b
 }
 
 // Height returns the height of the Element.
 //
-// If a fixed height has been set and the display mode is `block`, we use the
-// fixed height plus any vertical padding.
+// If a fixed height has been set and the display mode is not `inline`, we use
+// the fixed height plus any vertical space from padding and border.
 //
-// If a fixed height has not been set or the display mode is not `block`, the
-// height defaults to the number of lines of text content, or 1 if there is no
-// text content, plus any vertical padding.
+// If a fixed height has not been set or the display mode is inline, the height
+// defaults to the number of lines of text content, or 1 if there is no text
+// content, plus any vertical space from padding and border.
 func (b *Base) Height() types.Dimension {
 	parent := b.Parent()
 	if parent == nil {
@@ -176,11 +180,11 @@ func (b *Base) Height() types.Dimension {
 
 	ctx := context.TODO()
 	display := b.Display()
-	if display == types.DisplayBlock && b.HasFixedHeight() {
+	if display != types.DisplayInline && b.HasFixedHeight() {
 		fixedHeight := b.FixedHeight() + paddingVert + borderVert
 		gtlog.Debug(
 			ctx,
-			"Element.Height[%s]: display=%s padding_vert=%d border_vert=%d "+
+			"base.Base.Height[%s]: display=%s padding_vert=%d border_vert=%d "+
 				"using min(fixed_height=%d, parent_height=%d)",
 			b.Tag(), display, paddingVert, borderVert,
 			fixedHeight, parentHeight,
@@ -193,7 +197,7 @@ func (b *Base) Height() types.Dimension {
 	if wrapNever {
 		gtlog.Debug(
 			ctx,
-			"Element.Height[%s]: display=%s whitespace=%s "+
+			"base.Base.Height[%s]: display=%s whitespace=%s "+
 				"padding_vert=%d border_vert=%d "+
 				"height is always 1 plus padding_vert + border_vert",
 			b.Tag(), display, whitespace, paddingVert, borderVert,
@@ -221,7 +225,7 @@ func (b *Base) Height() types.Dimension {
 		contentHeight += paddingVert + borderVert
 		gtlog.Debug(
 			ctx,
-			"Element.Height[%s]: display=%s whitespace=%s "+
+			"base.Base.Height[%s]: display=%s whitespace=%s "+
 				"padding_vert=%d border_vert=%d "+
 				"original_content_height=%d parent_height=%d "+
 				"content_width=%d parent_width=%d wrapped=%t "+
@@ -235,7 +239,7 @@ func (b *Base) Height() types.Dimension {
 	}
 	gtlog.Debug(
 		ctx,
-		"Element.Height[%s]: display=%s whitespace=%s "+
+		"base.Base.Height[%s]: display=%s whitespace=%s "+
 			"padding_vert=%d border_vert=%d "+
 			"using min(content_height=%d, parent_height=%d)",
 		b.Tag(), display, whitespace,

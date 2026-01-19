@@ -43,6 +43,7 @@ func main() {
 	spanC := gtspan.New(ctx, "C")
 	spanC.SetID("C")
 	spanC.SetWidth(gt.Fixed(20))
+	spanC.SetHeight(gt.Fixed(2))
 	spanC.SetForegroundColor(black)
 	spanC.SetBackgroundColor(lightblue)
 	spanC.SetAlignment(gt.AlignmentRight)
