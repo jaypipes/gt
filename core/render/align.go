@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/types"
+	"github.com/jaypipes/gt/types"
 )
 
 // AlignString returns a string adjusted with padding to make the supplied string
@@ -19,7 +19,7 @@ func AlignString(
 	align types.Alignment,
 ) string {
 	gtlog.Debug(
-		ctx, "render.Align: bounds=%s alignment=%s",
+		ctx, "render.AlignString: bounds=%s alignment=%s",
 		bounds, align,
 	)
 	width := bounds.Dx()

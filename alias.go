@@ -10,10 +10,10 @@ import (
 	gtcontext "github.com/jaypipes/gt/core/context"
 	"github.com/jaypipes/gt/core/document"
 	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/types"
 	"github.com/jaypipes/gt/element/div"
 	"github.com/jaypipes/gt/element/hr"
 	"github.com/jaypipes/gt/element/span"
+	"github.com/jaypipes/gt/types"
 )
 
 var (

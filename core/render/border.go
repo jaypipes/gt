@@ -2,7 +2,8 @@ package render
 
 import (
 	"github.com/charmbracelet/x/ansi"
-	"github.com/jaypipes/gt/core/types"
+
+	"github.com/jaypipes/gt/types"
 )
 
 // BorderHorizontalSpace returns the number of cells the supplied Border

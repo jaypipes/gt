@@ -1,6 +1,6 @@
 package core
 
-import "github.com/jaypipes/gt/core/types"
+import "github.com/jaypipes/gt/types"
 
 // SizeConstraint describes a pair of DimensionConstraints on a Size's width
 // and height.

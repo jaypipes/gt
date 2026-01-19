@@ -6,10 +6,10 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 
-	"github.com/jaypipes/gt/core"
-	"github.com/jaypipes/gt/core/element"
+	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
-	"github.com/jaypipes/gt/core/types"
+	"github.com/jaypipes/gt/element/base"
+	"github.com/jaypipes/gt/types"
 )
 
 const (
@@ -21,38 +21,40 @@ func New(
 	ctx context.Context,
 	content string,
 ) *Span {
-	e := element.New(ctx, ElementClass)
-	s := &Span{Element: e}
+	b := base.New(ctx, ElementClass)
+	s := &Span{Base: b}
 	s.SetDisplay(types.DisplayInline)
-	s.SetContent(content)
+	s.SetTextContent(content)
 	return s
 }
 
 // Span is an Element that uses the inline display mode by default.
 type Span struct {
-	*element.Element
-	core.Contented
+	base.Base
 }
 
 // SetSize sets the fixed width and height of the Span and also sets the
 // display mode to `inline-block`.
-func (s *Span) SetSize(constraint types.SizeConstraint) {
-	s.Plotted.SetSize(constraint)
+func (s *Span) SetSize(constraint types.SizeConstraint) types.Element {
+	s.Base.SetSize(constraint)
 	s.SetDisplay(types.DisplayInlineBlock)
+	return s
 }
 
 // SetWidth sets the fixed width of the Span and also sets the display mode to
 // `inline-block`.
-func (s *Span) SetWidth(constraint types.DimensionConstraint) {
-	s.Plotted.SetWidth(constraint)
+func (s *Span) SetWidth(constraint types.DimensionConstraint) types.Element {
+	s.Base.SetWidth(constraint)
 	s.SetDisplay(types.DisplayInlineBlock)
+	return s
 }
 
 // SetHeight sets the fixed height of the Span and also sets the display mode
 // to `inline-block`.
-func (s *Span) SetHeight(constraint types.DimensionConstraint) {
-	s.Plotted.SetHeight(constraint)
+func (s *Span) SetHeight(constraint types.DimensionConstraint) types.Element {
+	s.Base.SetHeight(constraint)
 	s.SetDisplay(types.DisplayInlineBlock)
+	return s
 }
 
 // Height returns the height of the Span.
@@ -68,17 +70,18 @@ func (s *Span) InnerHeight() types.Dimension {
 	if display == types.DisplayBlock && s.HasFixedHeight() {
 		return s.FixedHeight()
 	}
-	return types.Dimension(strings.Count(s.Content(), "\n") + 1)
+	return types.Dimension(strings.Count(s.TextContent(), "\n") + 1)
 }
 
-// Draw renders the Span to the given screen in the specified bounding box.
-func (s *Span) Draw(screen types.Screen, bounds types.Rectangle) {
-	ctx := context.TODO()
-	s.Element.Draw(screen, bounds)
+// Render draws the Span to the given screen.
+func (s *Span) Render(ctx context.Context, screen types.Screen) {
+	gtlog.Debug(ctx, "span.Span.Render[%s]", s)
+	bounds := s.Bounds()
+	s.Base.Render(ctx, screen)
 	inner := s.InnerBounds()
 	innerClipped := render.Overlapping(bounds, inner)
 	content := render.AlignString(
-		ctx, s.Content(), inner, s.Alignment(),
+		ctx, s.TextContent(), inner, s.Alignment(),
 	)
 	style := s.Style()
 	content = style.Styled(content)

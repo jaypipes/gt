@@ -12,7 +12,7 @@ import (
 
 	"github.com/jaypipes/gt/core/document"
 	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/types"
+	"github.com/jaypipes/gt/types"
 )
 
 // New returns a new Application.
@@ -53,20 +53,20 @@ func (a *Application) SetName(name string) {
 
 // SetRoot instructs the Application which Element to put at the root of the
 // render tree (the Document).
-func (a *Application) SetRoot(el types.Element) {
+func (a *Application) SetRoot(root types.Element) {
 	d := a.Document()
-	d.SetRoot(el)
+	d.SetRoot(root)
 }
 
 // SetRootWithBounds instructs the Application which Element to put at the
 // root of the render tree (the Document) and a bounding box to use for the
 // Document.
 func (a *Application) SetRootWithBounds(
-	el types.Element,
+	root types.Element,
 	bounds types.Rectangle,
 ) {
 	d := a.Document()
-	d.SetRoot(el)
+	d.SetRoot(root)
 	d.SetBounds(bounds)
 }
 

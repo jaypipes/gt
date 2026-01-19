@@ -34,7 +34,7 @@ func main() {
 	// the terminal screen.
 	//
 	// To override the width of the HR, use the `gt.Element.SetWidth` method.
-	hrA.SetWidth(20)
+	hrA.SetWidth(gt.Fixed(20))
 	// Note that the default behaviour of an HR is to draw its line centered in
 	// the parent container. To change this behaviour, use the
 	// `gt.Element.SetAlignment` method.

@@ -3,10 +3,10 @@ package document
 import (
 	"context"
 
-	"github.com/jaypipes/gt/core/element"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
-	"github.com/jaypipes/gt/core/types"
+	"github.com/jaypipes/gt/element/base"
+	"github.com/jaypipes/gt/types"
 )
 
 const (
@@ -16,15 +16,16 @@ const (
 
 // New returns a new Document instance.
 func New(ctx context.Context) *Document {
-	e := element.New(ctx, ElementClass)
-	e.SetID(ElementID)
-	return &Document{Element: e}
+	b := base.New(ctx, ElementClass)
+	d := &Document{Base: b}
+	d.SetID(ElementID)
+	return d
 }
 
 // Document is the virtual representation of the tree of elements that will be
 // rendered to a Screen.
 type Document struct {
-	*element.Element
+	base.Base
 }
 
 // ElementByID returns the Element with the specified ID or nil if the
@@ -41,13 +42,14 @@ func (d *Document) ElementsByClass(class string) []types.Element {
 
 // SetRoot sets the Document's top-level renderable element. This is just
 // syntactic sugar over the underlying Node.PushChild() method.
-func (d *Document) SetRoot(el types.Element) {
+func (d *Document) SetRoot(node types.Element) {
 	d.RemoveAllChildren()
-	d.PushChild(el)
+	d.PushChild(node)
 }
 
 // Render ensures that any bounds placed on the Document are applied to all the
-// Document's element tree.
+// Document's element tree and draws all elements in the DOM to the supplied
+// Screen.
 func (d *Document) Render(
 	ctx context.Context,
 	screen types.Screen,
@@ -65,14 +67,17 @@ func (d *Document) Render(
 		bounds = screenBounds
 		d.SetBounds(bounds)
 	}
+
 	// calculate the position and sizing for each element in the DOM.
-	render.Plot(ctx, d)
+	for _, child := range d.Children() {
+		child.Plot(ctx)
+	}
 
 	// clear the outer bounds before rendering the DOM.
 	render.Clear(screen, bounds)
 
 	// draw each element in the DOM
-	render.Draw(ctx, d, screen)
+	for _, child := range d.Children() {
+		child.Render(ctx, screen)
+	}
 }
-
-var _ types.Document = (*Document)(nil)

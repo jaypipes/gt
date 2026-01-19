@@ -1,17 +1,14 @@
 package render
 
 import (
-	"context"
-
-	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/types"
+	"github.com/jaypipes/gt/types"
 )
 
 // Clear clears any rendered cell contents for the supplied bounding box.
-func Clear(buf types.Screen, area types.Rectangle) {
+func Clear(screen types.Screen, area types.Rectangle) {
 	for y := area.Min.Y; y < area.Max.Y; y++ {
 		for x := area.Min.X; x < area.Max.X; x++ {
-			buf.SetCell(x, y, nil)
+			screen.SetCell(x, y, nil)
 		}
 	}
 }
@@ -27,18 +24,4 @@ func Overlapping(a, b types.Rectangle) types.Rectangle {
 		return a
 	}
 	return a.Intersect(b)
-}
-
-// Draw writes the supplied element's contents to the supplied Screen and
-// outermost bounding box.
-func Draw(
-	ctx context.Context,
-	el types.Element,
-	screen types.Screen,
-) {
-	gtlog.Debug(ctx, "render.Draw[%s]", el.Tag())
-	el.Draw(screen, el.Bounds())
-	for _, child := range el.Children() {
-		Draw(ctx, child, screen)
-	}
 }

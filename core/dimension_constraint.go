@@ -1,7 +1,7 @@
 package core
 
 import (
-	"github.com/jaypipes/gt/core/types"
+	"github.com/jaypipes/gt/types"
 )
 
 // Percent returns a PercentConstraint representing a percentage of an

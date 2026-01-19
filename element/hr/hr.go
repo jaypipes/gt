@@ -7,9 +7,9 @@ import (
 	uv "github.com/charmbracelet/ultraviolet"
 
 	"github.com/jaypipes/gt/core"
-	"github.com/jaypipes/gt/core/element"
 	"github.com/jaypipes/gt/core/render"
-	"github.com/jaypipes/gt/core/types"
+	"github.com/jaypipes/gt/element/base"
+	"github.com/jaypipes/gt/types"
 )
 
 const (
@@ -19,8 +19,8 @@ const (
 
 // New returns a new HR instance.
 func New(ctx context.Context) *HR {
-	e := element.New(ctx, ElementClass)
-	h := &HR{Element: e}
+	b := base.New(ctx, ElementClass)
+	h := &HR{Base: b}
 	h.SetHeight(core.Fixed(1))
 	return h
 }
@@ -30,7 +30,7 @@ func New(ctx context.Context) *HR {
 // An HR defaults to the width of the parent container. An HR's height defaults
 // to 1. By default, the HR is centered within the parent container.
 type HR struct {
-	*element.Element
+	base.Base
 }
 
 // Display always returns DisplayBlock since an HR always starts on a new line.
@@ -43,7 +43,7 @@ func (h *HR) Display() types.Display {
 // container and the fixed height of the horizontal rule.
 func (h *HR) InnerBounds() types.Rectangle {
 	parent := h.Parent()
-	inner := h.Element.InnerBounds()
+	inner := h.Base.InnerBounds()
 	if parent != nil {
 		parentInner := parent.InnerBounds()
 		inner.Min.X = parentInner.Min.X
