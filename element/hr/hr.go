@@ -24,6 +24,7 @@ func New(ctx context.Context) *HR {
 	h.SetHeight(core.Fixed(1))
 	// An HR always starts on a new line.
 	h.SetDisplay(types.DisplayBlock)
+	h.SetAlignment(types.AlignmentCenter)
 	return h
 }
 
@@ -33,20 +34,6 @@ func New(ctx context.Context) *HR {
 // to 1. By default, the HR is centered within the parent container.
 type HR struct {
 	base.Base
-}
-
-// InnerBounds returns the HR's inner bounding box. The bounding box within
-// which a horizontal rule is aligned is always as wide as their parent
-// container and the fixed height of the horizontal rule.
-func (h *HR) InnerBounds() types.Rectangle {
-	parent := h.Parent()
-	inner := h.Base.InnerBounds()
-	if parent != nil {
-		parentInner := parent.InnerBounds()
-		inner.Min.X = parentInner.Min.X
-		inner.Max.X = parentInner.Max.X
-	}
-	return inner
 }
 
 // Render draws the HR to the supplied Screen.
