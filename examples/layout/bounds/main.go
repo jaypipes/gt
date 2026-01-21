@@ -9,10 +9,6 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 )
 
-const (
-	myAppName = "bounding box demo"
-)
-
 type myApp struct {
 	*gt.Application
 }
@@ -23,7 +19,6 @@ func main() {
 	ctx := gt.ContextFromEnv()
 	// create a new myApp that wraps the gt.Application
 	app := myApp{gtapp.New(ctx)}
-	app.SetName(myAppName)
 
 	// gt.Document represents the Document Object Model (DOM) for your
 	// Application's display views.
@@ -45,10 +40,12 @@ func main() {
 	// height instead of using the default width and height of a Span. The
 	// `gt.Element.SetSize()` method allows you to set the fixed width and
 	// height of an element.
-	span.SetSize(60, 10)
-	// Make a rounded yellow border around the span
+	span.SetSize(gt.FixedArea(60, 10))
+	// Make a rounded yellow border around the span and place the text in the
+	// centered middle of the span.
 	span.SetBorder(gt.RoundedBorder())
 	span.SetBorderForegroundColor(yellow)
+	span.SetAlignment(gt.AlignmentMiddleCenter)
 	doc.PushChild(span)
 
 	// We make the bounding box of the Application's Document (the outermost
@@ -74,11 +71,11 @@ func main() {
 	// Note that instead of specifying the bounding box using SetBounds(), we
 	// could have specified the anchor point of (10,10) using:
 	//
-	//doc.Anchor(gt.Pt(10, 10))
+	//doc.SetAbsolutePosition(gt.Pt(10, 10))
 	//
 	// and set the document's width and height:
 	//
-	//doc.SetSize(30, 10)
+	//doc.SetSize(gt.FixedArea(30, 10))
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)
