@@ -413,6 +413,9 @@ func (b *Base) Plot(ctx context.Context) {
 		b.Tag(), bounds,
 	)
 	b.SetBounds(bounds)
+	for _, child := range b.Children() {
+		child.Plot(ctx)
+	}
 }
 
 // nextLineY returns the maximum Y value of any previous sibling, or if

@@ -91,4 +91,7 @@ func (s *Span) Render(ctx context.Context, screen types.Screen) {
 		ss.Wrap = true
 	}
 	ss.Draw(screen, innerClipped)
+	for _, child := range s.Children() {
+		child.Render(ctx, screen)
+	}
 }

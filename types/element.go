@@ -82,9 +82,15 @@ type Element interface {
 	Width() Dimension
 	// HasFixedWidth returns true if the Element has a fixed width.
 	HasFixedWidth() bool
+	// HasPercentWidth returns true if the Element has a percent width
+	// cosntraint.
+	HasPercentWidth() bool
 	// FixedWidth returns the Element's fixed width. If the Element does not
 	// have a fixed width constraint, returns 0.
 	FixedWidth() Dimension
+	// PercentWidth returns the Element's percent width. If the Element does
+	// not have a percent width constraint, returns 0.
+	PercentWidth() Dimension
 	// WidthConstraint returns any DimensionConstraint set for the Element's
 	// width.
 	WidthConstraint() DimensionConstraint
@@ -96,11 +102,17 @@ type Element interface {
 	SetHeight(DimensionConstraint) Element
 	// HasFixedHeight returns true if the Element has a fixed height.
 	HasFixedHeight() bool
+	// HasPercentHeight returns true if the Element has a percent height
+	// constraint.
+	HasPercentHeight() bool
 	// Height returns the Element's height.
 	Height() Dimension
 	// FixedHeight returns the Element's fixed height. If the Element does not
 	// have a fixed height constraint, returns 0.
 	FixedHeight() Dimension
+	// PercentHeight returns the Element's percent height. If the Element does
+	// not have a percent height constraint, returns 0.
+	PercentHeight() Dimension
 	// HeightConstraint returns any DimensionConstraint set for the Element's
 	// height.
 	HeightConstraint() DimensionConstraint

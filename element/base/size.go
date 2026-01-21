@@ -40,9 +40,12 @@ func (b *Base) SetWidth(constraint types.DimensionConstraint) types.Element {
 
 // Width returns the Element's width.
 //
-// If a fixed width has been set and the display mode is `block` or
-// `inline-block`, we use the fixed width plus any horizontal padding and
-// left-right border width.
+// If a fixed width has been set and the display mode is not "inline", we use
+// the fixed width plus any horizontal padding and left-right border width.
+//
+// If a percent width has been set and the display mode is not "inline", we
+// calculate the width by looking at the siblings and subtracting any fixed
+// width siblings from the parent's available width.
 //
 // If a fixed width has not been set and the display mode is `block` or
 // `inline-block`, the width defaults to remaining horizontal space in the
@@ -65,22 +68,10 @@ func (b *Base) Width() types.Dimension {
 
 	ctx := context.TODO()
 	display := b.Display()
-	if display != types.DisplayInline && b.HasFixedWidth() {
-		fixedWidth := b.FixedWidth() + paddingHoriz + borderHoriz
-		gtlog.Debug(
-			ctx,
-			"base.Base.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
-				"using min(fixed_width=%d, parent_width=%d)",
-			b.Tag(), display, paddingHoriz, borderHoriz,
-			fixedWidth, parentWidth,
-		)
-		return types.Dimension(
-			min(parentWidth, fixedWidth),
-		)
-	}
-	if display != types.DisplayBlock {
-		// For inline or inline-block with no fixed width, we use the lesser of
-		// the parent's width or the "natural" width of the content
+
+	if display == types.DisplayInline {
+		// For inline, we use the lesser of the parent's width or the "natural"
+		// width of the content
 		contentWidth := b.TextContentWidth()
 		contentWidth += paddingHoriz + borderHoriz
 		gtlog.Debug(
@@ -95,34 +86,86 @@ func (b *Base) Width() types.Dimension {
 		)
 	}
 
-	// For block display mode, we start the element at the Min.X coordinate of
-	// the parent, which simulates a "newline" on the screen. We then calculate
-	// the width based on the whether we have a width constraint.
-
-	wc := b.WidthConstraint()
-
-	// Calculate the width of this based on whether there is a width
-	// constraint. If there is no constraint, the element receives the
-	// remainder of the horizontal space in the parent's bounding box.
-	if wc == nil {
+	if b.HasFixedWidth() {
+		fixedWidth := b.FixedWidth() + paddingHoriz + borderHoriz
 		gtlog.Debug(
 			ctx,
-			"base.Base.Width[%s]: display=%s width_constraint=none. "+
-				"width is parent inner bounds width of %d",
-			b.Tag(), display, parentWidth,
+			"base.Base.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
+				"using min(fixed_width=%d, parent_width=%d)",
+			b.Tag(), display, paddingHoriz, borderHoriz,
+			fixedWidth, parentWidth,
 		)
-		return parentWidth
+		return types.Dimension(
+			min(parentWidth, fixedWidth),
+		)
 	}
-	remainder := wc.Apply(types.Dimension(parentWidth))
+
+	percentWidth := types.Dimension(0)
+	parentAvailable := parentWidth
+	// Calculate the remainder of the parent's available width by examining
+	// the set of siblings and subtracting any fixed width values.
+	for _, child := range parent.Children() {
+		childDisplay := child.Display()
+		if childDisplay != types.DisplayInline && child.HasFixedWidth() {
+			parentAvailable -= child.FixedWidth()
+		}
+	}
+	if b.HasPercentWidth() {
+		constraint := b.WidthConstraint()
+		ph := b.PercentWidth()
+		percentWidth = parentAvailable * ph / 100
+		gtlog.Debug(
+			ctx,
+			"base.Base.Width[%s]: width_constraint=%s ph=%d. "+
+				"calculated width %d "+
+				"from total parent available width %d",
+			b.Tag(), constraint, ph, percentWidth, parentAvailable,
+		)
+		if percentWidth != 0 {
+			gtlog.Debug(
+				ctx,
+				"base.Base.Width[%s]: display=%s "+
+					"padding_horiz=%d border_horiz=%d width_constraint=%s "+
+					"using min(calc_percent_width=%d, parent_width=%d)",
+				b.Tag(), display,
+				paddingHoriz, borderHoriz, b.WidthConstraint(),
+				percentWidth, parentWidth,
+			)
+			return types.Dimension(min(parentWidth, percentWidth))
+		}
+	}
+
+	// No width constraint and not inline display, we consume the remainder of
+	// the parent's width if this is the last sibling or the next sibling is
+	// block display, otherwise we consume the "natural" width of the content,
+	next := b.NextSibling()
+	if next == nil || next.Display() == types.DisplayBlock {
+		gtlog.Debug(
+			ctx,
+			"base.Base.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
+				"last sibling or next sibling is block display. "+
+				"using remaining horizontal width in parent %d.",
+			b.Tag(), display, paddingHoriz, borderHoriz,
+			parentAvailable,
+		)
+		return types.Dimension(min(parentWidth, parentAvailable))
+	}
+	contentWidth := b.TextContentWidth()
 	gtlog.Debug(
 		ctx,
-		"base.Base.Width[%s]: display=%s "+
-			"width_constraint=%d padding_horiz=%d border_horiz=%d. "+
-			"calculated remainder of %d from parent width of %d",
-		b.Tag(), display, wc, paddingHoriz, borderHoriz,
-		remainder, parentWidth,
+		"base.Base.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
+			"not last sibling. using text content width %d.",
+		b.Tag(), display, paddingHoriz, borderHoriz,
+		contentWidth,
 	)
-	return remainder
+	return types.Dimension(min(parentWidth, contentWidth))
+}
+
+// HasFixedWidth returns true if the Element's inner bounding box has a fixed
+// width.
+func (b *Base) HasFixedWidth() bool {
+	_, ok := b.widthConstraint.(core.FixedConstraint)
+	return ok
 }
 
 // FixedWidth returns the Element's fixed width. If the Element does not have a
@@ -134,6 +177,22 @@ func (b *Base) FixedWidth() types.Dimension {
 	return types.Dimension(b.widthConstraint.(core.FixedConstraint))
 }
 
+// HasPercentWidth returns true if the Element's inner bounding box has a percent
+// width.
+func (b *Base) HasPercentWidth() bool {
+	_, ok := b.widthConstraint.(core.PercentConstraint)
+	return ok
+}
+
+// PercentWidth returns the Element's fixed width. If the Element does not have a
+// percent width constraint, returns 0.
+func (b *Base) PercentWidth() types.Dimension {
+	if !b.HasPercentWidth() {
+		return types.Dimension(0)
+	}
+	return types.Dimension(b.widthConstraint.(core.PercentConstraint))
+}
+
 // SetMinWidth sets the minimum width of the Element.
 func (b *Base) SetMinWidth(w types.Dimension) types.Element {
 	b.minWidth = w
@@ -143,6 +202,12 @@ func (b *Base) SetMinWidth(w types.Dimension) types.Element {
 // MinWidth returns the Element's minimum width.
 func (b *Base) MinWidth() types.Dimension {
 	return b.minWidth
+}
+
+// WidthConstraint returns any optional size constraint for the Element's
+// width.  Returns nil when there is no width constraint.
+func (b *Base) WidthConstraint() types.DimensionConstraint {
+	return b.widthConstraint
 }
 
 // SetHeight constrains the height of the Element.
@@ -159,6 +224,14 @@ func (b *Base) SetHeight(constraint types.DimensionConstraint) types.Element {
 //
 // If a fixed height has been set and the display mode is not `inline`, we use
 // the fixed height plus any vertical space from padding and border.
+//
+// If a percent height has been set and the display mode is not `inline`, we
+// calculate the height by looking at the set of siblings and determining the
+// appropriate percent of the remainder of the parent's height plus any
+// vertical space from padding and border.
+//
+// If neither a fixed or percent height has been set and the display mode is
+// `inline-block`, we return the height of the parent.
 //
 // If a fixed height has not been set or the display mode is inline, the height
 // defaults to the number of lines of text content, or 1 if there is no text
@@ -192,13 +265,64 @@ func (b *Base) Height() types.Dimension {
 		return types.Dimension(min(parentHeight, fixedHeight))
 	}
 
+	percentHeight := types.Dimension(0)
+	parentAvailable := parentHeight
+	if display != types.DisplayInline && b.HasPercentHeight() {
+		// Calculate the remainder of the parent's available height by
+		// examining the set of siblings and subtracting any fixed height
+		// values.
+		for _, child := range parent.Children() {
+			childDisplay := child.Display()
+			if childDisplay != types.DisplayInline && child.HasFixedHeight() {
+				parentAvailable -= child.FixedHeight()
+			}
+		}
+		constraint := b.HeightConstraint()
+		ph := b.PercentHeight()
+		percentHeight = parentAvailable * ph / 100
+		gtlog.Debug(
+			ctx,
+			"base.Base.Height[%s]: height_constraint=%s ph=%d. "+
+				"calculated height %d "+
+				"from total parent available height %d",
+			b.Tag(), constraint, ph, percentHeight, parentAvailable,
+		)
+		if percentHeight != 0 {
+			gtlog.Debug(
+				ctx,
+				"base.Base.Height[%s]: display=%s "+
+					"padding_vert=%d border_vert=%d height_constraint=%s "+
+					"using min(calc_percent_height=%d, parent_height=%d)",
+				b.Tag(), display,
+				paddingVert, borderVert, b.HeightConstraint(),
+				percentHeight, parentHeight,
+			)
+			return types.Dimension(min(parentHeight, percentHeight))
+		}
+	}
+
+	if display == types.DisplayInlineBlock {
+		// Default to the height of the parent container
+		gtlog.Debug(
+			ctx,
+			"base.Base.Height[%s]: display=%s "+
+				"padding_vert=%d border_vert=%d height_constraint=%s "+
+				"using parent remaining height %d",
+			b.Tag(), display,
+			paddingVert, borderVert, b.HeightConstraint(),
+			parentAvailable,
+		)
+		return parentAvailable
+	}
+
 	whitespace := b.Whitespace()
 	wrapNever := whitespace&types.WhitespaceWrapNever != 0
-	if wrapNever {
+	if wrapNever && percentHeight == 0 {
 		gtlog.Debug(
 			ctx,
 			"base.Base.Height[%s]: display=%s whitespace=%s "+
 				"padding_vert=%d border_vert=%d "+
+				"height_constraint=none. "+
 				"height is always 1 plus padding_vert + border_vert",
 			b.Tag(), display, whitespace, paddingVert, borderVert,
 		)
@@ -249,6 +373,13 @@ func (b *Base) Height() types.Dimension {
 	return types.Dimension(min(parentHeight, contentHeight))
 }
 
+// HasFixedHeight returns true if the Element's inner bounding box has a fixed
+// height.
+func (b *Base) HasFixedHeight() bool {
+	_, ok := b.heightConstraint.(core.FixedConstraint)
+	return ok
+}
+
 // FixedHeight returns the Element's fixed height. If the Element does not have
 // a fixed height constraint, returns 0.
 func (b *Base) FixedHeight() types.Dimension {
@@ -256,6 +387,22 @@ func (b *Base) FixedHeight() types.Dimension {
 		return types.Dimension(0)
 	}
 	return types.Dimension(b.heightConstraint.(core.FixedConstraint))
+}
+
+// HasPercentHeight returns true if the Element's inner bounding box has a percent
+// height.
+func (b *Base) HasPercentHeight() bool {
+	_, ok := b.heightConstraint.(core.PercentConstraint)
+	return ok
+}
+
+// PercentHeight returns the Element's percent height. If the Element does not
+// have a percent height constraint, returns 0.
+func (b *Base) PercentHeight() types.Dimension {
+	if !b.HasPercentHeight() {
+		return types.Dimension(0)
+	}
+	return types.Dimension(b.heightConstraint.(core.PercentConstraint))
 }
 
 // SetMinHeight sets the minimum height of the Element.
@@ -267,26 +414,6 @@ func (b *Base) SetMinHeight(h types.Dimension) types.Element {
 // MinHeight returns the Element's minimum height.
 func (b *Base) MinHeight() types.Dimension {
 	return b.minHeight
-}
-
-// HasFixedWidth returns true if the Element's inner bounding box has a fixed
-// width.
-func (b *Base) HasFixedWidth() bool {
-	_, ok := b.widthConstraint.(core.FixedConstraint)
-	return ok
-}
-
-// HasFixedHeight returns true if the Element's inner bounding box has a fixed
-// height.
-func (b *Base) HasFixedHeight() bool {
-	_, ok := b.heightConstraint.(core.FixedConstraint)
-	return ok
-}
-
-// WidthConstraint returns any optional size constraint for the Element's
-// width.  Returns nil when there is no width constraint.
-func (b *Base) WidthConstraint() types.DimensionConstraint {
-	return b.widthConstraint
 }
 
 // HeightConstraint returns any optional size constraint for the Element's

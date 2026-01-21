@@ -88,7 +88,7 @@ func (b *Base) String() string {
 		parentStr = b.parent.Tag()
 	}
 	idStr := b.id
-	if idStr != "" {
+	if idStr == "" {
 		idStr = "none"
 	}
 	return fmt.Sprintf(
