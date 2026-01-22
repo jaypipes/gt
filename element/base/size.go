@@ -6,7 +6,6 @@ import (
 
 	"github.com/jaypipes/gt/core"
 	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/types"
 	"github.com/mitchellh/go-wordwrap"
 )
@@ -59,12 +58,7 @@ func (b *Base) Width() types.Dimension {
 	}
 	parentInner := parent.InnerBounds()
 	parentWidth := types.Dimension(parentInner.Dx())
-	borderHoriz := types.Dimension(0)
-	border := b.Border()
-	if border != nil {
-		borderHoriz = render.BorderHorizontalSpace(*border)
-	}
-	paddingHoriz := b.Padding().HorizontalSpace()
+	horizSpace := b.HorizontalSpace()
 
 	ctx := context.TODO()
 	display := b.Display()
@@ -73,13 +67,12 @@ func (b *Base) Width() types.Dimension {
 		// For inline, we use the lesser of the parent's width or the "natural"
 		// width of the content
 		contentWidth := b.TextContentWidth()
-		contentWidth += paddingHoriz + borderHoriz
+		contentWidth += horizSpace
 		gtlog.Debug(
 			ctx,
-			"base.Base.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
+			"base.Base.Width[%s]: display=%s horiz_space=%d "+
 				"using min(content_width=%d, parent_width=%d)",
-			b.Tag(), display, paddingHoriz, borderHoriz,
-			contentWidth, parentWidth,
+			b.Tag(), display, horizSpace, contentWidth, parentWidth,
 		)
 		return types.Dimension(
 			min(parentWidth, contentWidth),
@@ -87,13 +80,12 @@ func (b *Base) Width() types.Dimension {
 	}
 
 	if b.HasFixedWidth() {
-		fixedWidth := b.FixedWidth() + paddingHoriz + borderHoriz
+		fixedWidth := b.FixedWidth() + horizSpace
 		gtlog.Debug(
 			ctx,
-			"base.Base.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
+			"base.Base.Width[%s]: display=%s horiz_space=%d "+
 				"using min(fixed_width=%d, parent_width=%d)",
-			b.Tag(), display, paddingHoriz, borderHoriz,
-			fixedWidth, parentWidth,
+			b.Tag(), display, horizSpace, fixedWidth, parentWidth,
 		)
 		return types.Dimension(
 			min(parentWidth, fixedWidth),
@@ -125,10 +117,10 @@ func (b *Base) Width() types.Dimension {
 			gtlog.Debug(
 				ctx,
 				"base.Base.Width[%s]: display=%s "+
-					"padding_horiz=%d border_horiz=%d width_constraint=%s "+
+					"horiz_space=%d width_constraint=%s "+
 					"using min(calc_percent_width=%d, parent_width=%d)",
 				b.Tag(), display,
-				paddingHoriz, borderHoriz, b.WidthConstraint(),
+				horizSpace, b.WidthConstraint(),
 				percentWidth, parentWidth,
 			)
 			return types.Dimension(min(parentWidth, percentWidth))
@@ -142,21 +134,19 @@ func (b *Base) Width() types.Dimension {
 	if next == nil || next.Display() == types.DisplayBlock {
 		gtlog.Debug(
 			ctx,
-			"base.Base.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
+			"base.Base.Width[%s]: display=%s horiz_space=%d "+
 				"last sibling or next sibling is block display. "+
 				"using remaining horizontal width in parent %d.",
-			b.Tag(), display, paddingHoriz, borderHoriz,
-			parentAvailable,
+			b.Tag(), display, horizSpace, parentAvailable,
 		)
 		return types.Dimension(min(parentWidth, parentAvailable))
 	}
 	contentWidth := b.TextContentWidth()
 	gtlog.Debug(
 		ctx,
-		"base.Base.Width[%s]: display=%s padding_horiz=%d border_horiz=%d "+
+		"base.Base.Width[%s]: display=%s horiz_space=%d "+
 			"not last sibling. using text content width %d.",
-		b.Tag(), display, paddingHoriz, borderHoriz,
-		contentWidth,
+		b.Tag(), display, horizSpace, contentWidth,
 	)
 	return types.Dimension(min(parentWidth, contentWidth))
 }
@@ -244,23 +234,17 @@ func (b *Base) Height() types.Dimension {
 	parentInner := parent.InnerBounds()
 	parentWidth := types.Dimension(parentInner.Dx())
 	parentHeight := types.Dimension(parentInner.Dy())
-	paddingVert := b.Padding().VerticalSpace()
-	borderVert := types.Dimension(0)
-	border := b.Border()
-	if border != nil {
-		borderVert = render.BorderVerticalSpace(*border)
-	}
+	vertSpace := b.VerticalSpace()
 
 	ctx := context.TODO()
 	display := b.Display()
 	if display != types.DisplayInline && b.HasFixedHeight() {
-		fixedHeight := b.FixedHeight() + paddingVert + borderVert
+		fixedHeight := b.FixedHeight() + vertSpace
 		gtlog.Debug(
 			ctx,
-			"base.Base.Height[%s]: display=%s padding_vert=%d border_vert=%d "+
+			"base.Base.Height[%s]: display=%s vert_space=%d "+
 				"using min(fixed_height=%d, parent_height=%d)",
-			b.Tag(), display, paddingVert, borderVert,
-			fixedHeight, parentHeight,
+			b.Tag(), display, vertSpace, fixedHeight, parentHeight,
 		)
 		return types.Dimension(min(parentHeight, fixedHeight))
 	}
@@ -291,10 +275,10 @@ func (b *Base) Height() types.Dimension {
 			gtlog.Debug(
 				ctx,
 				"base.Base.Height[%s]: display=%s "+
-					"padding_vert=%d border_vert=%d height_constraint=%s "+
+					"vert_space=%d height_constraint=%s "+
 					"using min(calc_percent_height=%d, parent_height=%d)",
 				b.Tag(), display,
-				paddingVert, borderVert, b.HeightConstraint(),
+				vertSpace, b.HeightConstraint(),
 				percentHeight, parentHeight,
 			)
 			return types.Dimension(min(parentHeight, percentHeight))
@@ -306,10 +290,10 @@ func (b *Base) Height() types.Dimension {
 		gtlog.Debug(
 			ctx,
 			"base.Base.Height[%s]: display=%s "+
-				"padding_vert=%d border_vert=%d height_constraint=%s "+
+				"vert_space=%d height_constraint=%s "+
 				"using parent remaining height %d",
 			b.Tag(), display,
-			paddingVert, borderVert, b.HeightConstraint(),
+			vertSpace, b.HeightConstraint(),
 			parentAvailable,
 		)
 		return parentAvailable
@@ -321,12 +305,11 @@ func (b *Base) Height() types.Dimension {
 		gtlog.Debug(
 			ctx,
 			"base.Base.Height[%s]: display=%s whitespace=%s "+
-				"padding_vert=%d border_vert=%d "+
-				"height_constraint=none. "+
+				"vert_space=%d height_constraint=none. "+
 				"height is always 1 plus padding_vert + border_vert",
-			b.Tag(), display, whitespace, paddingVert, borderVert,
+			b.Tag(), display, whitespace, vertSpace,
 		)
-		return paddingVert + borderVert + 1
+		return vertSpace + 1
 	}
 
 	// "wrap-line" whitespace mode means don't wrap except on existing
@@ -339,24 +322,22 @@ func (b *Base) Height() types.Dimension {
 	// wrapping of long text content before returning the number of newlines.
 	content := b.TextContent()
 	contentHeight := b.TextContentHeight()
-	contentHeight += paddingVert + borderVert
+	contentHeight += vertSpace
 	origContentHeight := contentHeight
 	contentWidth := b.TextContentWidth()
 	if !wrapLine && (contentWidth > parentWidth) {
 		wrapped = true
 		wrappedContent := wordwrap.WrapString(content, uint(parentWidth))
 		contentHeight = types.Dimension(strings.Count(wrappedContent, "\n") + 1)
-		contentHeight += paddingVert + borderVert
+		contentHeight += vertSpace
 		gtlog.Debug(
 			ctx,
 			"base.Base.Height[%s]: display=%s whitespace=%s "+
-				"padding_vert=%d border_vert=%d "+
-				"original_content_height=%d parent_height=%d "+
+				"vert_space=%d original_content_height=%d parent_height=%d "+
 				"content_width=%d parent_width=%d wrapped=%t "+
 				"calculated new content_height of %d",
 			b.Tag(), display, whitespace,
-			paddingVert, borderVert,
-			origContentHeight, parentHeight,
+			vertSpace, origContentHeight, parentHeight,
 			contentWidth, parentWidth, wrapped,
 			contentHeight,
 		)
@@ -364,11 +345,9 @@ func (b *Base) Height() types.Dimension {
 	gtlog.Debug(
 		ctx,
 		"base.Base.Height[%s]: display=%s whitespace=%s "+
-			"padding_vert=%d border_vert=%d "+
-			"using min(content_height=%d, parent_height=%d)",
+			"vert_space=%d using min(content_height=%d, parent_height=%d)",
 		b.Tag(), display, whitespace,
-		paddingVert, borderVert,
-		contentHeight, parentHeight,
+		vertSpace, contentHeight, parentHeight,
 	)
 	return types.Dimension(min(parentHeight, contentHeight))
 }

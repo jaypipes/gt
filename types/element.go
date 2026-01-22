@@ -156,6 +156,13 @@ type Element interface {
 	// BorderBackgroundColor returns the Element's border background color.
 	BorderBackgroundColor() Color
 
+	// HorizontalSpace returns the number of cells consumed by the element's
+	// left-right padding and border.
+	HorizontalSpace() Dimension
+	// VerticalSpace returns the number of lines consumed by the element's
+	// top-bottom padding and border
+	VerticalSpace() Dimension
+
 	// SetStyle applies the supplied Style to the Styled.
 	SetStyle(Style) Element
 	// Style returns the thing's Style
