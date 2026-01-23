@@ -422,14 +422,12 @@ func (b *Base) Plot(ctx context.Context) {
 // no siblings, the parent inner bounds top-left coordinate's Y valub.
 func nextLineY(b types.Element) int {
 	parent := b.Parent()
-	y := 0
-	if parent != nil {
-		y = parent.InnerBounds().Min.Y
+	if parent == nil {
+		return 0
 	}
-	prevSibling := b.PreviousSibling()
-	for prevSibling != nil {
+	y := parent.InnerBounds().Min.Y
+	for _, prevSibling := range b.PreviousSiblings() {
 		y = max(y, prevSibling.MaxY())
-		prevSibling = prevSibling.PreviousSibling()
 	}
 	return y
 }

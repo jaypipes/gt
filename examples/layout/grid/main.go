@@ -19,6 +19,7 @@ func main() {
 	yellow, _ := colorful.Hex("#ffff00")
 	pink, _ := colorful.Hex("#ffcccc")
 	lightgreen, _ := colorful.Hex("#d1ffbd")
+	lightblue, _ := colorful.Hex("#add8e6")
 
 	// create a new context.Context from environs variables
 	ctx := gt.ContextFromEnv()
@@ -29,28 +30,42 @@ func main() {
 	// Application's display views.
 	doc := app.Document()
 
-	// We create a layout with three horizontal panes consuming 25%, 50% and 25%
-	// of the screen's height, respectively. The middle horizontal pane will be
-	// divided into three vertical panes consuming 10 cells (fixed), 20% of the
-	// remaining and the rest of the remaining width of the screen:
+	// We create a layout with three horizontal panes consuming 25%, 50% and
+	// 25% of the screen's height, respectively. The middle horizontal pane
+	// will be divided into three vertical panes consuming 10 cells (fixed),
+	// 20% of the remaining and the rest of the remaining width of the screen
+	// and the center pane of the middle pane will be further vertically
+	// divided into three equally-sized panes:
 	//
 	// +---------------------------------------------------------------------+
 	// |                                                                     |
+	// |                                                                     |
 	// |                             Top                                     |
 	// |                                                                     |
+	// |                                                                     |
 	// +---------------------------------------------------------------------+
 	// |            |             |                                          |
 	// |            |             |                                          |
+	// |            |   Mid B-1   |                                          |
 	// |            |             |                                          |
 	// |            |             |                                          |
-	// |   Mid A    |    Mid B    |                 Mid C                    |
+	// |            +-------------+                                          |
 	// |            |             |                                          |
 	// |            |             |                                          |
+	// |   Mid A    |   Mid B-2   |                 Mid C                    |
+	// |            |             |                                          |
+	// |            |             |                                          |
+	// |            +-------------+                                          |
+	// |            |             |                                          |
+	// |            |             |                                          |
+	// |            |   Mid B-3   |                                          |
 	// |            |             |                                          |
 	// |            |             |                                          |
 	// +---------------------------------------------------------------------+
 	// |                                                                     |
+	// |                                                                     |
 	// |                           Bottom                                    |
+	// |                                                                     |
 	// |                                                                     |
 	// +---------------------------------------------------------------------+
 
@@ -99,6 +114,30 @@ func main() {
 	spanMidB.SetForegroundColor(black)
 	spanMidB.SetBackgroundColor(pink)
 	divMid.PushChild(spanMidB)
+
+	divMidB1 := gtdiv.New(ctx, "Mid B-1")
+	divMidB1.SetID("mid-b1")
+	divMidB1.SetHeight(gt.Percent(33))
+	divMidB1.SetAlignment(gt.AlignmentMiddleCenter)
+	divMidB1.SetForegroundColor(black)
+	divMidB1.SetBackgroundColor(lightblue)
+	spanMidB.PushChild(divMidB1)
+
+	divMidB2 := gtdiv.New(ctx, "Mid B-2")
+	divMidB2.SetID("mid-b2")
+	divMidB2.SetHeight(gt.Percent(33))
+	divMidB2.SetAlignment(gt.AlignmentMiddleCenter)
+	divMidB2.SetForegroundColor(black)
+	divMidB2.SetBackgroundColor(lightblue)
+	spanMidB.PushChild(divMidB2)
+
+	divMidB3 := gtdiv.New(ctx, "Mid B-3")
+	divMidB3.SetID("mid-b3")
+	divMidB3.SetHeight(gt.Percent(33))
+	divMidB3.SetAlignment(gt.AlignmentMiddleCenter)
+	divMidB3.SetForegroundColor(black)
+	divMidB3.SetBackgroundColor(lightblue)
+	spanMidB.PushChild(divMidB3)
 
 	spanMidC := gtspan.New(ctx, "Mid C")
 	spanMidC.SetID("mid-c")

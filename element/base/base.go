@@ -12,8 +12,9 @@ import (
 // New returns a new instance of a [base.Base] with the specified type/class.
 func New(ctx context.Context, class string) Base {
 	return Base{
-		RWMutex: new(sync.RWMutex),
-		class:   class,
+		RWMutex:  new(sync.RWMutex),
+		class:    class,
+		children: []types.Element{},
 	}
 }
 

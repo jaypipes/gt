@@ -183,6 +183,9 @@ type Element interface {
 	// So, "0.3" means "the fourth child of the first child of the root node".
 	// Returns "root" for the root node.
 	NodeInternalID() string
+	// ChildIndex returns the Element's index within the Element's parent's
+	// collection of children.
+	ChildIndex() int
 	// SetParent sets the Element's parent and index of the Element within the
 	// parent's children.
 	SetParent(Element, int) Element
@@ -217,4 +220,8 @@ type Element interface {
 	// Element's parent, or nil if this Element is the first child of the parent
 	// Element.
 	PreviousSibling() Element
+	// PreviousSiblings returns all Elements that are children of the Element's
+	// parent before this Element, or an empty slice of Elements if this
+	// Element is the first child of the parent Element.
+	PreviousSiblings() []Element
 }

@@ -52,10 +52,11 @@ func (b *Base) SetWidth(constraint types.DimensionConstraint) types.Element {
 // set to the width of the content plus any horizontal padding and left-right
 // border width.
 func (b *Base) Width() types.Dimension {
-	parent := b.Parent()
+	parent := b.parent
 	if parent == nil {
 		return types.Dimension(b.Bounds().Dx())
 	}
+	next := b.NextSibling()
 	parentInner := parent.InnerBounds()
 	parentWidth := types.Dimension(parentInner.Dx())
 	horizSpace := b.HorizontalSpace()
@@ -94,9 +95,14 @@ func (b *Base) Width() types.Dimension {
 
 	percentWidth := types.Dimension(0)
 	parentAvailable := parentWidth
-	// Calculate the remainder of the parent's available width by examining
-	// the set of siblings and subtracting any fixed width values.
+	// Calculate the remainder of the parent's available width by examining the
+	// set of siblings and subtracting any fixed width values and horizontal
+	// space.
 	for _, child := range parent.Children() {
+		if child.ChildIndex() == b.index {
+			continue
+		}
+		parentAvailable -= child.HorizontalSpace()
 		childDisplay := child.Display()
 		if childDisplay != types.DisplayInline && child.HasFixedWidth() {
 			parentAvailable -= child.FixedWidth()
@@ -104,20 +110,27 @@ func (b *Base) Width() types.Dimension {
 	}
 	if b.HasPercentWidth() {
 		constraint := b.WidthConstraint()
-		ph := b.PercentWidth()
-		percentWidth = parentAvailable * ph / 100
+		pw := b.PercentWidth()
+		percentWidth = parentAvailable * pw / 100
+		percentWidth += horizSpace
+		if next == nil {
+			// If we're the last child in the row to use a percentage width
+			// constraint, we need to reduce the calculated width by a single
+			// cell in order to not exceed the parent inner bounds.
+			percentWidth -= 1
+		}
 		gtlog.Debug(
 			ctx,
-			"base.Base.Width[%s]: width_constraint=%s ph=%d. "+
+			"base.Base.Width[%s]: width_constraint=%s. "+
 				"calculated width %d "+
 				"from total parent available width %d",
-			b.Tag(), constraint, ph, percentWidth, parentAvailable,
+			b.Tag(), constraint, percentWidth, parentAvailable,
 		)
 		if percentWidth != 0 {
 			gtlog.Debug(
 				ctx,
 				"base.Base.Width[%s]: display=%s "+
-					"horiz_space=%d width_constraint=%s "+
+					"horiz_space=%d width_constraint=%s. "+
 					"using min(calc_percent_width=%d, parent_width=%d)",
 				b.Tag(), display,
 				horizSpace, b.WidthConstraint(),
@@ -130,7 +143,6 @@ func (b *Base) Width() types.Dimension {
 	// No width constraint and not inline display, we consume the remainder of
 	// the parent's width if this is the last sibling or the next sibling is
 	// block display, otherwise we consume the "natural" width of the content,
-	next := b.NextSibling()
 	if next == nil || next.Display() == types.DisplayBlock {
 		gtlog.Debug(
 			ctx,
@@ -231,6 +243,7 @@ func (b *Base) Height() types.Dimension {
 	if parent == nil {
 		return types.Dimension(b.Bounds().Dy())
 	}
+	next := b.NextSibling()
 	parentInner := parent.InnerBounds()
 	parentWidth := types.Dimension(parentInner.Dx())
 	parentHeight := types.Dimension(parentInner.Dy())
@@ -266,11 +279,17 @@ func (b *Base) Height() types.Dimension {
 		percentHeight = parentAvailable * ph / 100
 		gtlog.Debug(
 			ctx,
-			"base.Base.Height[%s]: height_constraint=%s ph=%d. "+
+			"base.Base.Height[%s]: height_constraint=%s. "+
 				"calculated height %d "+
 				"from total parent available height %d",
-			b.Tag(), constraint, ph, percentHeight, parentAvailable,
+			b.Tag(), constraint, percentHeight, parentAvailable,
 		)
+		if next == nil {
+			// If we're the last child in the column to use a percentage height
+			// constraint, we expand the height by a single line to consume the
+			// remainder of the available parent's height.
+			percentHeight += 1
+		}
 		if percentHeight != 0 {
 			gtlog.Debug(
 				ctx,

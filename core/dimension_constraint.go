@@ -56,4 +56,8 @@ func (f noDimensionConstraint) Apply(d types.Dimension) types.Dimension {
 	return d
 }
 
+func (f noDimensionConstraint) String() string {
+	return "none"
+}
+
 const NoDimensionConstraint = noDimensionConstraint(0)
