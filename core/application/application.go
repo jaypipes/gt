@@ -9,6 +9,7 @@ import (
 	"runtime/debug"
 
 	uv "github.com/charmbracelet/ultraviolet"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/jaypipes/gt/core/document"
 	gtlog "github.com/jaypipes/gt/core/log"
@@ -94,9 +95,6 @@ func (a *Application) Start(ctx context.Context) error {
 		return fmt.Errorf("cannot start nil Application.")
 	}
 	t := uv.NewTerminal(os.Stdin, os.Stdout, os.Environ())
-	//if a.name != "" {
-	//	t.SetTitle(a.name)
-	//}
 
 	// By entering alt screen we take control of the output of the terminal
 	// which means when we exit the application, the terminal screen will be
@@ -115,6 +113,9 @@ func (a *Application) Start(ctx context.Context) error {
 	}
 
 	a.term = t
+	if a.name != "" {
+		t.WriteString(ansi.SetWindowTitle(a.name))
+	}
 
 loop:
 	for ev := range t.Events() {

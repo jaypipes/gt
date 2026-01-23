@@ -19,6 +19,7 @@ func main() {
 	ctx := gt.ContextFromEnv()
 	// create a new myApp that wraps the gt.Application
 	app := myApp{gtapp.New(ctx)}
+	app.SetName("demo")
 
 	// gt.Document represents the Document Object Model (DOM) for your
 	// Application's display views.
