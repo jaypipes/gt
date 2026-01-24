@@ -10,9 +10,11 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/samber/lo"
 
-	"github.com/jaypipes/gt/core/document"
+	"github.com/jaypipes/gt/core"
 	gtlog "github.com/jaypipes/gt/core/log"
+	"github.com/jaypipes/gt/core/view"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -20,9 +22,8 @@ import (
 func New(
 	ctx context.Context,
 ) *Application {
-	d := document.New(ctx)
 	return &Application{
-		document: d,
+		views: map[string]*view.View{},
 	}
 }
 
@@ -35,57 +36,158 @@ func New(
 //	 	myappstate string
 //	}
 type Application struct {
+	core.Box
 	term *uv.Terminal
 
-	// name is an optional name for the application, used as a title for the
-	// outer containing box for the TUI program.
-	name string
+	// title is an optional title for the application, used as a title for the
+	// terminal when set.
+	title string
 
-	// document contains the tree of elements to render the Application to a
-	// screen.
-	document *document.Document
+	// views is a map, keyed by the View ID, of Views that the Application is
+	// managing.
+	views map[string]*view.View
+	// curView is the ID of the currently active (displayed) View.
+	curView string
 }
 
-// SetName sets the Application's optional name, which by default also sets the
+// SetTitle sets the Application's optional title, which by default also sets the
 // terminal's screen title.
-func (a *Application) SetName(name string) {
-	a.name = name
+func (a *Application) SetTitle(title string) {
+	a.title = title
+}
+
+// Title returns the Application's optional title.
+func (a *Application) Title() string {
+	return a.title
+}
+
+// View returns the View with the supplied ID. If no such View exists, a new
+// empty View with that ID is returned.
+func (a *Application) View(ctx context.Context, id string) *view.View {
+	v, ok := a.views[id]
+	if !ok {
+		v = view.New(ctx, id)
+		a.views[id] = v
+	}
+	return v
+}
+
+// Views returns the collection of the Application's Views.
+func (a *Application) Views() []*view.View {
+	return lo.Values(a.views)
+}
+
+// CurrentView returns the currently active (displaying) View.
+func (a *Application) CurrentView() *view.View {
+	return a.views[a.curView]
+}
+
+// SetCurrentView sets the currently active (displaying) View.
+func (a *Application) SetCurrentView(id string) *Application {
+	a.curView = id
+	return a
 }
 
 // SetRoot instructs the Application which Element to put at the root of the
-// render tree (the Document).
-func (a *Application) SetRoot(root types.Element) {
-	d := a.Document()
-	d.SetRoot(root)
+// render tree (the active View).
+func (a *Application) SetRoot(root types.Element) *Application {
+	v := a.CurrentView()
+	if v == nil {
+		v = view.New(context.TODO(), "main")
+		a.views["main"] = v
+		a.curView = "main"
+	}
+	v.SetRoot(root)
+	return a
+}
+
+// SetBounds sets the View's outer bounding box.
+func (a *Application) SetBounds(bounds types.Rectangle) *Application {
+	a.Box.SetBounds(bounds)
+	return a
 }
 
 // SetRootWithBounds instructs the Application which Element to put at the
-// root of the render tree (the Document) and a bounding box to use for the
-// Document.
+// root of the render tree (the View) and a bounding box to use for the
+// View.
 func (a *Application) SetRootWithBounds(
 	root types.Element,
 	bounds types.Rectangle,
-) {
-	d := a.Document()
-	d.SetRoot(root)
-	d.SetBounds(bounds)
+) *Application {
+	v := a.CurrentView()
+	if v == nil {
+		v = view.New(context.TODO(), "main")
+		a.views["main"] = v
+		a.curView = "main"
+	}
+	v.SetRoot(root)
+	v.SetBounds(bounds)
+	return a
 }
 
-// Document returns the Application's Document.
-func (a *Application) Document() *document.Document {
-	return a.document
+// SetRect sets the Element's bounding rectangle
+func (a *Application) SetBorder(border types.Border) *Application {
+	a.Box.SetBorder(border)
+	return a
 }
 
-// draw renders the Application to the Terminal screen.
+// SetBorderForegroundColor sets the Application's border foreground color (i.e
+// the color of the border cell's underlying grapheme).
+func (a *Application) SetBorderForegroundColor(c types.Color) *Application {
+	a.Box.SetBorderForegroundColor(c)
+	return a
+}
+
+// SetBorderBackgroundColor sets the Application's border background color (i.e
+// the background color of the border's cells.
+func (a *Application) SetBorderBackgroundColor(c types.Color) *Application {
+	a.Box.SetBorderBackgroundColor(c)
+	return a
+}
+
+// draw renders the Application's active View to the Terminal screen.
 func (a *Application) draw(ctx context.Context) {
 	if a.term == nil {
 		panic("called Application.draw() with nil terminal.")
 	}
-	doc := a.document
-	doc.Render(ctx, a.term)
+	v := a.CurrentView()
+	if v == nil {
+		v = view.New(context.TODO(), "main")
+		a.views["main"] = v
+		a.curView = "main"
+	}
+
+	// If the Application has had no bounds set, adopt the screen's max width and
+	// height.
+	bounds := a.Bounds()
+	if bounds.Empty() {
+		screenBounds := a.term.Bounds()
+		gtlog.Debug(
+			ctx,
+			"Application.draw: setting application bounds to screen bounds %s",
+			screenBounds,
+		)
+		bounds = screenBounds
+		a.Box.SetBounds(bounds)
+	}
+
+	a.Box.DrawBorder(a.term)
+	v.SetBounds(a.InnerBounds())
+	v.Render(ctx, a.term)
 	if err := a.term.Display(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (a *Application) currentViewKeyMap() map[string]string {
+	res := map[string]string{}
+	for viewID, view := range a.views {
+		currentKP := view.CurrentViewKeyPress()
+		if currentKP != "" {
+			res[currentKP] = viewID
+		}
+	}
+	return res
 }
 
 // Start starts up the Application and its event loop, blocking until the event
@@ -113,9 +215,10 @@ func (a *Application) Start(ctx context.Context) error {
 	}
 
 	a.term = t
-	if a.name != "" {
-		t.WriteString(ansi.SetWindowTitle(a.name))
+	if a.title != "" {
+		t.WriteString(ansi.SetWindowTitle(a.title))
 	}
+	currentViewKeyMap := a.currentViewKeyMap()
 
 loop:
 	for ev := range t.Events() {
@@ -132,13 +235,20 @@ loop:
 				if err := t.Display(); err != nil {
 					log.Fatal(err)
 				}
-				if t.Shutdown(ctx) != nil {
-					log.Fatal("failed to shutdown terminal")
+				if t.Pause() != nil {
+					log.Fatal("failed to pause terminal")
 				}
 
 				uv.Suspend()
 
-				goto loop
+				if err := t.Resume(); err != nil {
+					log.Fatal("failed to resume terminal")
+				}
+			}
+			for viewKP, viewID := range currentViewKeyMap {
+				if ev.MatchString(viewKP) && a.curView != viewID {
+					a.SetCurrentView(viewID)
+				}
 			}
 		}
 

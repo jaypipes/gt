@@ -125,67 +125,6 @@ import (
 // or padding, that border and padding will cause the Element's OuterHeight()
 // and OuterWidth() to be more than the specified fixed width and height.
 
-// SetBounds sets the Element's outer bounding box.
-func (b *Base) SetBounds(bounds types.Rectangle) types.Element {
-	b.bounds = bounds
-	return b
-}
-
-// Bounds returns the Element's outer bounding box.
-func (b *Base) Bounds() types.Rectangle {
-	return b.bounds
-}
-
-// TL returns the Element's outer bounding box's top-left coordinates.
-func (b *Base) TL() types.Point {
-	return b.bounds.Min
-}
-
-// TR returns the Element's outer bounding box's top-right coordinates.
-func (b *Base) TR() types.Point {
-	return types.Point{
-		X: b.bounds.Max.X,
-		Y: b.bounds.Min.Y,
-	}
-}
-
-// MinY returns the Min Y (top) of the Element's outer bounding box.
-func (b *Base) MinY() int {
-	return b.bounds.Min.Y
-}
-
-// MaxY returns the Max Y (bottom) of the Element's outer bounding box.
-func (b *Base) MaxY() int {
-	return b.bounds.Max.Y
-}
-
-// SetAbsolutePosition sets the Element's outer bounding box's top-left
-// coordinates and marks the Element as using absolute positioning.
-func (b *Base) SetAbsolutePosition(pt types.Point) types.Element {
-	b.bounds.Min = pt
-	b.absolute = true
-	return b
-}
-
-// HasAbsolutePosition returns true if the Element used absolute positioning.
-func (b *Base) HasAbsolutePosition() bool {
-	return b.absolute
-}
-
-// InnerBounds returns the inner bounding box for the Element, which is the
-// outer bounding box adjusted for any border and padding.
-func (b *Base) InnerBounds() types.Rectangle {
-	bounds := b.Bounds()
-	border := b.Border()
-	if border != nil {
-		bounds.Min.X++
-		bounds.Min.Y++
-		bounds.Max.X--
-		bounds.Max.Y--
-	}
-	return b.Padding().AdjustBounds(bounds)
-}
-
 // Plot calculates the anchoring positioning coordinates of the element.
 //
 // It traverses the tree of elements rooted at this element and calculates the
@@ -200,7 +139,7 @@ func (b *Base) InnerBounds() types.Rectangle {
 // is relative to the previous sibling or, if no previous sibling, the parent.
 func (b *Base) Plot(ctx context.Context) {
 	// If bounds has already been set, no need to plot.
-	origBounds := b.bounds
+	origBounds := b.Bounds()
 	if !origBounds.Empty() {
 		return
 	}

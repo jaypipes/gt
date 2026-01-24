@@ -67,6 +67,12 @@ func PadTBLR(top, bottom, left, right int) Padding {
 	}
 }
 
+// PadHorizontal returns a Padding the left and right padding set to the same
+// supplied value.
+func PadHorizontal(v int) Padding {
+	return Padding{L: Dimension(v), R: Dimension(v)}
+}
+
 // PadL returns a Padding with the left padding set to the supplied value.
 func PadL(left int) Padding {
 	return Padding{L: Dimension(left)}
@@ -81,6 +87,12 @@ func PadR(right int) Padding {
 // values.
 func PadLR(left, right int) Padding {
 	return Padding{L: Dimension(left), R: Dimension(right)}
+}
+
+// PadVertical returns a Padding the top and bottom padding set to the same
+// supplied value.
+func PadVertical(v int) Padding {
+	return Padding{T: Dimension(v), B: Dimension(v)}
 }
 
 // PadT returns a Padding with the top padding set to the supplied value.

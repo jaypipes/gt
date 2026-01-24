@@ -19,14 +19,23 @@ func main() {
 	ctx := gt.ContextFromEnv()
 	// create a new myApp that wraps the gt.Application
 	app := myApp{gtapp.New(ctx)}
-	app.SetName("demo")
+	app.SetTitle("bounds demo")
+	// You can set an outer border on your Application.
+	app.SetBorder(gt.ThickBorder())
 
-	// gt.Document represents the Document Object Model (DOM) for your
-	// Application's display views.
-	doc := app.Document()
-	// You can set an outer border on your Application by setting a border on
-	// the Document.
-	doc.SetBorder(gt.ThickBorder())
+	// gt.View is used to group displayable things that represent a
+	// logically-related view of something.
+	//
+	// Here, we use the gt.Application.View method to return a View with the ID
+	// "main". Note that if no such View exists in the Application that that
+	// ID, a new empty View with that ID is created, added to the Application,
+	// and returned.
+	//
+	// Below, we add a set of gt.Elements to this View. gt.Elements are
+	// displayable primitives that function very much like an HTML element. The
+	// View can be seen as the root of a sort of Document Object Model (DOM) of
+	// gt.Elements.
+	v := app.View(ctx, "main")
 
 	// gt.Span is a simple element that behaves like an HTML <span> element,
 	// meaning that by default, the element will be rendered inline with either
@@ -47,34 +56,33 @@ func main() {
 	span.SetBorder(gt.RoundedBorder())
 	span.SetBorderForegroundColor(yellow)
 	span.SetAlignment(gt.AlignmentMiddleCenter)
-	doc.PushChild(span)
+	v.AppendElement(span)
 
-	// We make the bounding box of the Application's Document (the outermost
+	// We make the bounding box of the Application's View (the outermost
 	// renderable of the Application) a rectangle with the top-left coordinates
 	// at (10,10) and the bottom-right coordinates at (40,20). In other words,
 	// a rectangle anchored at (10,10) that is 30 cells wide and 10 cells high.
-	docBounds := gt.Rect(10, 10, 40, 20)
+	bounds := gt.Rect(10, 10, 40, 20)
 
-	// By specifying a bounding box (bounds) on the Application's Document, we
-	// trigger gt to draw the box component in a viewport that represents the
-	// maximum overlapping bounding rectangles for the root bounds and box
-	// bounds.
+	// By specifying a bounding box (bounds) on the Application, we trigger gt
+	// to draw the box component in a viewport that represents the maximum
+	// overlapping bounding rectangles for the root bounds and box bounds.
 	//
 	// In this case, even though we specified a box to be displayed within a
 	// bounding box 100 cells wide and 20 cells high, anchored at cell (0,0),
-	// the Document's bounding box causes the actual rendered box to be "clipped"
+	// the View's bounding box causes the actual rendered box to be "clipped"
 	// in a viewport 40 cells wide and 10 cells high, anchored at cell (10,10).
 	//
 	// Play around with the anchoring cell values and widths/heights and see
 	// the effect on the rendered box.
-	doc.SetBounds(docBounds)
+	app.SetBounds(bounds)
 
 	// Note that instead of specifying the bounding box using SetBounds(), we
 	// could have specified the anchor point of (10,10) using:
 	//
 	//doc.SetAbsolutePosition(gt.Pt(10, 10))
 	//
-	// and set the document's width and height:
+	// and set the view's width and height:
 	//
 	//doc.SetSize(gt.FixedArea(30, 10))
 

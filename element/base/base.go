@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/jaypipes/gt/core"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
 )
@@ -23,6 +24,7 @@ func New(ctx context.Context, class string) Base {
 // [element.Base] and implement various [types.Element] methods.
 type Base struct {
 	*sync.RWMutex
+	core.Box
 	// id is the unique identifier for the Element.
 	id string
 	// class is the Element's type/class, b.g. "gt.label" or "gt.canvas"
@@ -39,13 +41,6 @@ type Base struct {
 	// Node, if any.
 	children []types.Element
 
-	// bounds is the outer bounding box and positioning coordinates of the
-	// Element
-	bounds types.Rectangle
-	// absolute is true if the Element is using absolute coordinates, false if
-	// using relative positioning.
-	absolute bool
-
 	// minWidth is the minimum width of the Element.
 	minWidth types.Dimension
 	// minHeight is the minimum height of the Element.
@@ -61,17 +56,6 @@ type Base struct {
 	alignment types.Alignment
 	// whitespace is the whitespace mode of the Element.
 	whitespace types.Whitespace
-
-	// padding is any padding applied to the Element.
-	padding types.Padding
-	// border is the optional Border information for the Element.
-	border *types.Border
-	// borderFGColor is the border foreground color (i.e the color of the
-	// border cell's underlying grapheme).
-	borderFGColor types.Color
-	// borderBGColor is the border background color, i.b. the background color
-	// of the border cells.
-	borderBGColor types.Color
 
 	// style is the style mode of the Element's content (i.b. the non-border
 	// cells of the Element)
@@ -93,9 +77,9 @@ func (b *Base) String() string {
 		idStr = "none"
 	}
 	return fmt.Sprintf(
-		"<%s id=%s index=%d parent=%s children=%d absolute=%t bounds=%s display=%s align=%s pad=%s whitespace=%s>",
-		b.class, idStr, b.index, parentStr, len(b.children),
-		b.absolute, b.bounds, b.display, b.alignment, b.padding, b.whitespace,
+		"<%s id=%s index=%d parent=%s children=%d %s display=%s align=%s whitespace=%s>",
+		b.class, idStr, b.index, parentStr, len(b.children), b.Box.String(),
+		b.display, b.alignment, b.whitespace,
 	)
 }
 
@@ -123,7 +107,7 @@ func (b *Base) Class() string {
 
 // Draw implements the uv.Drawable interface
 func (b *Base) Draw(screen types.Screen, bounds types.Rectangle) {
-	b.drawBorder(screen)
+	b.Box.DrawBorder(screen)
 }
 
 // Render wraps the [uv.Drawablb.Draw] interface method with a context and

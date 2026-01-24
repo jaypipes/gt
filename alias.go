@@ -8,8 +8,8 @@ import (
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/application"
 	gtcontext "github.com/jaypipes/gt/core/context"
-	"github.com/jaypipes/gt/core/document"
 	gtlog "github.com/jaypipes/gt/core/log"
+	"github.com/jaypipes/gt/core/view"
 	"github.com/jaypipes/gt/element/div"
 	"github.com/jaypipes/gt/element/hr"
 	"github.com/jaypipes/gt/element/span"
@@ -26,10 +26,14 @@ var ContextFromEnv = gtcontext.FromEnv
 
 type Application = application.Application
 
-type Document = document.Document
-
 var (
 	NewApplication = application.New
+)
+
+type View = view.View
+
+var (
+	NewView = view.New
 )
 
 type Div = div.Div
@@ -114,14 +118,18 @@ const (
 )
 
 var (
-	Pad     = types.Pad
-	PadTBLR = types.PadTBLR
-	PadL    = types.PadL
-	PadR    = types.PadR
-	PadLR   = types.PadLR
-	PadT    = types.PadT
-	PadB    = types.PadB
-	PadTB   = types.PadTB
+	Pad           = types.Pad
+	PadHorizontal = types.PadHorizontal
+	PadH          = PadHorizontal
+	PadVertical   = types.PadVertical
+	PadV          = PadVertical
+	PadTBLR       = types.PadTBLR
+	PadL          = types.PadL
+	PadR          = types.PadR
+	PadLR         = types.PadLR
+	PadT          = types.PadT
+	PadB          = types.PadB
+	PadTB         = types.PadTB
 )
 
 var (

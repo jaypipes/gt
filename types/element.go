@@ -7,7 +7,21 @@ import (
 	uv "github.com/charmbracelet/ultraviolet"
 )
 
-// Element represents a node in gt's Document Object Model (DOM).
+// Element represents a single node in gt's Document Object Model (DOM).
+//
+// The DOM is a single-rooted tree structure, and as such each Element in the
+// tree can have zero or more child Elements and only the root node in the tree
+// has no parent Element.
+//
+// Every Element knows how to calculate its width and height, how to calculate
+// its inner and outer bounding boxes, and how to style itself with a border,
+// padding, foreground and background color, etc.
+//
+// Element implements [uv.Drawable] which means that every Element can draw
+// itself onto a [uv.Screen]. That said, structures that implement Element
+// generally will embed [element.base.Base] which has basic implementations of
+// most of the Element interface's methods, one of which is Render, which wraps
+// [uv.Drawable.Draw] for the user.
 type Element interface {
 	uv.Drawable
 
@@ -58,14 +72,6 @@ type Element interface {
 	// Plot calculates the anchoring positioning coordinates of a supplied element.
 	// It traverses the tree of elements rooted at the supplied element and
 	// calculates the top left coordinates for the element.
-	//
-	// To calculate the top left (anchor point) coordinates of the element's
-	// bounding box, we use the following algorithm:
-	//
-	// If the element is using absolute positioning, its bounding box is anchored
-	// at the absolute coordinates. If the element is using relative positioning,
-	// the anchor point is calculated based on the element's Display property and
-	// is relative to the previous sibling or, if no previous sibling, the parent.
 	Plot(context.Context)
 
 	// Render wraps the [uv.Drawable.Draw] interface method with a context and
@@ -192,9 +198,9 @@ type Element interface {
 	// Parent returns the Element that is the parent of this Element, or nil if this
 	// is a root Element.
 	Parent() Element
-	// PushChild adds a new child Element to the Element at the end of Element's set of
+	// AppendChild adds a new child Element to the Element at the end of Element's set of
 	// children.
-	PushChild(Element)
+	AppendChild(Element)
 	// PopChild removes the last child Element from the Element's children and returns
 	// it. Returns nil if Element has no children.
 	PopChild() Element

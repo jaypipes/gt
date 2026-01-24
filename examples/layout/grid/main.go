@@ -26,9 +26,19 @@ func main() {
 	// create a new myApp that wraps the gt.Application
 	app := myApp{gtapp.New(ctx)}
 
-	// gt.Document represents the Document Object Model (DOM) for your
-	// Application's display views.
-	doc := app.Document()
+	// gt.View is used to group displayable things that represent a
+	// logically-related view of something.
+	//
+	// Here, we use the gt.Application.View method to return a View with the ID
+	// "main". Note that if no such View exists in the Application that that
+	// ID, a new empty View with that ID is created, added to the Application,
+	// and returned.
+	//
+	// Below, we add a set of gt.Elements to this View. gt.Elements are
+	// displayable primitives that function very much like an HTML element. The
+	// View can be seen as the root of a sort of Document Object Model (DOM) of
+	// gt.Elements.
+	v := app.View(ctx, "main")
 
 	// We create a layout with three horizontal panes consuming 25%, 50% and
 	// 25% of the screen's height, respectively. The middle horizontal pane
@@ -74,19 +84,19 @@ func main() {
 	// line and consume the width (in cells on the screen) of its parent
 	// container and consume the natural height (in lines on the screen) of its
 	// content.
-	divTop := gtdiv.New(ctx, "Top")
-	divTop.SetID("top")
-	divTop.SetForegroundColor(black)
-	divTop.SetBackgroundColor(yellow)
-	divTop.SetHeight(gt.Percent(25))
-	divTop.SetAlignment(gt.AlignmentMiddleCenter)
-	doc.PushChild(divTop)
+	top := gtdiv.New(ctx, "Top")
+	top.SetID("top")
+	top.SetForegroundColor(black)
+	top.SetBackgroundColor(yellow)
+	top.SetHeight(gt.Percent(25))
+	top.SetAlignment(gt.AlignmentMiddleCenter)
+	v.AppendElement(top)
 
-	divMid := gtdiv.New(ctx, "Mid")
-	divMid.SetID("mid")
-	divMid.SetHeight(gt.Percent(50))
-	divMid.SetAlignment(gt.AlignmentMiddleCenter)
-	doc.PushChild(divMid)
+	mid := gtdiv.New(ctx, "Mid")
+	mid.SetID("mid")
+	mid.SetHeight(gt.Percent(50))
+	mid.SetAlignment(gt.AlignmentMiddleCenter)
+	v.AppendElement(mid)
 
 	// gt.Span is similar to an HTML <span> element. It will display any
 	// content within a bounding box that by default will begin its content to
@@ -97,64 +107,64 @@ func main() {
 	// automatically switched to "inline-block" which will cause the height to
 	// default to the height of the parent container, which is 50% of the
 	// screen's number of lines.
-	spanMidA := gtspan.New(ctx, "Mid A")
-	spanMidA.SetID("mid-a")
-	spanMidA.SetWidth(gt.Fixed(10))
-	spanMidA.SetAlignment(gt.AlignmentMiddleCenter)
-	spanMidA.SetBorder(gt.RoundedBorder())
-	spanMidA.SetForegroundColor(black)
-	spanMidA.SetBackgroundColor(pink)
-	divMid.PushChild(spanMidA)
+	midA := gtspan.New(ctx, "Mid A")
+	midA.SetID("mid-a")
+	midA.SetWidth(gt.Fixed(10))
+	midA.SetAlignment(gt.AlignmentMiddleCenter)
+	midA.SetBorder(gt.RoundedBorder())
+	midA.SetForegroundColor(black)
+	midA.SetBackgroundColor(pink)
+	mid.AppendChild(midA)
 
-	spanMidB := gtspan.New(ctx, "Mid B")
-	spanMidB.SetID("mid-b")
-	spanMidB.SetWidth(gt.Percent(20))
-	spanMidB.SetAlignment(gt.AlignmentMiddleCenter)
-	spanMidB.SetBorder(gt.RoundedBorder())
-	spanMidB.SetForegroundColor(black)
-	spanMidB.SetBackgroundColor(pink)
-	divMid.PushChild(spanMidB)
+	midB := gtspan.New(ctx, "Mid B")
+	midB.SetID("mid-b")
+	midB.SetWidth(gt.Percent(20))
+	midB.SetAlignment(gt.AlignmentMiddleCenter)
+	midB.SetBorder(gt.RoundedBorder())
+	midB.SetForegroundColor(black)
+	midB.SetBackgroundColor(pink)
+	mid.AppendChild(midB)
 
-	divMidB1 := gtdiv.New(ctx, "Mid B-1")
-	divMidB1.SetID("mid-b1")
-	divMidB1.SetHeight(gt.Percent(33))
-	divMidB1.SetAlignment(gt.AlignmentMiddleCenter)
-	divMidB1.SetForegroundColor(black)
-	divMidB1.SetBackgroundColor(lightblue)
-	spanMidB.PushChild(divMidB1)
+	midB1 := gtdiv.New(ctx, "Mid B-1")
+	midB1.SetID("mid-b1")
+	midB1.SetHeight(gt.Percent(33))
+	midB1.SetAlignment(gt.AlignmentMiddleCenter)
+	midB1.SetForegroundColor(black)
+	midB1.SetBackgroundColor(lightblue)
+	midB.AppendChild(midB1)
 
-	divMidB2 := gtdiv.New(ctx, "Mid B-2")
-	divMidB2.SetID("mid-b2")
-	divMidB2.SetHeight(gt.Percent(33))
-	divMidB2.SetAlignment(gt.AlignmentMiddleCenter)
-	divMidB2.SetForegroundColor(black)
-	divMidB2.SetBackgroundColor(lightblue)
-	spanMidB.PushChild(divMidB2)
+	midB2 := gtdiv.New(ctx, "Mid B-2")
+	midB2.SetID("mid-b2")
+	midB2.SetHeight(gt.Percent(33))
+	midB2.SetAlignment(gt.AlignmentMiddleCenter)
+	midB2.SetForegroundColor(black)
+	midB2.SetBackgroundColor(lightblue)
+	midB.AppendChild(midB2)
 
-	divMidB3 := gtdiv.New(ctx, "Mid B-3")
-	divMidB3.SetID("mid-b3")
-	divMidB3.SetHeight(gt.Percent(33))
-	divMidB3.SetAlignment(gt.AlignmentMiddleCenter)
-	divMidB3.SetForegroundColor(black)
-	divMidB3.SetBackgroundColor(lightblue)
-	spanMidB.PushChild(divMidB3)
+	midB3 := gtdiv.New(ctx, "Mid B-3")
+	midB3.SetID("mid-b3")
+	midB3.SetHeight(gt.Percent(33))
+	midB3.SetAlignment(gt.AlignmentMiddleCenter)
+	midB3.SetForegroundColor(black)
+	midB3.SetBackgroundColor(lightblue)
+	midB.AppendChild(midB3)
 
-	spanMidC := gtspan.New(ctx, "Mid C")
-	spanMidC.SetID("mid-c")
-	spanMidC.SetWidth(gt.Percent(80))
-	spanMidC.SetAlignment(gt.AlignmentMiddleCenter)
-	spanMidC.SetBorder(gt.RoundedBorder())
-	spanMidC.SetForegroundColor(black)
-	spanMidC.SetBackgroundColor(pink)
-	divMid.PushChild(spanMidC)
+	midC := gtspan.New(ctx, "Mid C")
+	midC.SetID("mid-c")
+	midC.SetWidth(gt.Percent(80))
+	midC.SetAlignment(gt.AlignmentMiddleCenter)
+	midC.SetBorder(gt.RoundedBorder())
+	midC.SetForegroundColor(black)
+	midC.SetBackgroundColor(pink)
+	mid.AppendChild(midC)
 
-	divBottom := gtdiv.New(ctx, "Bottom")
-	divBottom.SetID("bottom")
-	divBottom.SetForegroundColor(black)
-	divBottom.SetBackgroundColor(lightgreen)
-	divBottom.SetHeight(gt.Percent(25))
-	divBottom.SetAlignment(gt.AlignmentMiddleCenter)
-	doc.PushChild(divBottom)
+	bottom := gtdiv.New(ctx, "Bottom")
+	bottom.SetID("bottom")
+	bottom.SetForegroundColor(black)
+	bottom.SetBackgroundColor(lightgreen)
+	bottom.SetHeight(gt.Percent(25))
+	bottom.SetAlignment(gt.AlignmentMiddleCenter)
+	v.AppendElement(bottom)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)

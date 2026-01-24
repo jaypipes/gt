@@ -140,18 +140,18 @@ func (b *Base) childAtNoLock(index int) types.Element {
 	return b.children[index]
 }
 
-// PushChild adds a new child Element to the Element at the end of Element's
+// AppendChild adds a new child Element to the Element at the end of Element's
 // set of childreb.
-func (b *Base) PushChild(child types.Element) {
+func (b *Base) AppendChild(child types.Element) {
 	b.Lock()
 	defer b.Unlock()
 	child.SetParent(b, len(b.children))
-	b.pushChildNoLock(child)
+	b.appendChildNoLock(child)
 }
 
-// pushChildNoLock adds a new child Element to the Element at the end of
+// appendChildNoLock adds a new child Element to the Element at the end of
 // Element's set of children but does not lock the structure.
-func (b *Base) pushChildNoLock(child types.Element) {
+func (b *Base) appendChildNoLock(child types.Element) {
 	if b.children == nil {
 		b.children = []types.Element{child}
 		return
