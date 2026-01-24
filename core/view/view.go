@@ -16,8 +16,15 @@ import (
 
 // New returns a new View instance.
 func New(ctx context.Context, id string) *View {
+	// By default, a View's content is a div that consumes the entire area of
+	// the View.
+	container := div.New(ctx, "")
+	container.SetID(fmt.Sprintf("view-%s-container", id))
+	container.SetHeight(core.Percent(100))
+	container.SetWidth(core.Percent(100))
 	return &View{
-		id: id,
+		id:      id,
+		content: container,
 	}
 }
 
@@ -29,8 +36,8 @@ type View struct {
 	id string
 	// bounds is the outer bounding box for the View.
 	bounds types.Rectangle
-	// root is the root Element for the View.
-	root types.Element
+	// content is the thing that will be rendered in the View.
+	content types.Element
 	// restoreBuf is a pointer to a [uv.Buffer] that we save pre-rendered
 	// content from the View to. This is restored when View.Restore is called.
 	restoreBuf *uv.Buffer
@@ -46,22 +53,7 @@ func (v *View) ID() string {
 
 // String returns a short string representation of the View.
 func (v *View) String() string {
-	root := "none"
-	if v.root != nil {
-		root = v.root.Tag()
-	}
-	return fmt.Sprintf("<view id=%s root=%s>", v.id, root)
-}
-
-// SetRoot sets the View's top-level renderable Element.
-func (v *View) SetRoot(root types.Element) *View {
-	v.root = root
-	return v
-}
-
-// Root returns the View's top-level renderable Element.
-func (v *View) Root() types.Element {
-	return v.root
+	return fmt.Sprintf("<view id=%s>", v.id)
 }
 
 // SetBounds sets the View's outer bounding box.
@@ -83,12 +75,18 @@ func (v *View) CurrentViewKeyPress() string {
 	return v.currentViewKeyPress
 }
 
-// AppendElement adds a new Element to the supplied View's root Element.
-func (v *View) AppendElement(el types.Element) *View {
-	if v.root == nil {
-		v.root = div.New(context.TODO(), "")
+// SetContent sets the thing that will be rendered in the View.
+func (v *View) SetContent(content types.Element) *View {
+	v.content = content
+	return v
+}
+
+// AppendContent adds a child Element to the View's content.
+func (v *View) AppendContent(content types.Element) *View {
+	if v.content == nil {
+		return v.SetContent(content)
 	}
-	v.root.AppendChild(el)
+	v.content.AppendChild(content)
 	return v
 }
 
@@ -98,8 +96,8 @@ func (v *View) Restore(
 	ctx context.Context,
 	screen uv.Screen,
 ) {
-	if v.restoreBuf != nil && v.root != nil {
-		bounds := v.root.Bounds()
+	if v.restoreBuf != nil {
+		bounds := v.Bounds()
 		v.restoreBuf.Draw(screen, bounds)
 	}
 }
@@ -110,9 +108,6 @@ func (v *View) Save(
 	ctx context.Context,
 	screen uv.Screen,
 ) {
-	if v.root == nil {
-		return
-	}
 	bounds := v.Bounds()
 	v.restoreBuf = uvscreen.CloneArea(screen, bounds)
 }
@@ -124,18 +119,12 @@ func (v *View) Render(
 	ctx context.Context,
 	screen types.Screen,
 ) {
-	gtlog.Debug(ctx, "View.Render(%s)", v.id)
-	root := v.root
-	if root == nil {
+	content := v.content
+	if content == nil {
 		return
 	}
-	root.SetBounds(v.InnerBounds())
-
-	// calculate the position and sizing for each element in the DOM rooted at
-	// the root Element.
-	for _, child := range root.Children() {
-		child.Plot(ctx)
-	}
+	gtlog.Debug(ctx, "View.Render(%s)", v.id)
+	content.SetBounds(v.InnerBounds())
 
 	// clear the outer bounds before rendering the DOM rooted at the root
 	// Element.
@@ -143,8 +132,5 @@ func (v *View) Render(
 
 	v.DrawBorder(screen)
 
-	// draw each element in the DOM rooted at the root Element.
-	for _, child := range root.Children() {
-		child.Render(ctx, screen)
-	}
+	content.Render(ctx, screen)
 }

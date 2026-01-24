@@ -3,11 +3,12 @@ package main
 import (
 	"log"
 
+	"github.com/lucasb-eyer/go-colorful"
+
 	"github.com/jaypipes/gt"
 	gtapp "github.com/jaypipes/gt/core/application"
-	gtdiv "github.com/jaypipes/gt/element/div"
-	gtspan "github.com/jaypipes/gt/element/span"
-	"github.com/lucasb-eyer/go-colorful"
+	"github.com/jaypipes/gt/element/div"
+	"github.com/jaypipes/gt/element/span"
 )
 
 type myApp struct {
@@ -84,19 +85,19 @@ func main() {
 	// line and consume the width (in cells on the screen) of its parent
 	// container and consume the natural height (in lines on the screen) of its
 	// content.
-	top := gtdiv.New(ctx, "Top")
+	top := div.New(ctx, "Top")
 	top.SetID("top")
 	top.SetForegroundColor(black)
 	top.SetBackgroundColor(yellow)
 	top.SetHeight(gt.Percent(25))
 	top.SetAlignment(gt.AlignmentMiddleCenter)
-	v.AppendElement(top)
+	v.AppendContent(top)
 
-	mid := gtdiv.New(ctx, "Mid")
+	mid := div.New(ctx, "Mid")
 	mid.SetID("mid")
 	mid.SetHeight(gt.Percent(50))
 	mid.SetAlignment(gt.AlignmentMiddleCenter)
-	v.AppendElement(mid)
+	v.AppendContent(mid)
 
 	// gt.Span is similar to an HTML <span> element. It will display any
 	// content within a bounding box that by default will begin its content to
@@ -107,7 +108,7 @@ func main() {
 	// automatically switched to "inline-block" which will cause the height to
 	// default to the height of the parent container, which is 50% of the
 	// screen's number of lines.
-	midA := gtspan.New(ctx, "Mid A")
+	midA := span.New(ctx, "Mid A")
 	midA.SetID("mid-a")
 	midA.SetWidth(gt.Fixed(10))
 	midA.SetAlignment(gt.AlignmentMiddleCenter)
@@ -116,7 +117,7 @@ func main() {
 	midA.SetBackgroundColor(pink)
 	mid.AppendChild(midA)
 
-	midB := gtspan.New(ctx, "Mid B")
+	midB := span.New(ctx, "Mid B")
 	midB.SetID("mid-b")
 	midB.SetWidth(gt.Percent(20))
 	midB.SetAlignment(gt.AlignmentMiddleCenter)
@@ -125,7 +126,7 @@ func main() {
 	midB.SetBackgroundColor(pink)
 	mid.AppendChild(midB)
 
-	midB1 := gtdiv.New(ctx, "Mid B-1")
+	midB1 := div.New(ctx, "Mid B-1")
 	midB1.SetID("mid-b1")
 	midB1.SetHeight(gt.Percent(33))
 	midB1.SetAlignment(gt.AlignmentMiddleCenter)
@@ -133,7 +134,7 @@ func main() {
 	midB1.SetBackgroundColor(lightblue)
 	midB.AppendChild(midB1)
 
-	midB2 := gtdiv.New(ctx, "Mid B-2")
+	midB2 := div.New(ctx, "Mid B-2")
 	midB2.SetID("mid-b2")
 	midB2.SetHeight(gt.Percent(33))
 	midB2.SetAlignment(gt.AlignmentMiddleCenter)
@@ -141,7 +142,7 @@ func main() {
 	midB2.SetBackgroundColor(lightblue)
 	midB.AppendChild(midB2)
 
-	midB3 := gtdiv.New(ctx, "Mid B-3")
+	midB3 := div.New(ctx, "Mid B-3")
 	midB3.SetID("mid-b3")
 	midB3.SetHeight(gt.Percent(33))
 	midB3.SetAlignment(gt.AlignmentMiddleCenter)
@@ -149,7 +150,7 @@ func main() {
 	midB3.SetBackgroundColor(lightblue)
 	midB.AppendChild(midB3)
 
-	midC := gtspan.New(ctx, "Mid C")
+	midC := span.New(ctx, "Mid C")
 	midC.SetID("mid-c")
 	midC.SetWidth(gt.Percent(80))
 	midC.SetAlignment(gt.AlignmentMiddleCenter)
@@ -158,13 +159,13 @@ func main() {
 	midC.SetBackgroundColor(pink)
 	mid.AppendChild(midC)
 
-	bottom := gtdiv.New(ctx, "Bottom")
+	bottom := div.New(ctx, "Bottom")
 	bottom.SetID("bottom")
 	bottom.SetForegroundColor(black)
 	bottom.SetBackgroundColor(lightgreen)
 	bottom.SetHeight(gt.Percent(25))
 	bottom.SetAlignment(gt.AlignmentMiddleCenter)
-	v.AppendElement(bottom)
+	v.AppendContent(bottom)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)

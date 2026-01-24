@@ -68,6 +68,7 @@ func (a *Application) View(ctx context.Context, id string) *view.View {
 	if !ok {
 		v = view.New(ctx, id)
 		a.views[id] = v
+		a.curView = id
 	}
 	return v
 }
@@ -88,40 +89,9 @@ func (a *Application) SetCurrentView(id string) *Application {
 	return a
 }
 
-// SetRoot instructs the Application which Element to put at the root of the
-// render tree (the active View).
-func (a *Application) SetRoot(root types.Element) *Application {
-	v := a.CurrentView()
-	if v == nil {
-		v = view.New(context.TODO(), "main")
-		a.views["main"] = v
-		a.curView = "main"
-	}
-	v.SetRoot(root)
-	return a
-}
-
 // SetBounds sets the View's outer bounding box.
 func (a *Application) SetBounds(bounds types.Rectangle) *Application {
 	a.Box.SetBounds(bounds)
-	return a
-}
-
-// SetRootWithBounds instructs the Application which Element to put at the
-// root of the render tree (the View) and a bounding box to use for the
-// View.
-func (a *Application) SetRootWithBounds(
-	root types.Element,
-	bounds types.Rectangle,
-) *Application {
-	v := a.CurrentView()
-	if v == nil {
-		v = view.New(context.TODO(), "main")
-		a.views["main"] = v
-		a.curView = "main"
-	}
-	v.SetRoot(root)
-	v.SetBounds(bounds)
 	return a
 }
 

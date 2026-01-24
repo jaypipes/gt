@@ -2,7 +2,6 @@ package span
 
 import (
 	"context"
-	"strings"
 
 	uv "github.com/charmbracelet/ultraviolet"
 
@@ -57,27 +56,11 @@ func (s *Span) SetHeight(constraint types.DimensionConstraint) types.Element {
 	return s
 }
 
-// Height returns the height of the Span.
-//
-// If a fixed height has been set and the display mode is `block`, we use the
-// fixed height.
-//
-// If a fixed height has not been set or the display mode is not `block`, the
-// height defaults to the number of lines of text content, or 1 if there is no
-// text content.
-func (s *Span) InnerHeight() types.Dimension {
-	display := s.Display()
-	if display == types.DisplayBlock && s.HasFixedHeight() {
-		return s.FixedHeight()
-	}
-	return types.Dimension(strings.Count(s.TextContent(), "\n") + 1)
-}
-
 // Render draws the Span to the given screen.
 func (s *Span) Render(ctx context.Context, screen types.Screen) {
+	s.Base.Render(ctx, screen)
 	gtlog.Debug(ctx, "span.Span.Render[%s]", s)
 	bounds := s.Bounds()
-	s.Base.Render(ctx, screen)
 	inner := s.InnerBounds()
 	innerClipped := render.Overlapping(bounds, inner)
 	content := render.AlignString(

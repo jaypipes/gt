@@ -34,9 +34,9 @@ type Div struct {
 
 // Render draws the Div to the supplied Screen.
 func (d *Div) Render(ctx context.Context, screen types.Screen) {
+	d.Base.Render(ctx, screen)
 	gtlog.Debug(ctx, "div.Div.Render[%s]", d)
 	bounds := d.Bounds()
-	d.Base.Render(ctx, screen)
 	inner := d.InnerBounds()
 	innerClipped := render.Overlapping(bounds, inner)
 	content := render.AlignString(

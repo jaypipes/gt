@@ -49,7 +49,7 @@ func main() {
 	div1.SetAlignment(gt.AlignmentMiddleCenter)
 	div1.SetForegroundColor(black)
 	div1.SetBackgroundColor(yellow)
-	v1.AppendElement(div1)
+	v1.SetContent(div1)
 
 	v2 := app.View(ctx, "2")
 	v2.SetCurrentViewKeyPress("2")
@@ -63,7 +63,7 @@ func main() {
 	div2.SetAlignment(gt.AlignmentMiddleCenter)
 	div2.SetForegroundColor(black)
 	div2.SetBackgroundColor(pink)
-	v2.AppendElement(div2)
+	v2.SetContent(div2)
 
 	// gt.Application.SetCurrentView can be used to programmatically switch the
 	// active (displayed) View for an Application.
