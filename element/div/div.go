@@ -3,10 +3,6 @@ package div
 import (
 	"context"
 
-	uv "github.com/charmbracelet/ultraviolet"
-
-	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/element/base"
 	"github.com/jaypipes/gt/types"
 )
@@ -30,27 +26,4 @@ func New(
 // Div is an Element that uses the block display mode by default.
 type Div struct {
 	base.Base
-}
-
-// Render draws the Div to the supplied Screen.
-func (d *Div) Render(ctx context.Context, screen types.Screen) {
-	d.Base.Render(ctx, screen)
-	gtlog.Debug(ctx, "div.Div.Render[%s]", d)
-	bounds := d.Bounds()
-	inner := d.InnerBounds()
-	innerClipped := render.Overlapping(bounds, inner)
-	content := render.AlignString(
-		ctx, d.TextContent(), inner, d.Alignment(),
-	)
-	style := d.Style()
-	content = style.Styled(content)
-	ss := uv.NewStyledString(content)
-	ws := d.Whitespace()
-	if ws&types.WhitespaceWrapNever == 0 {
-		ss.Wrap = true
-	}
-	ss.Draw(screen, innerClipped)
-	for _, child := range d.Children() {
-		child.Render(ctx, screen)
-	}
 }

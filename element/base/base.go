@@ -3,19 +3,21 @@ package base
 import (
 	"context"
 	"fmt"
-	"sync"
 
-	"github.com/jaypipes/gt/core"
+	uv "github.com/charmbracelet/ultraviolet"
+
+	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
+	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/types"
 )
 
 // New returns a new instance of a [base.Base] with the specified type/class.
 func New(ctx context.Context, class string) Base {
+	b := box.New(ctx)
 	return Base{
-		RWMutex:  new(sync.RWMutex),
-		class:    class,
-		children: []types.Element{},
+		Box:   b,
+		class: class,
 	}
 }
 
@@ -23,39 +25,12 @@ func New(ctx context.Context, class string) Base {
 // implementations. Subclasses in the [element] subpackages embed
 // [element.Base] and implement various [types.Element] methods.
 type Base struct {
-	*sync.RWMutex
-	core.Box
-	// id is the unique identifier for the Element.
-	id string
+	box.Box
 	// class is the Element's type/class, b.g. "gt.label" or "gt.canvas"
 	class string
 
 	// textContent is any unstyled raw text content for the Element.
 	textContent string
-
-	// index is the index of this Node in the parent's children.
-	index int
-	// parent is the this Node's parent, if any.
-	parent types.Element
-	// children is the collection of Nodes that are the direct children of this
-	// Node, if any.
-	children []types.Element
-
-	// minWidth is the minimum width of the Element.
-	minWidth types.Dimension
-	// minHeight is the minimum height of the Element.
-	minHeight types.Dimension
-	// widthConstraint is the constraint put on the width dimension
-	widthConstraint types.DimensionConstraint
-	// heightConstraint is the constraint put on the height dimension
-	heightConstraint types.DimensionConstraint
-
-	// display is the display mode for the Element.
-	display types.Display
-	// alignment is the alignment mode of the Element
-	alignment types.Alignment
-	// whitespace is the whitespace mode of the Element.
-	whitespace types.Whitespace
 
 	// style is the style mode of the Element's content (i.b. the non-border
 	// cells of the Element)
@@ -64,38 +39,24 @@ type Base struct {
 
 // Tag returns a string with the Element's type/class and ID
 func (b *Base) Tag() string {
-	return fmt.Sprintf("<%s:%s>", b.class, b.id)
+	return fmt.Sprintf("<%s:%s>", b.class, b.ID())
 }
 
 func (b *Base) String() string {
-	parentStr := "nil"
-	if b.parent != nil {
-		parentStr = b.parent.Tag()
-	}
-	idStr := b.id
-	if idStr == "" {
-		idStr = "none"
-	}
 	return fmt.Sprintf(
-		"<%s id=%s index=%d parent=%s children=%d %s display=%s align=%s whitespace=%s>",
-		b.class, idStr, b.index, parentStr, len(b.children), b.Box.String(),
-		b.display, b.alignment, b.whitespace,
+		"<%s %s>",
+		b.class, b.Box.String(),
 	)
 }
 
-// SetID sets the Element's unique identifier.
-func (b *Base) SetID(id string) types.Element {
-	b.id = id
+// WithID sets the Element's unique identifier and returns the Element.
+func (b *Base) WithID(id string) types.Element {
+	b.Box.SetID(id)
 	return b
 }
 
-// ID returns the Element's unique identifier.
-func (b *Base) ID() string {
-	return b.id
-}
-
-// SetClass sets the Element's type/class
-func (b *Base) SetClass(class string) types.Element {
+// WithClass sets the Element's type/class and returns the Element
+func (b *Base) WithClass(class string) types.Element {
 	b.class = class
 	return b
 }
@@ -117,8 +78,29 @@ func (b *Base) Render(ctx context.Context, screen types.Screen) {
 	gtlog.Debug(ctx, "base.Base.Render[%s]", b)
 	b.Draw(screen, b.Bounds())
 	children := b.Children()
-	for _, child := range children {
-		child.Render(ctx, screen)
+	if len(children) > 0 {
+		for _, child := range children {
+			child.Render(ctx, screen)
+		}
+	} else {
+		content := b.TextContent()
+		if len(content) == 0 {
+			return
+		}
+		bounds := b.Bounds()
+		inner := b.InnerBounds()
+		innerClipped := render.Overlapping(bounds, inner)
+		content = render.AlignString(
+			ctx, content, inner, b.Alignment(),
+		)
+		style := b.Style()
+		content = style.Styled(content)
+		ss := uv.NewStyledString(content)
+		ws := b.Whitespace()
+		if ws&types.WhitespaceWrapNever == 0 {
+			ss.Wrap = true
+		}
+		ss.Draw(screen, innerClipped)
 	}
 }
 

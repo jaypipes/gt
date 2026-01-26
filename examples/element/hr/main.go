@@ -50,7 +50,7 @@ func main() {
 	// `gt.Element.SetAlignment` method.
 	hrA.SetAlignment(gt.AlignmentLeft)
 	hrA.SetForegroundColor(yellow)
-	v.AppendElement(hrA)
+	v.AppendContent(hrA)
 
 	// We'll add another HR without a fixed width or alignment mode to
 	// demonstrate the default behaviour of a width equal to the parent
@@ -58,7 +58,7 @@ func main() {
 	hrB := gthr.New(ctx)
 	hrB.SetID("B")
 	hrB.SetForegroundColor(blue)
-	v.AppendElement(hrB)
+	v.AppendContent(hrB)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)

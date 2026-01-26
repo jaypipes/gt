@@ -8,6 +8,7 @@ import (
 	uvscreen "github.com/charmbracelet/ultraviolet/screen"
 
 	"github.com/jaypipes/gt/core"
+	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/element/div"
@@ -31,7 +32,7 @@ func New(ctx context.Context, id string) *View {
 // View is the virtual representation of the tree of elements that will be
 // rendered to a Screen.
 type View struct {
-	core.Box
+	box.Box
 	// id is the unique identifier for the View.
 	id string
 	// bounds is the outer bounding box for the View.

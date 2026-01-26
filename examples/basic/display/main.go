@@ -26,13 +26,22 @@ func main() {
 	ctx := gt.ContextFromEnv()
 	// create a new myApp that wraps the gt.Application
 	app := myApp{gtapp.New(ctx)}
+	// You can set an outer border on your Application.
+	app.SetBorder(gt.ThickBorder())
 
-	// gt.Document represents the Document Object Model (DOM) for your
-	// Application's display views.
-	doc := app.Document()
-	// You can set an outer border on your Application by setting a border on
-	// the Document.
-	doc.SetBorder(gt.ThickBorder())
+	// gt.View is used to group displayable things that represent a
+	// logically-related view of something.
+	//
+	// Here, we use the gt.Application.View method to return a View with the ID
+	// "main". Note that if no such View exists in the Application that that
+	// ID, a new empty View with that ID is created, added to the Application,
+	// and returned.
+	//
+	// Below, we add a set of gt.Elements to this View. gt.Elements are
+	// displayable primitives that function very much like an HTML element. The
+	// View can be seen as the root of a sort of Document Object Model (DOM) of
+	// gt.Elements.
+	v := app.View(ctx, "main")
 
 	// gt.Div is similar to an HTML <div> element. It will display any content
 	// within a bounding box that by default will begin its content on a new
@@ -71,7 +80,7 @@ func main() {
 	// of 5 lines, we override this dynamic sizing behaviour.
 	divA.SetSize(gt.FixedArea(30, 5))
 	// Add divA to our Application's Document.
-	doc.PushChild(divA)
+	v.AppendContent(divA)
 
 	// We will *not* give divB a fixed width and height, instead relying on the
 	// default sizing of `gt.Div` elements.
@@ -101,7 +110,7 @@ func main() {
 	// divB.SetWhitespace(gt.WhitespaceWrapNever)
 
 	// Add divB to our Application's Document as a sibling of divA.
-	doc.PushChild(divB)
+	v.AppendContent(divB)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)

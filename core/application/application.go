@@ -12,7 +12,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 	"github.com/samber/lo"
 
-	"github.com/jaypipes/gt/core"
+	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/view"
 	"github.com/jaypipes/gt/types"
@@ -36,7 +36,7 @@ func New(
 //	 	myappstate string
 //	}
 type Application struct {
-	core.Box
+	box.Box
 	term *uv.Terminal
 
 	// title is an optional title for the application, used as a title for the

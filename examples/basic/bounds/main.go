@@ -56,7 +56,7 @@ func main() {
 	span.SetBorder(gt.RoundedBorder())
 	span.SetBorderForegroundColor(yellow)
 	span.SetAlignment(gt.AlignmentMiddleCenter)
-	v.AppendElement(span)
+	v.AppendContent(span)
 
 	// We make the bounding box of the Application's View (the outermost
 	// renderable of the Application) a rectangle with the top-left coordinates

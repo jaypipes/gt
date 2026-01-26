@@ -4,36 +4,40 @@ import (
 	"context"
 	"strings"
 
-	"github.com/jaypipes/gt/core"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
 	"github.com/mitchellh/go-wordwrap"
 )
 
-// SetSize constrains the size of the Element's inner bounding box.
-func (b *Base) SetSize(constraint types.SizeConstraint) types.Element {
-	wc := constraint.Width()
-	if wc != nil {
-		b.widthConstraint = wc
-	}
-	hc := constraint.Height()
-	if hc != nil {
-		b.heightConstraint = hc
-	}
+// WithSize constrains the size of the Element's outer bounding box and returns
+// the Element.
+func (b *Base) WithSize(constraint types.SizeConstraint) types.Element {
+	b.Box.SetSize(constraint)
 	return b
 }
 
-// Size returns the width and height of the Element.
-func (b *Base) Size() types.Size {
-	return types.Size{
-		W: int(b.Width()),
-		H: int(b.Height()),
-	}
+// WithWidth constrains the width of the Element and returns the Element.
+func (b *Base) WithWidth(constraint types.DimensionConstraint) types.Element {
+	b.Box.SetWidth(constraint)
+	return b
 }
 
-// SetWidth constrains the width of the Element.
-func (b *Base) SetWidth(constraint types.DimensionConstraint) types.Element {
-	b.widthConstraint = constraint
+// WithMinWidth sets the minimum width of the Element and returns the Element.
+func (b *Base) WithMinWidth(w types.Dimension) types.Element {
+	b.Box.SetMinWidth(w)
+	return b
+}
+
+// WithHeight constrains the height of the Element and returns the Element.
+func (b *Base) WithHeight(constraint types.DimensionConstraint) types.Element {
+	b.Box.SetHeight(constraint)
+	return b
+}
+
+// WithMinHeight sets the minimum height of the Element and returns the
+// Element.
+func (b *Base) WithMinHeight(w types.Dimension) types.Element {
+	b.Box.SetMinHeight(w)
 	return b
 }
 
@@ -52,7 +56,7 @@ func (b *Base) SetWidth(constraint types.DimensionConstraint) types.Element {
 // set to the width of the content plus any horizontal padding and left-right
 // border width.
 func (b *Base) Width() types.Dimension {
-	parent := b.parent
+	parent := b.Parent()
 	if parent == nil {
 		return types.Dimension(b.Bounds().Dx())
 	}
@@ -98,8 +102,9 @@ func (b *Base) Width() types.Dimension {
 	// Calculate the remainder of the parent's available width by examining the
 	// set of siblings and subtracting any fixed width values and horizontal
 	// space.
+	childIndex := b.ChildIndex()
 	for _, child := range parent.Children() {
-		if child.ChildIndex() == b.index {
+		if child.ChildIndex() == childIndex {
 			continue
 		}
 		parentAvailable -= child.HorizontalSpace()
@@ -161,65 +166,6 @@ func (b *Base) Width() types.Dimension {
 		b.Tag(), display, horizSpace, contentWidth,
 	)
 	return types.Dimension(min(parentWidth, contentWidth))
-}
-
-// HasFixedWidth returns true if the Element's inner bounding box has a fixed
-// width.
-func (b *Base) HasFixedWidth() bool {
-	_, ok := b.widthConstraint.(core.FixedConstraint)
-	return ok
-}
-
-// FixedWidth returns the Element's fixed width. If the Element does not have a
-// fixed width constraint, returns 0.
-func (b *Base) FixedWidth() types.Dimension {
-	if !b.HasFixedWidth() {
-		return types.Dimension(0)
-	}
-	return types.Dimension(b.widthConstraint.(core.FixedConstraint))
-}
-
-// HasPercentWidth returns true if the Element's inner bounding box has a percent
-// width.
-func (b *Base) HasPercentWidth() bool {
-	_, ok := b.widthConstraint.(core.PercentConstraint)
-	return ok
-}
-
-// PercentWidth returns the Element's fixed width. If the Element does not have a
-// percent width constraint, returns 0.
-func (b *Base) PercentWidth() types.Dimension {
-	if !b.HasPercentWidth() {
-		return types.Dimension(0)
-	}
-	return types.Dimension(b.widthConstraint.(core.PercentConstraint))
-}
-
-// SetMinWidth sets the minimum width of the Element.
-func (b *Base) SetMinWidth(w types.Dimension) types.Element {
-	b.minWidth = w
-	return b
-}
-
-// MinWidth returns the Element's minimum width.
-func (b *Base) MinWidth() types.Dimension {
-	return b.minWidth
-}
-
-// WidthConstraint returns any optional size constraint for the Element's
-// width.  Returns nil when there is no width constraint.
-func (b *Base) WidthConstraint() types.DimensionConstraint {
-	return b.widthConstraint
-}
-
-// SetHeight constrains the height of the Element.
-func (b *Base) SetHeight(constraint types.DimensionConstraint) types.Element {
-	gtlog.Debug(
-		context.TODO(), "base.Base.SetHeight[%s](constraint=%s)",
-		b.Tag(), constraint,
-	)
-	b.heightConstraint = constraint
-	return b
 }
 
 // Height returns the height of the Element.
@@ -369,53 +315,4 @@ func (b *Base) Height() types.Dimension {
 		vertSpace, contentHeight, parentHeight,
 	)
 	return types.Dimension(min(parentHeight, contentHeight))
-}
-
-// HasFixedHeight returns true if the Element's inner bounding box has a fixed
-// height.
-func (b *Base) HasFixedHeight() bool {
-	_, ok := b.heightConstraint.(core.FixedConstraint)
-	return ok
-}
-
-// FixedHeight returns the Element's fixed height. If the Element does not have
-// a fixed height constraint, returns 0.
-func (b *Base) FixedHeight() types.Dimension {
-	if !b.HasFixedHeight() {
-		return types.Dimension(0)
-	}
-	return types.Dimension(b.heightConstraint.(core.FixedConstraint))
-}
-
-// HasPercentHeight returns true if the Element's inner bounding box has a percent
-// height.
-func (b *Base) HasPercentHeight() bool {
-	_, ok := b.heightConstraint.(core.PercentConstraint)
-	return ok
-}
-
-// PercentHeight returns the Element's percent height. If the Element does not
-// have a percent height constraint, returns 0.
-func (b *Base) PercentHeight() types.Dimension {
-	if !b.HasPercentHeight() {
-		return types.Dimension(0)
-	}
-	return types.Dimension(b.heightConstraint.(core.PercentConstraint))
-}
-
-// SetMinHeight sets the minimum height of the Element.
-func (b *Base) SetMinHeight(h types.Dimension) types.Element {
-	b.minHeight = h
-	return b
-}
-
-// MinHeight returns the Element's minimum height.
-func (b *Base) MinHeight() types.Dimension {
-	return b.minHeight
-}
-
-// HeightConstraint returns any optional size constraint for the Element's
-// height. Returns nil when there is no height constraint.
-func (b *Base) HeightConstraint() types.DimensionConstraint {
-	return b.heightConstraint
 }

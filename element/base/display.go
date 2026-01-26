@@ -2,13 +2,9 @@ package base
 
 import "github.com/jaypipes/gt/types"
 
-// SetDisplayMode sets the display mode of the Element
-func (b *Base) SetDisplay(display types.Display) types.Element {
-	b.display = display
+// WithDisplayMode sets the display mode of the Element and returns the
+// Element.
+func (b *Base) WithDisplay(display types.Display) types.Element {
+	b.Box.SetDisplay(display)
 	return b
-}
-
-// DisplayMode returns the display mode of the Element
-func (b *Base) Display() types.Display {
-	return b.display
 }
