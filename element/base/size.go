@@ -60,89 +60,21 @@ func (b *Base) Width() types.Dimension {
 	if parent == nil {
 		return types.Dimension(b.Bounds().Dx())
 	}
+	boxWidth := b.Box.Width()
 	next := b.NextSibling()
-	parentInner := parent.InnerBounds()
-	parentWidth := types.Dimension(parentInner.Dx())
 	horizSpace := b.HorizontalSpace()
 
 	ctx := context.TODO()
 	display := b.Display()
 
-	if display == types.DisplayInline {
-		// For inline, we use the lesser of the parent's width or the "natural"
-		// width of the content
-		contentWidth := b.TextContentWidth()
-		contentWidth += horizSpace
+	if display != types.DisplayInline {
 		gtlog.Debug(
 			ctx,
-			"base.Base.Width[%s]: display=%s horiz_space=%d "+
-				"using min(content_width=%d, parent_width=%d)",
-			b.Tag(), display, horizSpace, contentWidth, parentWidth,
+			"base.Base.Width[%s]: display=%s. "+
+				"using box width %d.",
+			b.Tag(), display, boxWidth,
 		)
-		return types.Dimension(
-			min(parentWidth, contentWidth),
-		)
-	}
-
-	if b.HasFixedWidth() {
-		fixedWidth := b.FixedWidth() + horizSpace
-		gtlog.Debug(
-			ctx,
-			"base.Base.Width[%s]: display=%s horiz_space=%d "+
-				"using min(fixed_width=%d, parent_width=%d)",
-			b.Tag(), display, horizSpace, fixedWidth, parentWidth,
-		)
-		return types.Dimension(
-			min(parentWidth, fixedWidth),
-		)
-	}
-
-	percentWidth := types.Dimension(0)
-	parentAvailable := parentWidth
-	// Calculate the remainder of the parent's available width by examining the
-	// set of siblings and subtracting any fixed width values and horizontal
-	// space.
-	childIndex := b.ChildIndex()
-	for _, child := range parent.Children() {
-		if child.ChildIndex() == childIndex {
-			continue
-		}
-		parentAvailable -= child.HorizontalSpace()
-		childDisplay := child.Display()
-		if childDisplay != types.DisplayInline && child.HasFixedWidth() {
-			parentAvailable -= child.FixedWidth()
-		}
-	}
-	if b.HasPercentWidth() {
-		constraint := b.WidthConstraint()
-		pw := b.PercentWidth()
-		percentWidth = parentAvailable * pw / 100
-		percentWidth += horizSpace
-		if next == nil {
-			// If we're the last child in the row to use a percentage width
-			// constraint, we need to reduce the calculated width by a single
-			// cell in order to not exceed the parent inner bounds.
-			percentWidth -= 1
-		}
-		gtlog.Debug(
-			ctx,
-			"base.Base.Width[%s]: width_constraint=%s. "+
-				"calculated width %d "+
-				"from total parent available width %d",
-			b.Tag(), constraint, percentWidth, parentAvailable,
-		)
-		if percentWidth != 0 {
-			gtlog.Debug(
-				ctx,
-				"base.Base.Width[%s]: display=%s "+
-					"horiz_space=%d width_constraint=%s. "+
-					"using min(calc_percent_width=%d, parent_width=%d)",
-				b.Tag(), display,
-				horizSpace, b.WidthConstraint(),
-				percentWidth, parentWidth,
-			)
-			return types.Dimension(min(parentWidth, percentWidth))
-		}
+		return boxWidth
 	}
 
 	// No width constraint and not inline display, we consume the remainder of
@@ -153,19 +85,22 @@ func (b *Base) Width() types.Dimension {
 			ctx,
 			"base.Base.Width[%s]: display=%s horiz_space=%d "+
 				"last sibling or next sibling is block display. "+
-				"using remaining horizontal width in parent %d.",
-			b.Tag(), display, horizSpace, parentAvailable,
+				"using box width %d.",
+			b.Tag(), display, horizSpace, boxWidth,
 		)
-		return types.Dimension(min(parentWidth, parentAvailable))
+		return boxWidth
 	}
+
 	contentWidth := b.TextContentWidth()
+	calcWidth := contentWidth + horizSpace
 	gtlog.Debug(
 		ctx,
-		"base.Base.Width[%s]: display=%s horiz_space=%d "+
-			"not last sibling. using text content width %d.",
+		"base.Base.Width[%s]: display=%s horiz_space=%d content_width=%d. "+
+			"using min(box_width=%d, calc_width=%d).",
 		b.Tag(), display, horizSpace, contentWidth,
+		boxWidth, calcWidth,
 	)
-	return types.Dimension(min(parentWidth, contentWidth))
+	return types.Dimension(min(boxWidth, calcWidth))
 }
 
 // Height returns the height of the Element.
@@ -189,6 +124,7 @@ func (b *Base) Height() types.Dimension {
 	if parent == nil {
 		return types.Dimension(b.Bounds().Dy())
 	}
+	boxHeight := b.Box.Height()
 	next := b.NextSibling()
 	parentInner := parent.InnerBounds()
 	parentWidth := types.Dimension(parentInner.Dx())
@@ -197,15 +133,17 @@ func (b *Base) Height() types.Dimension {
 
 	ctx := context.TODO()
 	display := b.Display()
+
+	// If we're not using inline display mode and there is a fixed height, we
+	// use the box-calculated height.
 	if display != types.DisplayInline && b.HasFixedHeight() {
-		fixedHeight := b.FixedHeight() + vertSpace
 		gtlog.Debug(
 			ctx,
-			"base.Base.Height[%s]: display=%s vert_space=%d "+
-				"using min(fixed_height=%d, parent_height=%d)",
-			b.Tag(), display, vertSpace, fixedHeight, parentHeight,
+			"base.Base.Height[%s]: display=%s. "+
+				"using box fixed height %d",
+			b.ID(), display, boxHeight,
 		)
-		return types.Dimension(min(parentHeight, fixedHeight))
+		return boxHeight
 	}
 
 	percentHeight := types.Dimension(0)
@@ -248,20 +186,6 @@ func (b *Base) Height() types.Dimension {
 			)
 			return types.Dimension(min(parentHeight, percentHeight))
 		}
-	}
-
-	if display == types.DisplayInlineBlock {
-		// Default to the height of the parent container
-		gtlog.Debug(
-			ctx,
-			"base.Base.Height[%s]: display=%s "+
-				"vert_space=%d height_constraint=%s "+
-				"using parent remaining height %d",
-			b.Tag(), display,
-			vertSpace, b.HeightConstraint(),
-			parentAvailable,
-		)
-		return parentAvailable
 	}
 
 	whitespace := b.Whitespace()

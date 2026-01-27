@@ -6,6 +6,7 @@ import (
 	"github.com/jaypipes/gt/core"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
+	"github.com/samber/lo"
 )
 
 // SetSize constrains the size of the Box's inner bounding box.
@@ -23,8 +24,8 @@ func (b *Box) SetSize(constraint types.SizeConstraint) {
 // Size returns the width and height of the Box.
 func (b *Box) Size() types.Size {
 	return types.Size{
-		W: int(b.OuterWidth()),
-		H: int(b.OuterHeight()),
+		W: int(b.Width()),
+		H: int(b.Height()),
 	}
 }
 
@@ -81,7 +82,7 @@ func (b *Box) WidthConstraint() types.DimensionConstraint {
 	return b.widthConstraint
 }
 
-// OuterWidth returns the width of the Box's outer bounding box.
+// Width returns the width of the Box's outer bounding box.
 //
 // If a fixed width has been set and the display mode is not "inline", we use
 // the fixed width plus any horizontal padding and left-right border width.
@@ -93,7 +94,7 @@ func (b *Box) WidthConstraint() types.DimensionConstraint {
 // If a fixed width has not been set and the display mode is `block` or
 // `inline-block`, the width defaults to remaining horizontal space in the
 // parent's inner bounding box.
-func (b *Box) OuterWidth() types.Dimension {
+func (b *Box) Width() types.Dimension {
 	parent := b.Parent()
 	if parent == nil {
 		return types.Dimension(b.Bounds().Dx())
@@ -107,56 +108,109 @@ func (b *Box) OuterWidth() types.Dimension {
 	display := b.Display()
 
 	if b.HasFixedWidth() {
-		fixedWidth := b.FixedWidth() + horizSpace
+		fixedWidth := b.FixedWidth()
+		calcWidth := fixedWidth + horizSpace
 		gtlog.Debug(
 			ctx,
-			"box.Box.OuterWidth[%s]: display=%s horiz_space=%d "+
-				"using min(fixed_width=%d, parent_width=%d)",
-			b.ID(), display, horizSpace, fixedWidth, parentWidth,
+			"box.Box.Width[%s]: display=%s "+
+				"fixed_width=%d horiz_space=%d "+
+				"using min(calculated_width=%d, parent_width=%d)",
+			b.ID(), display, fixedWidth, horizSpace,
+			calcWidth, parentWidth,
 		)
 		return types.Dimension(
-			min(parentWidth, fixedWidth),
+			min(parentWidth, calcWidth),
 		)
 	}
 
-	percentWidth := types.Dimension(0)
-	parentAvailable := parentWidth
-	// Calculate the remainder of the parent's available width by examining the
-	// set of siblings and subtracting any fixed width values and horizontal
-	// space.
-	childIndex := b.ChildIndex()
-	for _, child := range parent.Children() {
-		if child.ChildIndex() == childIndex {
-			continue
-		}
-		parentAvailable -= child.HorizontalSpace()
-		childDisplay := child.Display()
-		if childDisplay != types.DisplayInline && child.HasFixedWidth() {
-			parentAvailable -= child.FixedWidth()
-		}
-	}
-	if b.HasPercentWidth() {
-		constraint := b.WidthConstraint()
-		pw := b.PercentWidth()
-		percentWidth = parentAvailable * pw / 100
-		percentWidth += horizSpace
-		if next == nil {
-			// If we're the last child in the row to use a percentage width
-			// constraint, we need to reduce the calculated width by a single
-			// cell in order to not exceed the parent inner bounds.
-			percentWidth -= 1
+	// If this Box is using block display and does not have a fixed width, the
+	// Box will start at the left edge of the parent. We calculate the
+	// remaining width of the "row" of Boxes by doing a forward pass through
+	// this Box's siblings and subtracting any fixed width amounts. If we reach
+	// the end of the siblings or we come across a sibling that is using block
+	// display, we stop calculating the remaining width.
+	if display == types.DisplayBlock {
+		remainingWidth := parentWidth
+		next := b.NextSibling()
+		for next != nil {
+			if next.Display() == types.DisplayBlock {
+				break
+			}
+			remainingWidth -= next.HorizontalSpace()
+			if next.HasFixedWidth() {
+				remainingWidth -= next.FixedWidth()
+			}
+			next = next.NextSibling()
 		}
 		gtlog.Debug(
 			ctx,
-			"box.Box.OuterWidth[%s]: width_constraint=%s. "+
+			"box.Box.Width[%s]: using block display. "+
+				"calculated remaining available width %d "+
+				"from original parent width %d",
+			b.ID(), remainingWidth, parentWidth,
+		)
+		return types.Dimension(
+			min(parentWidth, remainingWidth),
+		)
+	}
+
+	// If the Box is NOT using block display and does not have a fixed width,
+	// we calculate the remainder of the available width by determining the set
+	// of siblings IN THIS ROW and subtracting any fixed width values and
+	// horizontal space.
+	remainingWidth := parentWidth
+	firstChildInRow := b.ChildIndex()
+	prev := b.PreviousSibling()
+	for prev != nil {
+		if prev.Display() != types.DisplayBlock {
+			firstChildInRow = prev.ChildIndex()
+		}
+		prev = prev.PreviousSibling()
+	}
+
+	childIndex := b.ChildIndex()
+	children := parent.Children()
+
+	for x, child := range children[firstChildInRow:] {
+		if x == childIndex {
+			// ignore THIS element for the purposes of calculating
+			// remaining width...
+			continue
+		}
+		if child.Display() == types.DisplayBlock {
+			// Sibling starts a new row at the parent's inner bounds left edge
+			// and therefore we are done calculating the available width.
+			break
+		}
+		remainingWidth -= child.HorizontalSpace()
+		if child.HasFixedWidth() {
+			remainingWidth -= child.FixedWidth()
+		}
+	}
+
+	percentWidth := types.Dimension(0)
+	if b.HasPercentWidth() {
+		constraint := b.WidthConstraint()
+		pw := b.PercentWidth()
+		percentWidth = remainingWidth * pw / 100
+		percentWidth += horizSpace
+		if next == nil {
+			// If we're the last child in the row to use a percentage width
+			// constraint, we need to increase the calculated width by a single
+			// cell in order to snug to the parent's inner bounds.
+			percentWidth += 1
+		}
+		gtlog.Debug(
+			ctx,
+			"box.Box.Width[%s]: width_constraint=%s. "+
 				"calculated width %d "+
-				"from total parent available width %d",
-			b.ID(), constraint, percentWidth, parentAvailable,
+				"from total remaining available width %d",
+			b.ID(), constraint, percentWidth, remainingWidth,
 		)
 		if percentWidth != 0 {
 			gtlog.Debug(
 				ctx,
-				"box.Box.OuterWidth[%s]: display=%s "+
+				"box.Box.Width[%s]: display=%s "+
 					"horiz_space=%d width_constraint=%s. "+
 					"using min(calc_percent_width=%d, parent_width=%d)",
 				b.ID(), display,
@@ -169,12 +223,11 @@ func (b *Box) OuterWidth() types.Dimension {
 
 	gtlog.Debug(
 		ctx,
-		"box.Box.OuterWidth[%s]: display=%s horiz_space=%d "+
-			"last sibling or next sibling is block display. "+
+		"box.Box.Width[%s]: display=%s horiz_space=%d. "+
 			"using remaining horizontal width in parent %d.",
-		b.ID(), display, horizSpace, parentAvailable,
+		b.ID(), display, horizSpace, remainingWidth,
 	)
-	return types.Dimension(min(parentWidth, parentAvailable))
+	return types.Dimension(min(parentWidth, remainingWidth))
 }
 
 // SetHeight constrains the height of the Box.
@@ -230,7 +283,7 @@ func (b *Box) HeightConstraint() types.DimensionConstraint {
 	return b.heightConstraint
 }
 
-// OuterHeight returns the height of the Box's outer bounding box.
+// Height returns the height of the Box's outer bounding box.
 //
 // If a fixed height has been set and the display mode is not `inline`, we use
 // the fixed height plus any vertical space from padding and border.
@@ -242,12 +295,11 @@ func (b *Box) HeightConstraint() types.DimensionConstraint {
 //
 // If neither a fixed or percent height has been set, we return the remaining
 // available height of the parent.
-func (b *Box) OuterHeight() types.Dimension {
+func (b *Box) Height() types.Dimension {
 	parent := b.Parent()
 	if parent == nil {
 		return types.Dimension(b.Bounds().Dy())
 	}
-	next := b.NextSibling()
 	parentInner := parent.InnerBounds()
 	parentHeight := types.Dimension(parentInner.Dy())
 	vertSpace := b.VerticalSpace()
@@ -255,48 +307,78 @@ func (b *Box) OuterHeight() types.Dimension {
 	ctx := context.TODO()
 	display := b.Display()
 	if display != types.DisplayInline && b.HasFixedHeight() {
-		fixedHeight := b.FixedHeight() + vertSpace
+		fixedHeight := b.FixedHeight()
+		calcHeight := fixedHeight + vertSpace
 		gtlog.Debug(
 			ctx,
-			"box.Box.OuterHeight[%s]: display=%s vert_space=%d "+
-				"using min(fixed_height=%d, parent_height=%d)",
-			b.ID(), display, vertSpace, fixedHeight, parentHeight,
+			"box.Box.Height[%s]: "+
+				"display=%s vert_space=%d fixed_height=%d. "+
+				"using min(calculated_height=%d, parent_height=%d)",
+			b.ID(), display, vertSpace, fixedHeight,
+			calcHeight, parentHeight,
 		)
-		return types.Dimension(min(parentHeight, fixedHeight))
+		return types.Dimension(min(parentHeight, calcHeight))
 	}
 
-	percentHeight := types.Dimension(0)
-	parentAvailable := parentHeight
-	if display != types.DisplayInline && b.HasPercentHeight() {
-		// Calculate the remainder of the parent's available height by
-		// examining the set of siblings and subtracting any fixed height
-		// values.
-		for _, child := range parent.Children() {
-			childDisplay := child.Display()
-			if childDisplay != types.DisplayInline && child.HasFixedHeight() {
-				parentAvailable -= child.FixedHeight()
-			}
+	// To determine the remaining available height, we determine the max fixed
+	// height of previous "rows" and subtract those max-fixed-height values
+	// from the parent's inner height.
+	remainingHeight := parentHeight
+	childIndex := b.ChildIndex()
+	children := parent.Children()
+	rowMaxHeights := map[int]types.Dimension{}
+	rowMaxHeight := types.Dimension(0)
+	curRow := 0
+	for x, child := range children {
+		if x == childIndex {
+			continue
 		}
+		cellVertSpace := child.VerticalSpace()
+		cellFixedHeight := child.FixedHeight()
+		childDisplay := child.Display()
+		if childDisplay != types.DisplayInline {
+			rowMaxHeight = max(rowMaxHeight, cellFixedHeight+cellVertSpace)
+		}
+		if childDisplay == types.DisplayBlock {
+			rowMaxHeights[curRow] = rowMaxHeight
+			curRow++
+			rowMaxHeight = 0
+			continue
+		}
+	}
+	rowMaxHeights[curRow] = rowMaxHeight
+	remainingHeight -= lo.Sum(lo.Values(rowMaxHeights))
+	gtlog.Debug(
+		ctx,
+		"box.Box.Height[%s]: parent_height=%d row_max_heights=%v. "+
+			"calculated remaining height %d",
+		b.ID(), parentHeight, rowMaxHeights, remainingHeight,
+	)
+
+	next := b.NextSibling()
+	percentHeight := types.Dimension(0)
+	if display != types.DisplayInline && b.HasPercentHeight() {
 		constraint := b.HeightConstraint()
 		ph := b.PercentHeight()
-		percentHeight = parentAvailable * ph / 100
-		gtlog.Debug(
-			ctx,
-			"box.Box.OuterHeight[%s]: height_constraint=%s. "+
-				"calculated height %d "+
-				"from total parent available height %d",
-			b.ID(), constraint, percentHeight, parentAvailable,
-		)
+		percentHeight = remainingHeight * ph / 100
 		if next == nil {
 			// If we're the last child in the column to use a percentage height
 			// constraint, we expand the height by a single line to consume the
 			// remainder of the available parent's height.
 			percentHeight += 1
 		}
+		percentHeight += vertSpace
+		gtlog.Debug(
+			ctx,
+			"box.Box.Height[%s]: height_constraint=%s. "+
+				"calculated height %d "+
+				"from total parent available height %d",
+			b.ID(), constraint, percentHeight, remainingHeight,
+		)
 		if percentHeight != 0 {
 			gtlog.Debug(
 				ctx,
-				"box.Box.OuterHeight[%s]: display=%s "+
+				"box.Box.Height[%s]: display=%s "+
 					"vert_space=%d height_constraint=%s "+
 					"using min(calc_percent_height=%d, parent_height=%d)",
 				b.ID(), display,
@@ -307,15 +389,19 @@ func (b *Box) OuterHeight() types.Dimension {
 		}
 	}
 
+	if display != types.DisplayBlock {
+		remainingHeight += vertSpace
+	}
+
 	// Default to the remaining height of the parent container
 	gtlog.Debug(
 		ctx,
-		"box.Box.OuterHeight[%s]: display=%s "+
+		"box.Box.Height[%s]: display=%s "+
 			"vert_space=%d height_constraint=%s "+
 			"using parent remaining height %d",
 		b.ID(), display,
 		vertSpace, b.HeightConstraint(),
-		parentAvailable,
+		remainingHeight,
 	)
-	return parentAvailable
+	return types.Dimension(min(parentHeight, remainingHeight))
 }

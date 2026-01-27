@@ -38,7 +38,7 @@ type HR struct {
 
 // Render draws the HR to the supplied Screen.
 func (h *HR) Render(ctx context.Context, screen types.Screen) {
-	h.Plot(ctx)
+	render.Plot(ctx, h)
 	numCellsWide := h.Width()
 	inner := h.InnerBounds()
 	if numCellsWide == 0 {

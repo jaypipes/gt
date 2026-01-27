@@ -24,11 +24,6 @@ type Plottable interface {
 	uv.Drawable
 	Identifiable
 
-	// Plot calculates the anchoring positioning coordinates of a Plottable.
-	// It traverses the tree of Plottables and calculates the top left
-	// coordinates for each node in the tree.
-	Plot(context.Context)
-
 	// Render wraps the [uv.Drawable.Draw] interface method with a context and
 	// always calls [uv.Drawable.Draw] with the Plottable's plotted bounds.
 	Render(context.Context, Screen)
@@ -60,8 +55,8 @@ type Plottable interface {
 	Size() Size
 	// SetWidth constrains the width of the Plottable.
 	SetWidth(DimensionConstraint)
-	// OuterWidth returns the width of the Plottable's outer bounding box.
-	OuterWidth() Dimension
+	// Width returns the width of the Plottable's outer bounding box.
+	Width() Dimension
 	// HasFixedWidth returns true if the Plottable has a fixed width.
 	HasFixedWidth() bool
 	// HasPercentWidth returns true if the Plottable has a percent width
@@ -87,8 +82,8 @@ type Plottable interface {
 	// HasPercentHeight returns true if the Plottable has a percent height
 	// constraint.
 	HasPercentHeight() bool
-	// OuterHeight returns the height of the Plottable's outer bounding box.
-	OuterHeight() Dimension
+	// Height returns the height of the Plottable's outer bounding box.
+	Height() Dimension
 	// FixedHeight returns the Plottable's fixed height. If the Plottable does not
 	// have a fixed height constraint, returns 0.
 	FixedHeight() Dimension

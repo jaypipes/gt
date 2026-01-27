@@ -74,8 +74,8 @@ func (b *Base) Draw(screen types.Screen, bounds types.Rectangle) {
 // Render wraps the [uv.Drawablb.Draw] interface method with a context and
 // always calls [uv.Drawablb.Draw] with the Rendered's plotted bounds.
 func (b *Base) Render(ctx context.Context, screen types.Screen) {
-	b.Plot(ctx)
-	gtlog.Debug(ctx, "base.Base.Render[%s]", b)
+	gtlog.Debug(ctx, "base.Base.Render[%s]", b.Tag())
+	render.Plot(ctx, b)
 	b.Draw(screen, b.Bounds())
 	children := b.Children()
 	if len(children) > 0 {

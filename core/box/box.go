@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	gtlog "github.com/jaypipes/gt/core/log"
+	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -108,7 +109,7 @@ func (b *Box) Draw(screen types.Screen, bounds types.Rectangle) {
 // Render wraps the [uv.Drawablb.Draw] interface method with a context and
 // always calls [uv.Drawablb.Draw] with the Rendered's plotted bounds.
 func (b *Box) Render(ctx context.Context, screen types.Screen) {
-	b.Plot(ctx)
+	render.Plot(ctx, b)
 	gtlog.Debug(ctx, "box.Box.Render[%s]", b)
 	b.Draw(screen, b.Bounds())
 	children := b.Children()

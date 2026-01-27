@@ -105,12 +105,14 @@ func main() {
 	// cells equal to the "natural" width of its content and receive a height
 	// in lines equal to the "natural" height of its content. By setting these
 	// gt.Span's width to either a fixed or percent value, the display mode is
-	// automatically switched to "inline-block" which will cause the height to
-	// default to the height of the parent container, which is 50% of the
-	// screen's number of lines.
+	// automatically switched to "inline-block" which will cause the width to
+	// be either a fixed value or a percent of the parent container's width.
 	midA := span.New(ctx, "Mid A")
 	midA.SetID("mid-a")
 	midA.SetWidth(gt.Fixed(10))
+	// Setting a height of 100% here forces the height to be equal to the
+	// parent container's height.
+	midA.SetHeight(gt.Percent(100))
 	midA.SetAlignment(gt.AlignmentMiddleCenter)
 	midA.SetBorder(gt.RoundedBorder())
 	midA.SetForegroundColor(black)
@@ -120,6 +122,7 @@ func main() {
 	midB := span.New(ctx, "Mid B")
 	midB.SetID("mid-b")
 	midB.SetWidth(gt.Percent(20))
+	midB.SetHeight(gt.Percent(100))
 	midB.SetAlignment(gt.AlignmentMiddleCenter)
 	midB.SetBorder(gt.RoundedBorder())
 	midB.SetForegroundColor(black)
@@ -144,7 +147,7 @@ func main() {
 
 	midB3 := div.New(ctx, "Mid B-3")
 	midB3.SetID("mid-b3")
-	midB3.SetHeight(gt.Percent(33))
+	midB3.SetHeight(gt.Percent(34))
 	midB3.SetAlignment(gt.AlignmentMiddleCenter)
 	midB3.SetForegroundColor(black)
 	midB3.SetBackgroundColor(lightblue)
@@ -153,6 +156,7 @@ func main() {
 	midC := span.New(ctx, "Mid C")
 	midC.SetID("mid-c")
 	midC.SetWidth(gt.Percent(80))
+	midC.SetHeight(gt.Percent(100))
 	midC.SetAlignment(gt.AlignmentMiddleCenter)
 	midC.SetBorder(gt.RoundedBorder())
 	midC.SetForegroundColor(black)
