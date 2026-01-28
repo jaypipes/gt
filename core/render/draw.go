@@ -1,6 +1,8 @@
 package render
 
 import (
+	"context"
+
 	"github.com/jaypipes/gt/types"
 )
 
@@ -24,4 +26,17 @@ func Overlapping(a, b types.Rectangle) types.Rectangle {
 		return a
 	}
 	return a.Intersect(b)
+}
+
+// Draw calls Draw on the supplied Drawable.
+func Draw(
+	ctx context.Context,
+	r types.Drawable,
+	screen types.Screen,
+) {
+	for _, child := range r.Children() {
+		cr := child.(types.Drawable)
+		Draw(ctx, cr, screen)
+	}
+	r.DrawWithContext(ctx, screen)
 }

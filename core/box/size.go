@@ -95,33 +95,37 @@ func (b *Box) WidthConstraint() types.DimensionConstraint {
 // `inline-block`, the width defaults to remaining horizontal space in the
 // parent's inner bounding box.
 func (b *Box) Width() types.Dimension {
-	parent := b.Parent()
-	if parent == nil {
-		return types.Dimension(b.Bounds().Dx())
-	}
-	next := b.NextSibling()
-	parentInner := parent.InnerBounds()
-	parentWidth := types.Dimension(parentInner.Dx())
-	horizSpace := b.HorizontalSpace()
 
 	ctx := context.TODO()
 	display := b.Display()
+	horizSpace := b.HorizontalSpace()
 
-	if b.HasFixedWidth() {
+	if b.HasFixedWidth() && display != types.DisplayInline {
 		fixedWidth := b.FixedWidth()
 		calcWidth := fixedWidth + horizSpace
 		gtlog.Debug(
 			ctx,
 			"box.Box.Width[%s]: display=%s "+
-				"fixed_width=%d horiz_space=%d "+
-				"using min(calculated_width=%d, parent_width=%d)",
-			b.ID(), display, fixedWidth, horizSpace,
-			calcWidth, parentWidth,
+				"fixed_width=%d horiz_space=%d. "+
+				"calculated width of %d",
+			b.ID(), display, fixedWidth, horizSpace, calcWidth,
 		)
-		return types.Dimension(
-			min(parentWidth, calcWidth),
-		)
+		return calcWidth
 	}
+
+	parentNode := b.Parent()
+	if parentNode == nil {
+		width := types.Dimension(b.Bounds().Dx())
+		gtlog.Debug(
+			ctx, "box.Box.Width[%s]: no parent. using width of bounds: %d",
+			b.ID(), width,
+		)
+		return width
+	}
+
+	parent := parentNode.(types.Plottable)
+	parentInner := parent.InnerBounds()
+	parentWidth := types.Dimension(parentInner.Dx())
 
 	// If this Box is using block display and does not have a fixed width, the
 	// Box will start at the left edge of the parent. We calculate the
@@ -130,9 +134,10 @@ func (b *Box) Width() types.Dimension {
 	// the end of the siblings or we come across a sibling that is using block
 	// display, we stop calculating the remaining width.
 	if display == types.DisplayBlock {
+		nextNode := b.NextSibling()
 		remainingWidth := parentWidth
-		next := b.NextSibling()
-		for next != nil {
+		for nextNode != nil {
+			next := nextNode.(types.Plottable)
 			if next.Display() == types.DisplayBlock {
 				break
 			}
@@ -140,7 +145,7 @@ func (b *Box) Width() types.Dimension {
 			if next.HasFixedWidth() {
 				remainingWidth -= next.FixedWidth()
 			}
-			next = next.NextSibling()
+			nextNode = next.NextSibling()
 		}
 		gtlog.Debug(
 			ctx,
@@ -160,23 +165,25 @@ func (b *Box) Width() types.Dimension {
 	// horizontal space.
 	remainingWidth := parentWidth
 	firstChildInRow := b.ChildIndex()
-	prev := b.PreviousSibling()
-	for prev != nil {
+	prevNode := b.PreviousSibling()
+	for prevNode != nil {
+		prev := prevNode.(types.Plottable)
 		if prev.Display() != types.DisplayBlock {
 			firstChildInRow = prev.ChildIndex()
 		}
-		prev = prev.PreviousSibling()
+		prevNode = prev.PreviousSibling()
 	}
 
 	childIndex := b.ChildIndex()
 	children := parent.Children()
 
-	for x, child := range children[firstChildInRow:] {
+	for x, childNode := range children[firstChildInRow:] {
 		if x == childIndex {
 			// ignore THIS element for the purposes of calculating
 			// remaining width...
 			continue
 		}
+		child := childNode.(types.Plottable)
 		if child.Display() == types.DisplayBlock {
 			// Sibling starts a new row at the parent's inner bounds left edge
 			// and therefore we are done calculating the available width.
@@ -190,11 +197,12 @@ func (b *Box) Width() types.Dimension {
 
 	percentWidth := types.Dimension(0)
 	if b.HasPercentWidth() {
+		nextNode := b.NextSibling()
 		constraint := b.WidthConstraint()
 		pw := b.PercentWidth()
 		percentWidth = remainingWidth * pw / 100
 		percentWidth += horizSpace
-		if next == nil {
+		if nextNode == nil {
 			// If we're the last child in the row to use a percentage width
 			// constraint, we need to increase the calculated width by a single
 			// cell in order to snug to the parent's inner bounds.
@@ -296,16 +304,10 @@ func (b *Box) HeightConstraint() types.DimensionConstraint {
 // If neither a fixed or percent height has been set, we return the remaining
 // available height of the parent.
 func (b *Box) Height() types.Dimension {
-	parent := b.Parent()
-	if parent == nil {
-		return types.Dimension(b.Bounds().Dy())
-	}
-	parentInner := parent.InnerBounds()
-	parentHeight := types.Dimension(parentInner.Dy())
-	vertSpace := b.VerticalSpace()
-
 	ctx := context.TODO()
 	display := b.Display()
+	vertSpace := b.VerticalSpace()
+
 	if display != types.DisplayInline && b.HasFixedHeight() {
 		fixedHeight := b.FixedHeight()
 		calcHeight := fixedHeight + vertSpace
@@ -313,12 +315,24 @@ func (b *Box) Height() types.Dimension {
 			ctx,
 			"box.Box.Height[%s]: "+
 				"display=%s vert_space=%d fixed_height=%d. "+
-				"using min(calculated_height=%d, parent_height=%d)",
-			b.ID(), display, vertSpace, fixedHeight,
-			calcHeight, parentHeight,
+				"calculated height of %d",
+			b.ID(), display, vertSpace, fixedHeight, calcHeight,
 		)
-		return types.Dimension(min(parentHeight, calcHeight))
+		return calcHeight
 	}
+
+	parentNode := b.Parent()
+	if parentNode == nil {
+		height := types.Dimension(b.Bounds().Dy())
+		gtlog.Debug(
+			ctx, "box.Box.Height[%s]: no parent. using height of bounds: %d",
+			b.ID(), height,
+		)
+		return height
+	}
+	parent := parentNode.(types.Plottable)
+	parentInner := parent.InnerBounds()
+	parentHeight := types.Dimension(parentInner.Dy())
 
 	// To determine the remaining available height, we determine the max fixed
 	// height of previous "rows" and subtract those max-fixed-height values
@@ -329,10 +343,11 @@ func (b *Box) Height() types.Dimension {
 	rowMaxHeights := map[int]types.Dimension{}
 	rowMaxHeight := types.Dimension(0)
 	curRow := 0
-	for x, child := range children {
+	for x, childNode := range children {
 		if x == childIndex {
 			continue
 		}
+		child := childNode.(types.Plottable)
 		cellVertSpace := child.VerticalSpace()
 		cellFixedHeight := child.FixedHeight()
 		childDisplay := child.Display()

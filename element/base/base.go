@@ -69,39 +69,35 @@ func (b *Base) Class() string {
 // Draw implements the uv.Drawable interface
 func (b *Base) Draw(screen types.Screen, bounds types.Rectangle) {
 	b.Box.DrawBorder(screen)
+	content := b.TextContent()
+	if len(content) == 0 {
+		return
+	}
+	ctx := context.TODO()
+	inner := b.InnerBounds()
+	innerClipped := render.Overlapping(bounds, inner)
+	content = render.AlignString(
+		ctx, content, inner, b.Alignment(),
+	)
+	style := b.Style()
+	content = style.Styled(content)
+	ss := uv.NewStyledString(content)
+	ws := b.Whitespace()
+	if ws&types.WhitespaceWrapNever == 0 {
+		ss.Wrap = true
+	}
+	ss.Draw(screen, innerClipped)
 }
 
-// Render wraps the [uv.Drawablb.Draw] interface method with a context and
-// always calls [uv.Drawablb.Draw] with the Rendered's plotted bounds.
-func (b *Base) Render(ctx context.Context, screen types.Screen) {
-	gtlog.Debug(ctx, "base.Base.Render[%s]", b.Tag())
-	render.Plot(ctx, b)
-	b.Draw(screen, b.Bounds())
-	children := b.Children()
-	if len(children) > 0 {
-		for _, child := range children {
-			child.Render(ctx, screen)
-		}
-	} else {
-		content := b.TextContent()
-		if len(content) == 0 {
-			return
-		}
-		bounds := b.Bounds()
-		inner := b.InnerBounds()
-		innerClipped := render.Overlapping(bounds, inner)
-		content = render.AlignString(
-			ctx, content, inner, b.Alignment(),
-		)
-		style := b.Style()
-		content = style.Styled(content)
-		ss := uv.NewStyledString(content)
-		ws := b.Whitespace()
-		if ws&types.WhitespaceWrapNever == 0 {
-			ss.Wrap = true
-		}
-		ss.Draw(screen, innerClipped)
-	}
+// DrawWithContext wraps the [uv.Drawable] interface with a supplied context
+// and always calls Draw with the Box's pre-plotted bounds.
+func (b *Base) DrawWithContext(
+	ctx context.Context,
+	screen types.Screen,
+) {
+	bounds := b.Bounds()
+	gtlog.Debug(ctx, "Base.Draw[%s]: bounds=%s", b.Tag(), bounds)
+	b.Draw(screen, bounds)
 }
 
 var _ types.Element = (*Base)(nil)

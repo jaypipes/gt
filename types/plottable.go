@@ -1,11 +1,5 @@
 package types
 
-import (
-	"context"
-
-	uv "github.com/charmbracelet/ultraviolet"
-)
-
 // Plottable represents a single node in gt's Document Object Model (DOM).
 //
 // The DOM is a single-rooted tree structure, and as such each Plottable in the
@@ -21,12 +15,8 @@ import (
 // will embed [core.box.Box] which has basic implementations of most of the
 // Plottable interface's methods.
 type Plottable interface {
-	uv.Drawable
 	Identifiable
-
-	// Render wraps the [uv.Drawable.Draw] interface method with a context and
-	// always calls [uv.Drawable.Draw] with the Plottable's plotted bounds.
-	Render(context.Context, Screen)
+	Node
 
 	// SetBounds sets the Plottable's outer bounding box.
 	SetBounds(Rectangle)
@@ -139,53 +129,4 @@ type Plottable interface {
 	// VerticalSpace returns the number of lines consumed by the element's
 	// top-bottom padding and border
 	VerticalSpace() Dimension
-
-	// NodeInternalID returns a dotted-notation identifier for the node within
-	// the tree. Each number in the returned string indicates the child index
-	// of this Node's ancestors.
-	//
-	// So, "0.3" means "the fourth child of the first child of the root node".
-	// Returns "root" for the root node.
-	NodeInternalID() string
-	// ChildIndex returns the Plottable's index within the Plottable's parent's
-	// collection of children.
-	ChildIndex() int
-	// SetParent sets the Plottable's parent and index of the Plottable within the
-	// parent's children.
-	SetParent(Plottable, int)
-	// Parent returns the Plottable that is the parent of this Plottable, or nil if this
-	// is a root Plottable.
-	Parent() Plottable
-	// AppendChild adds a new child Plottable to the Plottable at the end of Plottable's set of
-	// children.
-	AppendChild(Plottable)
-	// PopChild removes the last child Plottable from the Plottable's children and returns
-	// it. Returns nil if Plottable has no children.
-	PopChild() Plottable
-	// RemoveAllChildren removes any children from this Node.
-	RemoveAllChildren()
-	// Children returns a slice of Plottables that are children of this Plottable.
-	Children() []Plottable
-	// HasChildren returns whether the Plottable has children.
-	HasChildren() bool
-	// FirstChild returns the Plottable that is the first child of this Plottable, or nil
-	// if there are no children.
-	FirstChild() Plottable
-	// LastChild returns the Plottable that is the last child of this Plottable, or nil
-	// if there are no children.
-	LastChild() Plottable
-	// ChildAt returns the child element at the supplied zero-based index, or nil
-	// if the index is out of bounds.
-	ChildAt(int) Plottable
-	// NextSibling() returns the Plottable that is the next child of this Plottable's
-	// parent, or nil if there is none.
-	NextSibling() Plottable
-	// PreviousSibling returns the Plottable that is the previous child of the
-	// Plottable's parent, or nil if this Plottable is the first child of the parent
-	// Plottable.
-	PreviousSibling() Plottable
-	// PreviousSiblings returns all Plottables that are children of the Plottable's
-	// parent before this Plottable, or an empty slice of Plottables if this
-	// Plottable is the first child of the parent Plottable.
-	PreviousSiblings() []Plottable
 }

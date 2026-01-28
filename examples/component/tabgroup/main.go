@@ -32,6 +32,8 @@ func main() {
 	// Application does not have a View with that ID, a new View is added to
 	// the Application and then returned.
 	v := app.View(ctx, "main")
+	// You can set an outer border on your View.
+	v.SetBorder(gt.RoundedBorder())
 
 	tg := tabgroup.New(ctx, "tg")
 	tab1 := tg.Tab(ctx, "tab-1")
@@ -56,9 +58,7 @@ func main() {
 	div2.SetBackgroundColor(pink)
 	tab2.SetContent(div2)
 
-	v.SetContent(tg)
-
-	app.SetCurrentView(v.ID())
+	v.AppendContent(tg)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)

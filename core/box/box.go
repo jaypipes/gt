@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -33,10 +32,10 @@ type Box struct {
 	// childIndex is the index of this Box in the parent's children.
 	childIndex int
 	// parent is the this Node's parent, if any.
-	parent types.Plottable
+	parent types.Node
 	// children is the collection of Nodes that are the direct children of this
 	// Node, if any.
-	children []types.Plottable
+	children []types.Node
 
 	// bounds is the outer bounding box and positioning coordinates of the
 	// Box
@@ -106,14 +105,20 @@ func (b *Box) Draw(screen types.Screen, bounds types.Rectangle) {
 	b.DrawBorder(screen)
 }
 
-// Render wraps the [uv.Drawablb.Draw] interface method with a context and
-// always calls [uv.Drawablb.Draw] with the Rendered's plotted bounds.
-func (b *Box) Render(ctx context.Context, screen types.Screen) {
-	render.Plot(ctx, b)
-	gtlog.Debug(ctx, "box.Box.Render[%s]", b)
-	b.Draw(screen, b.Bounds())
-	children := b.Children()
-	for _, child := range children {
-		child.Render(ctx, screen)
-	}
+// DrawWithContext wraps the [uv.Drawable] interface with a supplied context
+// and always calls Draw with the Box's pre-plotted bounds.
+func (b *Box) DrawWithContext(
+	ctx context.Context,
+	screen types.Screen,
+) {
+	bounds := b.bounds
+	gtlog.Debug(ctx, "Box.Draw[%s]: bounds=%s", b.id, bounds)
+	b.Draw(screen, bounds)
 }
+
+// Build allows the Box to dynamically generate content.
+func (b *Box) Build(ctx context.Context) {}
+
+var _ types.Plottable = (*Box)(nil)
+var _ types.Drawable = (*Box)(nil)
+var _ types.Buildable = (*Box)(nil)

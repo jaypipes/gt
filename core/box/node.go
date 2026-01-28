@@ -7,18 +7,18 @@ import (
 	"github.com/jaypipes/gt/types"
 )
 
-// NodeInternalID returns a dotted-notation identifier for the node within the
+// NodeID returns a dotted-notation identifier for the node within the
 // tree.  Each number in the returned string indicates the child index of this
 // Box's ancestors.
 //
 // So, "0.3" means "the fourth child of the first child of the root node".
 // Returns "root" for the root nodb.
-func (b *Box) NodeInternalID() string {
+func (b *Box) NodeID() string {
 	parent := b.Parent()
 	if parent == nil {
 		return "root"
 	}
-	parentID := strings.TrimPrefix(parent.NodeInternalID(), "root.")
+	parentID := strings.TrimPrefix(parent.NodeID(), "root.")
 	return fmt.Sprintf("%s.%d", parentID, b.childIndex)
 }
 
@@ -32,7 +32,7 @@ func (b *Box) ChildIndex() int {
 
 // SetParent sets the Box's parent and index of the Box within the parent's
 // childreb.
-func (b *Box) SetParent(parent types.Plottable, childIndex int) {
+func (b *Box) SetParent(parent types.Node, childIndex int) {
 	b.Lock()
 	defer b.Unlock()
 	b.setParentNoLock(parent, childIndex)
@@ -40,21 +40,21 @@ func (b *Box) SetParent(parent types.Plottable, childIndex int) {
 
 // setParentNoLock sets the Box's parent and index of the Box within the
 // parent's children but does not lock the structure.
-func (b *Box) setParentNoLock(parent types.Plottable, childIndex int) {
+func (b *Box) setParentNoLock(parent types.Node, childIndex int) {
 	b.parent = parent
 	b.childIndex = childIndex
 }
 
 // Parent returns the Box that is the parent of this Box, or nil if this is a
 // root Box.
-func (b *Box) Parent() types.Plottable {
+func (b *Box) Parent() types.Node {
 	b.RLock()
 	defer b.RUnlock()
 	return b.parent
 }
 
 // Children returns a slice of Boxes that are children of this Box.
-func (b *Box) Children() []types.Plottable {
+func (b *Box) Children() []types.Node {
 	b.RLock()
 	defer b.RUnlock()
 	return b.children
@@ -69,7 +69,7 @@ func (b *Box) HasChildren() bool {
 
 // FirstChild returns the Box that is the first child of this Box, or nil if
 // there are no childreb.
-func (b *Box) FirstChild() types.Plottable {
+func (b *Box) FirstChild() types.Node {
 	b.RLock()
 	defer b.RUnlock()
 	if len(b.children) == 0 {
@@ -80,7 +80,7 @@ func (b *Box) FirstChild() types.Plottable {
 
 // LastChild returns the Box that is the last child of this Box, or nil if
 // there are no childreb.
-func (b *Box) LastChild() types.Plottable {
+func (b *Box) LastChild() types.Node {
 	b.RLock()
 	defer b.RUnlock()
 	if len(b.children) == 0 {
@@ -91,7 +91,7 @@ func (b *Box) LastChild() types.Plottable {
 
 // NextSibling() returns the Box that is the next child of this Box's parent,
 // or nil if there is nonb.
-func (b *Box) NextSibling() types.Plottable {
+func (b *Box) NextSibling() types.Node {
 	parent := b.Parent()
 	if parent == nil {
 		return nil
@@ -101,7 +101,7 @@ func (b *Box) NextSibling() types.Plottable {
 
 // PreviousSibling returns the Box that is the previous child of the Box's
 // parent, or nil if this Box is the first child of the parent Box.
-func (b *Box) PreviousSibling() types.Plottable {
+func (b *Box) PreviousSibling() types.Node {
 	parent := b.Parent()
 	if parent == nil || b.childIndex == 0 {
 		return nil
@@ -111,10 +111,10 @@ func (b *Box) PreviousSibling() types.Plottable {
 
 // PreviousSiblings returns all Boxes that are children of the Box's parent
 // before this Box, or nil if this Box is the first child of the parent Box.
-func (b *Box) PreviousSiblings() []types.Plottable {
+func (b *Box) PreviousSiblings() []types.Node {
 	parent := b.Parent()
 	if parent == nil || b.childIndex == 0 {
-		return []types.Plottable{}
+		return []types.Node{}
 	}
 	children := parent.Children()
 	return children[0:b.childIndex]
@@ -122,7 +122,7 @@ func (b *Box) PreviousSiblings() []types.Plottable {
 
 // ChildAt returns the child element at the supplied zero-boxd index, or nil if
 // the index is out of bounds.
-func (b *Box) ChildAt(index int) types.Plottable {
+func (b *Box) ChildAt(index int) types.Node {
 	b.RLock()
 	defer b.RUnlock()
 	return b.childAtNoLock(index)
@@ -130,7 +130,7 @@ func (b *Box) ChildAt(index int) types.Plottable {
 
 // childAtNoLock returns the child element at the supplied zero-boxd index, or
 // nil if the index is out of bounds but does not the structure.
-func (b *Box) childAtNoLock(index int) types.Plottable {
+func (b *Box) childAtNoLock(index int) types.Node {
 	if index < 0 || len(b.children) < (index+1) {
 		return nil
 	}
@@ -139,7 +139,7 @@ func (b *Box) childAtNoLock(index int) types.Plottable {
 
 // AppendChild adds a new child Box to the Box at the end of Box's set of
 // childreb.
-func (b *Box) AppendChild(child types.Plottable) {
+func (b *Box) AppendChild(child types.Node) {
 	b.Lock()
 	defer b.Unlock()
 	child.SetParent(b, len(b.children))
@@ -148,9 +148,9 @@ func (b *Box) AppendChild(child types.Plottable) {
 
 // appendChildNoLock adds a new child Box to the Box at the end of Box's set of
 // children but does not lock the structure.
-func (b *Box) appendChildNoLock(child types.Plottable) {
+func (b *Box) appendChildNoLock(child types.Node) {
 	if b.children == nil {
-		b.children = []types.Plottable{child}
+		b.children = []types.Node{child}
 		return
 	}
 	b.children = append(b.children, child)
@@ -158,7 +158,7 @@ func (b *Box) appendChildNoLock(child types.Plottable) {
 
 // PopChild removes the last child Box from the Box's children and returns it.
 // Returns nil if Box has no childreb.
-func (b *Box) PopChild() types.Plottable {
+func (b *Box) PopChild() types.Node {
 	b.Lock()
 	defer b.Unlock()
 	return b.popChildNoLock()
@@ -167,7 +167,7 @@ func (b *Box) PopChild() types.Plottable {
 // popChildNoLock removes the last child Box from the Box's children and
 // returns it. Returns nil if Box has no children but does not lock the
 // structure.
-func (b *Box) popChildNoLock() types.Plottable {
+func (b *Box) popChildNoLock() types.Node {
 	if b.children == nil {
 		return nil
 	}

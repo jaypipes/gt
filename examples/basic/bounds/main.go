@@ -46,6 +46,7 @@ func main() {
 	// lines that the text content will wrap within the Span's parent
 	// container.
 	span := gtspan.New(ctx, "some text")
+	span.SetID("content")
 	// To demonstrate how bounds work, we will give this Span a fixed width and
 	// height instead of using the default width and height of a Span. The
 	// `gt.Element.SetSize()` method allows you to set the fixed width and
@@ -56,7 +57,7 @@ func main() {
 	span.SetBorder(gt.RoundedBorder())
 	span.SetBorderForegroundColor(yellow)
 	span.SetAlignment(gt.AlignmentMiddleCenter)
-	v.AppendContent(span)
+	v.SetContent(span)
 
 	// We make the bounding box of the Application's View (the outermost
 	// renderable of the Application) a rectangle with the top-left coordinates

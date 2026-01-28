@@ -56,25 +56,28 @@ func (b *Base) WithMinHeight(w types.Dimension) types.Element {
 // set to the width of the content plus any horizontal padding and left-right
 // border width.
 func (b *Base) Width() types.Dimension {
-	parent := b.Parent()
-	if parent == nil {
-		return types.Dimension(b.Bounds().Dx())
-	}
-	boxWidth := b.Box.Width()
-	next := b.NextSibling()
-	horizSpace := b.HorizontalSpace()
-
 	ctx := context.TODO()
+	boxWidth := b.Box.Width()
 	display := b.Display()
 
+	// If we're not using inline display mode and there is a fixed height, we
+	// use the box-calculated height.
 	if display != types.DisplayInline {
 		gtlog.Debug(
 			ctx,
-			"base.Base.Width[%s]: display=%s. "+
+			"element.Base.Width[%s]: display=%s. "+
 				"using box width %d.",
 			b.Tag(), display, boxWidth,
 		)
 		return boxWidth
+	}
+
+	horizSpace := b.HorizontalSpace()
+
+	var next types.Plottable
+	nextNode := b.NextSibling()
+	if nextNode != nil {
+		next = nextNode.(types.Plottable)
 	}
 
 	// No width constraint and not inline display, we consume the remainder of
@@ -83,7 +86,7 @@ func (b *Base) Width() types.Dimension {
 	if next == nil || next.Display() == types.DisplayBlock {
 		gtlog.Debug(
 			ctx,
-			"base.Base.Width[%s]: display=%s horiz_space=%d "+
+			"element.Base.Width[%s]: display=%s horiz_space=%d "+
 				"last sibling or next sibling is block display. "+
 				"using box width %d.",
 			b.Tag(), display, horizSpace, boxWidth,
@@ -95,7 +98,7 @@ func (b *Base) Width() types.Dimension {
 	calcWidth := contentWidth + horizSpace
 	gtlog.Debug(
 		ctx,
-		"base.Base.Width[%s]: display=%s horiz_space=%d content_width=%d. "+
+		"element.Base.Width[%s]: display=%s horiz_space=%d content_width=%d. "+
 			"using min(box_width=%d, calc_width=%d).",
 		b.Tag(), display, horizSpace, contentWidth,
 		boxWidth, calcWidth,
@@ -120,31 +123,42 @@ func (b *Base) Width() types.Dimension {
 // defaults to the number of lines of text content, or 1 if there is no text
 // content, plus any vertical space from padding and border.
 func (b *Base) Height() types.Dimension {
-	parent := b.Parent()
-	if parent == nil {
-		return types.Dimension(b.Bounds().Dy())
-	}
-	boxHeight := b.Box.Height()
-	next := b.NextSibling()
-	parentInner := parent.InnerBounds()
-	parentWidth := types.Dimension(parentInner.Dx())
-	parentHeight := types.Dimension(parentInner.Dy())
-	vertSpace := b.VerticalSpace()
-
 	ctx := context.TODO()
 	display := b.Display()
+	boxHeight := b.Box.Height()
 
 	// If we're not using inline display mode and there is a fixed height, we
 	// use the box-calculated height.
 	if display != types.DisplayInline && b.HasFixedHeight() {
 		gtlog.Debug(
 			ctx,
-			"base.Base.Height[%s]: display=%s. "+
-				"using box fixed height %d",
+			"element.Base.Height[%s]: display=%s. "+
+				"using box height %d",
 			b.ID(), display, boxHeight,
 		)
 		return boxHeight
 	}
+
+	parentNode := b.Parent()
+	if parentNode == nil {
+		gtlog.Debug(
+			ctx,
+			"element.Base.Height[%s]: no parent. using box height %d",
+			b.ID(), boxHeight,
+		)
+		return boxHeight
+	}
+
+	parent := parentNode.(types.Plottable)
+	var next types.Plottable
+	nextNode := b.NextSibling()
+	if nextNode != nil {
+		next = nextNode.(types.Plottable)
+	}
+	parentInner := parent.InnerBounds()
+	parentWidth := types.Dimension(parentInner.Dx())
+	parentHeight := types.Dimension(parentInner.Dy())
+	vertSpace := b.VerticalSpace()
 
 	percentHeight := types.Dimension(0)
 	parentAvailable := parentHeight
@@ -152,7 +166,8 @@ func (b *Base) Height() types.Dimension {
 		// Calculate the remainder of the parent's available height by
 		// examining the set of siblings and subtracting any fixed height
 		// values.
-		for _, child := range parent.Children() {
+		for _, childNode := range parent.Children() {
+			child := childNode.(types.Plottable)
 			childDisplay := child.Display()
 			if childDisplay != types.DisplayInline && child.HasFixedHeight() {
 				parentAvailable -= child.FixedHeight()
@@ -163,7 +178,7 @@ func (b *Base) Height() types.Dimension {
 		percentHeight = parentAvailable * ph / 100
 		gtlog.Debug(
 			ctx,
-			"base.Base.Height[%s]: height_constraint=%s. "+
+			"element.Base.Height[%s]: height_constraint=%s. "+
 				"calculated height %d "+
 				"from total parent available height %d",
 			b.Tag(), constraint, percentHeight, parentAvailable,
@@ -177,7 +192,7 @@ func (b *Base) Height() types.Dimension {
 		if percentHeight != 0 {
 			gtlog.Debug(
 				ctx,
-				"base.Base.Height[%s]: display=%s "+
+				"element.Base.Height[%s]: display=%s "+
 					"vert_space=%d height_constraint=%s "+
 					"using min(calc_percent_height=%d, parent_height=%d)",
 				b.Tag(), display,
@@ -193,7 +208,7 @@ func (b *Base) Height() types.Dimension {
 	if wrapNever && percentHeight == 0 {
 		gtlog.Debug(
 			ctx,
-			"base.Base.Height[%s]: display=%s whitespace=%s "+
+			"element.Base.Height[%s]: display=%s whitespace=%s "+
 				"vert_space=%d height_constraint=none. "+
 				"height is always 1 plus padding_vert + border_vert",
 			b.Tag(), display, whitespace, vertSpace,
@@ -221,7 +236,7 @@ func (b *Base) Height() types.Dimension {
 		contentHeight += vertSpace
 		gtlog.Debug(
 			ctx,
-			"base.Base.Height[%s]: display=%s whitespace=%s "+
+			"element.Base.Height[%s]: display=%s whitespace=%s "+
 				"vert_space=%d original_content_height=%d parent_height=%d "+
 				"content_width=%d parent_width=%d wrapped=%t "+
 				"calculated new content_height of %d",
@@ -233,7 +248,7 @@ func (b *Base) Height() types.Dimension {
 	}
 	gtlog.Debug(
 		ctx,
-		"base.Base.Height[%s]: display=%s whitespace=%s "+
+		"element.Base.Height[%s]: display=%s whitespace=%s "+
 			"vert_space=%d using min(content_height=%d, parent_height=%d)",
 		b.Tag(), display, whitespace,
 		vertSpace, contentHeight, parentHeight,

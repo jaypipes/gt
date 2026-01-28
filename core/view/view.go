@@ -7,38 +7,25 @@ import (
 	uv "github.com/charmbracelet/ultraviolet"
 	uvscreen "github.com/charmbracelet/ultraviolet/screen"
 
-	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
-	"github.com/jaypipes/gt/element/div"
 	"github.com/jaypipes/gt/types"
 )
 
 // New returns a new View instance.
 func New(ctx context.Context, id string) *View {
-	// By default, a View's content is a div that consumes the entire area of
-	// the View.
-	container := div.New(ctx, "")
-	container.SetID(fmt.Sprintf("view-%s-container", id))
-	container.SetHeight(core.Percent(100))
-	container.SetWidth(core.Percent(100))
-	return &View{
-		id:      id,
-		content: container,
-	}
+	b := box.New(ctx)
+	b.SetID(id)
+	return &View{Box: b}
 }
 
 // View is the virtual representation of the tree of elements that will be
 // rendered to a Screen.
 type View struct {
 	box.Box
-	// id is the unique identifier for the View.
-	id string
 	// bounds is the outer bounding box for the View.
 	bounds types.Rectangle
-	// content is the thing that will be rendered in the View.
-	content types.Element
 	// restoreBuf is a pointer to a [uv.Buffer] that we save pre-rendered
 	// content from the View to. This is restored when View.Restore is called.
 	restoreBuf *uv.Buffer
@@ -47,26 +34,27 @@ type View struct {
 	currentViewKeyPress string
 }
 
-// ID returns the View's unique identifier.
-func (v *View) ID() string {
-	return v.id
-}
-
 // String returns a short string representation of the View.
 func (v *View) String() string {
-	return fmt.Sprintf("<view id=%s>", v.id)
+	return fmt.Sprintf("<view id=%s>", v.ID())
 }
 
-// SetBounds sets the View's outer bounding box.
-func (v *View) SetBounds(bounds types.Rectangle) *View {
+// WithBounds sets the View's outer bounding box and returns the View.
+func (v *View) WithBounds(bounds types.Rectangle) *View {
 	v.Box.SetBounds(bounds)
 	return v
 }
 
 // SetCurrentViewKeyPress sets the key combination that should trigger setting this
 // View as the current View in the Application.
-func (v *View) SetCurrentViewKeyPress(key string) *View {
+func (v *View) SetCurrentViewKeyPress(key string) {
 	v.currentViewKeyPress = key
+}
+
+// SetCurrentViewKeyPress sets the key combination that should trigger setting this
+// View as the current View in the Application and returns the View.
+func (v *View) WithCurrentViewKeyPress(key string) *View {
+	v.SetCurrentViewKeyPress(key)
 	return v
 }
 
@@ -77,17 +65,22 @@ func (v *View) CurrentViewKeyPress() string {
 }
 
 // SetContent sets the thing that will be rendered in the View.
-func (v *View) SetContent(content types.Element) *View {
-	v.content = content
+func (v *View) SetContent(content types.Plottable) {
+	v.Box.RemoveAllChildren()
+	v.Box.AppendChild(content)
+}
+
+// WithContent sets the thing that will be rendered in the View and returns the
+// View.
+func (v *View) WithContent(content types.Plottable) *View {
+	v.SetContent(content)
 	return v
 }
 
-// AppendContent adds a child Element to the View's content.
-func (v *View) AppendContent(content types.Element) *View {
-	if v.content == nil {
-		return v.SetContent(content)
-	}
-	v.content.AppendChild(content)
+// AppendContent adds a child Element to the View's content and returns the
+// View.
+func (v *View) AppendContent(content types.Plottable) *View {
+	v.Box.AppendChild(content)
 	return v
 }
 
@@ -120,18 +113,23 @@ func (v *View) Render(
 	ctx context.Context,
 	screen types.Screen,
 ) {
-	content := v.content
-	if content == nil {
-		return
-	}
-	gtlog.Debug(ctx, "View.Render(%s)", v.id)
-	content.SetBounds(v.InnerBounds())
+	bounds := v.Bounds()
+	inner := v.InnerBounds()
+	gtlog.Debug(
+		ctx, "View.Render[%s]: bounds=%s inner_bounds=%s",
+		v.ID(), bounds, inner,
+	)
+
+	// Allow any components to dynamically create renderable content.
+	render.Build(ctx, v)
 
 	// clear the outer bounds before rendering the DOM rooted at the root
 	// Element.
-	render.Clear(screen, v.Bounds())
+	render.Clear(screen, bounds)
 
-	v.DrawBorder(screen)
+	// Then recursively plot all content in the View.
+	render.Plot(ctx, v, inner)
 
-	content.Render(ctx, screen)
+	// And finally draw all the content to the Screen.
+	render.Draw(ctx, v, screen)
 }

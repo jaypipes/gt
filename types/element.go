@@ -21,6 +21,7 @@ import (
 // [uv.Drawable.Draw] for the user.
 type Element interface {
 	Plottable
+	Drawable
 
 	// WithID sets the Element's unique identifier and returns the Element.
 	WithID(string) Element
