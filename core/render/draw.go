@@ -34,9 +34,9 @@ func Draw(
 	r types.Drawable,
 	screen types.Screen,
 ) {
+	r.Draw(screen, r.Bounds())
 	for _, child := range r.Children() {
 		cr := child.(types.Drawable)
 		Draw(ctx, cr, screen)
 	}
-	r.Draw(screen, r.Bounds())
 }

@@ -161,10 +161,11 @@ func Plot(
 		)
 		p.SetBounds(bounds)
 	}
+	inner := p.InnerBounds()
 	for _, child := range p.Children() {
 		cp, ok := child.(types.Plottable)
 		if ok {
-			Plot(ctx, cp, containerBounds)
+			Plot(ctx, cp, inner)
 		}
 	}
 }

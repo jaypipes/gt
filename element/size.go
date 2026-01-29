@@ -61,8 +61,9 @@ func (e *Element) Width() types.Dimension {
 	boxWidth := e.Box.Width()
 	display := e.Display()
 
-	// If we're not using inline display mode and there is a fixed height, we
-	// use the box-calculated height.
+	// If we're not using inline display mode, we use the box-calculated width.
+	// The box-calculated width already includes the horizontal space of the
+	// Element.
 	if display != types.DisplayInline {
 		gtlog.Debug(
 			ctx,
@@ -134,7 +135,7 @@ func (e *Element) Height() types.Dimension {
 		gtlog.Debug(
 			ctx,
 			"Element.Height[%s]: display=%s. "+
-				"using box height %d",
+				"using fixed box height %d.",
 			e.ID(), display, boxHeight,
 		)
 		return boxHeight
@@ -144,69 +145,34 @@ func (e *Element) Height() types.Dimension {
 	if parentNode == nil {
 		gtlog.Debug(
 			ctx,
-			"Element.Height[%s]: no parent. using box height %d",
+			"Element.Height[%s]: no parent. using box height %d.",
 			e.ID(), boxHeight,
 		)
 		return boxHeight
 	}
 
 	parent := parentNode.(types.Plottable)
-	var next types.Plottable
-	nextNode := e.NextSibling()
-	if nextNode != nil {
-		next = nextNode.(types.Plottable)
-	}
 	parentInner := parent.InnerBounds()
 	parentWidth := types.Dimension(parentInner.Dx())
 	parentHeight := types.Dimension(parentInner.Dy())
 	vertSpace := e.VerticalSpace()
 
-	percentHeight := types.Dimension(0)
-	parentAvailable := parentHeight
 	if display != types.DisplayInline && e.HasPercentHeight() {
-		// Calculate the remainder of the parent's available height by
-		// examining the set of siblings and subtracting any fixed height
-		// values.
-		for _, childNode := range parent.Children() {
-			child := childNode.(types.Plottable)
-			childDisplay := child.Display()
-			if childDisplay != types.DisplayInline && child.HasFixedHeight() {
-				parentAvailable -= child.FixedHeight()
-			}
-		}
-		constraint := e.HeightConstraint()
-		ph := e.PercentHeight()
-		percentHeight = parentAvailable * ph / 100
 		gtlog.Debug(
 			ctx,
-			"Element.Height[%s]: height_constraint=%s. "+
-				"calculated height %d "+
-				"from total parent available height %d",
-			e.Tag(), constraint, percentHeight, parentAvailable,
+			"Element.Height[%s]: display=%s "+
+				"vert_space=%d height_constraint=%s. "+
+				"using box height %d.",
+			e.Tag(), display,
+			vertSpace, e.HeightConstraint(),
+			boxHeight,
 		)
-		if next == nil {
-			// If we're the last child in the column to use a percentage height
-			// constraint, we expand the height by a single line to consume the
-			// remainder of the available parent's height.
-			percentHeight += 1
-		}
-		if percentHeight != 0 {
-			gtlog.Debug(
-				ctx,
-				"Element.Height[%s]: display=%s "+
-					"vert_space=%d height_constraint=%s "+
-					"using min(calc_percent_height=%d, parent_height=%d)",
-				e.Tag(), display,
-				vertSpace, e.HeightConstraint(),
-				percentHeight, parentHeight,
-			)
-			return types.Dimension(min(parentHeight, percentHeight))
-		}
+		return boxHeight
 	}
 
 	whitespace := e.Whitespace()
 	wrapNever := whitespace&types.WhitespaceWrapNever != 0
-	if wrapNever && percentHeight == 0 {
+	if wrapNever && boxHeight == 0 {
 		gtlog.Debug(
 			ctx,
 			"Element.Height[%s]: display=%s whitespace=%s "+
