@@ -24,7 +24,19 @@ func main() {
 	ctx := gt.ContextFromEnv()
 	app := myApp{gtapp.New(ctx)}
 
-	doc := app.Document()
+	// gt.View is used to group displayable things that represent a
+	// logically-related view of something.
+	//
+	// Here, we use the gt.Application.View method to return a View with the ID
+	// "main". Note that if no such View exists in the Application that that
+	// ID, a new empty View with that ID is created, added to the Application,
+	// and returned.
+	//
+	// Below, we add a set of gt.Elements to this View. gt.Elements are
+	// displayable primitives that function very much like an HTML element. The
+	// View can be seen as the root of a sort of Document Object Model (DOM) of
+	// gt.Elements.
+	v := app.View(ctx, "main")
 
 	spanA := gtspan.New(ctx, "A")
 	spanA.SetID("A")
@@ -43,6 +55,10 @@ func main() {
 	spanC := gtspan.New(ctx, "C")
 	spanC.SetID("C")
 	spanC.SetWidth(gt.Fixed(20))
+	// We set a fixed height of 2 for this span to demonstrate how inline-block
+	// Elements will lay out on the Screen. This will have the effect of making
+	// this span twice the height of spans "A" and "B", since the natural
+	// (content) height of those spans is 1.
 	spanC.SetHeight(gt.Fixed(2))
 	spanC.SetForegroundColor(black)
 	spanC.SetBackgroundColor(lightblue)
@@ -54,10 +70,13 @@ func main() {
 	divD.SetBackgroundColor(lightgreen)
 	divD.SetAlignment(gt.AlignmentCenter)
 
-	doc.PushChild(spanA)
-	doc.PushChild(spanB)
-	doc.PushChild(spanC)
-	doc.PushChild(divD)
+	// Calling gt.View.AppendContent pushes the element into the View. Elements
+	// pushed into the View are displayed top-down on the Screen in the order
+	// they are pushed/appended.
+	v.AppendContent(spanA)
+	v.AppendContent(spanB)
+	v.AppendContent(spanC)
+	v.AppendContent(divD)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)
