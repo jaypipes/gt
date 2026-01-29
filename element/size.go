@@ -1,44 +1,45 @@
-package base
+package element
 
 import (
 	"context"
 	"strings"
 
+	"github.com/mitchellh/go-wordwrap"
+
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
-	"github.com/mitchellh/go-wordwrap"
 )
 
 // WithSize constrains the size of the Element's outer bounding box and returns
 // the Element.
-func (b *Base) WithSize(constraint types.SizeConstraint) types.Element {
-	b.Box.SetSize(constraint)
-	return b
+func (e *Element) WithSize(constraint types.SizeConstraint) types.Element {
+	e.Box.SetSize(constraint)
+	return e
 }
 
 // WithWidth constrains the width of the Element and returns the Element.
-func (b *Base) WithWidth(constraint types.DimensionConstraint) types.Element {
-	b.Box.SetWidth(constraint)
-	return b
+func (e *Element) WithWidth(constraint types.DimensionConstraint) types.Element {
+	e.Box.SetWidth(constraint)
+	return e
 }
 
 // WithMinWidth sets the minimum width of the Element and returns the Element.
-func (b *Base) WithMinWidth(w types.Dimension) types.Element {
-	b.Box.SetMinWidth(w)
-	return b
+func (e *Element) WithMinWidth(w types.Dimension) types.Element {
+	e.Box.SetMinWidth(w)
+	return e
 }
 
 // WithHeight constrains the height of the Element and returns the Element.
-func (b *Base) WithHeight(constraint types.DimensionConstraint) types.Element {
-	b.Box.SetHeight(constraint)
-	return b
+func (e *Element) WithHeight(constraint types.DimensionConstraint) types.Element {
+	e.Box.SetHeight(constraint)
+	return e
 }
 
 // WithMinHeight sets the minimum height of the Element and returns the
 // Element.
-func (b *Base) WithMinHeight(w types.Dimension) types.Element {
-	b.Box.SetMinHeight(w)
-	return b
+func (e *Element) WithMinHeight(w types.Dimension) types.Element {
+	e.Box.SetMinHeight(w)
+	return e
 }
 
 // Width returns the Element's width.
@@ -55,27 +56,27 @@ func (b *Base) WithMinHeight(w types.Dimension) types.Element {
 // parent's inner bounding box. If the display mode is `inline`, the width is
 // set to the width of the content plus any horizontal padding and left-right
 // border width.
-func (b *Base) Width() types.Dimension {
+func (e *Element) Width() types.Dimension {
 	ctx := context.TODO()
-	boxWidth := b.Box.Width()
-	display := b.Display()
+	boxWidth := e.Box.Width()
+	display := e.Display()
 
 	// If we're not using inline display mode and there is a fixed height, we
 	// use the box-calculated height.
 	if display != types.DisplayInline {
 		gtlog.Debug(
 			ctx,
-			"element.Base.Width[%s]: display=%s. "+
+			"Element.Width[%s]: display=%s. "+
 				"using box width %d.",
-			b.Tag(), display, boxWidth,
+			e.Tag(), display, boxWidth,
 		)
 		return boxWidth
 	}
 
-	horizSpace := b.HorizontalSpace()
+	horizSpace := e.HorizontalSpace()
 
 	var next types.Plottable
-	nextNode := b.NextSibling()
+	nextNode := e.NextSibling()
 	if nextNode != nil {
 		next = nextNode.(types.Plottable)
 	}
@@ -86,21 +87,21 @@ func (b *Base) Width() types.Dimension {
 	if next == nil || next.Display() == types.DisplayBlock {
 		gtlog.Debug(
 			ctx,
-			"element.Base.Width[%s]: display=%s horiz_space=%d "+
+			"Element.Width[%s]: display=%s horiz_space=%d "+
 				"last sibling or next sibling is block display. "+
 				"using box width %d.",
-			b.Tag(), display, horizSpace, boxWidth,
+			e.Tag(), display, horizSpace, boxWidth,
 		)
 		return boxWidth
 	}
 
-	contentWidth := b.TextContentWidth()
+	contentWidth := e.TextContentWidth()
 	calcWidth := contentWidth + horizSpace
 	gtlog.Debug(
 		ctx,
-		"element.Base.Width[%s]: display=%s horiz_space=%d content_width=%d. "+
+		"Element.Width[%s]: display=%s horiz_space=%d content_width=%d. "+
 			"using min(box_width=%d, calc_width=%d).",
-		b.Tag(), display, horizSpace, contentWidth,
+		e.Tag(), display, horizSpace, contentWidth,
 		boxWidth, calcWidth,
 	)
 	return types.Dimension(min(boxWidth, calcWidth))
@@ -122,47 +123,47 @@ func (b *Base) Width() types.Dimension {
 // If a fixed height has not been set or the display mode is inline, the height
 // defaults to the number of lines of text content, or 1 if there is no text
 // content, plus any vertical space from padding and border.
-func (b *Base) Height() types.Dimension {
+func (e *Element) Height() types.Dimension {
 	ctx := context.TODO()
-	display := b.Display()
-	boxHeight := b.Box.Height()
+	display := e.Display()
+	boxHeight := e.Box.Height()
 
 	// If we're not using inline display mode and there is a fixed height, we
 	// use the box-calculated height.
-	if display != types.DisplayInline && b.HasFixedHeight() {
+	if display != types.DisplayInline && e.HasFixedHeight() {
 		gtlog.Debug(
 			ctx,
-			"element.Base.Height[%s]: display=%s. "+
+			"Element.Height[%s]: display=%s. "+
 				"using box height %d",
-			b.ID(), display, boxHeight,
+			e.ID(), display, boxHeight,
 		)
 		return boxHeight
 	}
 
-	parentNode := b.Parent()
+	parentNode := e.Parent()
 	if parentNode == nil {
 		gtlog.Debug(
 			ctx,
-			"element.Base.Height[%s]: no parent. using box height %d",
-			b.ID(), boxHeight,
+			"Element.Height[%s]: no parent. using box height %d",
+			e.ID(), boxHeight,
 		)
 		return boxHeight
 	}
 
 	parent := parentNode.(types.Plottable)
 	var next types.Plottable
-	nextNode := b.NextSibling()
+	nextNode := e.NextSibling()
 	if nextNode != nil {
 		next = nextNode.(types.Plottable)
 	}
 	parentInner := parent.InnerBounds()
 	parentWidth := types.Dimension(parentInner.Dx())
 	parentHeight := types.Dimension(parentInner.Dy())
-	vertSpace := b.VerticalSpace()
+	vertSpace := e.VerticalSpace()
 
 	percentHeight := types.Dimension(0)
 	parentAvailable := parentHeight
-	if display != types.DisplayInline && b.HasPercentHeight() {
+	if display != types.DisplayInline && e.HasPercentHeight() {
 		// Calculate the remainder of the parent's available height by
 		// examining the set of siblings and subtracting any fixed height
 		// values.
@@ -173,15 +174,15 @@ func (b *Base) Height() types.Dimension {
 				parentAvailable -= child.FixedHeight()
 			}
 		}
-		constraint := b.HeightConstraint()
-		ph := b.PercentHeight()
+		constraint := e.HeightConstraint()
+		ph := e.PercentHeight()
 		percentHeight = parentAvailable * ph / 100
 		gtlog.Debug(
 			ctx,
-			"element.Base.Height[%s]: height_constraint=%s. "+
+			"Element.Height[%s]: height_constraint=%s. "+
 				"calculated height %d "+
 				"from total parent available height %d",
-			b.Tag(), constraint, percentHeight, parentAvailable,
+			e.Tag(), constraint, percentHeight, parentAvailable,
 		)
 		if next == nil {
 			// If we're the last child in the column to use a percentage height
@@ -192,26 +193,26 @@ func (b *Base) Height() types.Dimension {
 		if percentHeight != 0 {
 			gtlog.Debug(
 				ctx,
-				"element.Base.Height[%s]: display=%s "+
+				"Element.Height[%s]: display=%s "+
 					"vert_space=%d height_constraint=%s "+
 					"using min(calc_percent_height=%d, parent_height=%d)",
-				b.Tag(), display,
-				vertSpace, b.HeightConstraint(),
+				e.Tag(), display,
+				vertSpace, e.HeightConstraint(),
 				percentHeight, parentHeight,
 			)
 			return types.Dimension(min(parentHeight, percentHeight))
 		}
 	}
 
-	whitespace := b.Whitespace()
+	whitespace := e.Whitespace()
 	wrapNever := whitespace&types.WhitespaceWrapNever != 0
 	if wrapNever && percentHeight == 0 {
 		gtlog.Debug(
 			ctx,
-			"element.Base.Height[%s]: display=%s whitespace=%s "+
+			"Element.Height[%s]: display=%s whitespace=%s "+
 				"vert_space=%d height_constraint=none. "+
 				"height is always 1 plus padding_vert + border_vert",
-			b.Tag(), display, whitespace, vertSpace,
+			e.Tag(), display, whitespace, vertSpace,
 		)
 		return vertSpace + 1
 	}
@@ -224,11 +225,11 @@ func (b *Base) Height() types.Dimension {
 	// We use the "natural" height of the content, which is the number of
 	// newlines in the content. However, we first need to calculate any
 	// wrapping of long text content before returning the number of newlines.
-	content := b.TextContent()
-	contentHeight := b.TextContentHeight()
+	content := e.TextContent()
+	contentHeight := e.TextContentHeight()
 	contentHeight += vertSpace
 	origContentHeight := contentHeight
-	contentWidth := b.TextContentWidth()
+	contentWidth := e.TextContentWidth()
 	if !wrapLine && (contentWidth > parentWidth) {
 		wrapped = true
 		wrappedContent := wordwrap.WrapString(content, uint(parentWidth))
@@ -236,11 +237,11 @@ func (b *Base) Height() types.Dimension {
 		contentHeight += vertSpace
 		gtlog.Debug(
 			ctx,
-			"element.Base.Height[%s]: display=%s whitespace=%s "+
+			"Element.Height[%s]: display=%s whitespace=%s "+
 				"vert_space=%d original_content_height=%d parent_height=%d "+
 				"content_width=%d parent_width=%d wrapped=%t "+
 				"calculated new content_height of %d",
-			b.Tag(), display, whitespace,
+			e.Tag(), display, whitespace,
 			vertSpace, origContentHeight, parentHeight,
 			contentWidth, parentWidth, wrapped,
 			contentHeight,
@@ -248,9 +249,9 @@ func (b *Base) Height() types.Dimension {
 	}
 	gtlog.Debug(
 		ctx,
-		"element.Base.Height[%s]: display=%s whitespace=%s "+
+		"Element.Height[%s]: display=%s whitespace=%s "+
 			"vert_space=%d using min(content_height=%d, parent_height=%d)",
-		b.Tag(), display, whitespace,
+		e.Tag(), display, whitespace,
 		vertSpace, contentHeight, parentHeight,
 	)
 	return types.Dimension(min(parentHeight, contentHeight))

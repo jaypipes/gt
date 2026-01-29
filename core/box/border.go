@@ -37,18 +37,6 @@ func (b *Box) BorderBackgroundColor() types.Color {
 	return b.borderBGColor
 }
 
-// DrawBorder draws the border around the outer bounding box's cells.
-func (b *Box) DrawBorder(screen types.Screen) {
-	// If we have a border, draw it around the outer bounding box.
-	border := b.border
-	if border == nil {
-		return
-	}
-	style := types.Style{Fg: b.borderFGColor, Bg: b.borderBGColor}
-	bb := border.Style(style)
-	bb.Draw(screen, b.bounds)
-}
-
 // SetPadding sets the Box's padding.
 func (b *Box) SetPadding(padding types.Padding) {
 	b.padding = padding

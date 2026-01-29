@@ -22,7 +22,10 @@ import (
 func New(
 	ctx context.Context,
 ) *Application {
+	b := box.New(ctx)
+	b.SetID("gt.app")
 	return &Application{
+		Box:   b,
 		views: map[string]*view.View{},
 	}
 }
@@ -141,7 +144,7 @@ func (a *Application) draw(ctx context.Context) {
 		a.Box.SetBounds(bounds)
 	}
 
-	a.Box.DrawBorder(a.term)
+	a.Box.Draw(a.term, a.Bounds())
 	v.SetBounds(a.InnerBounds())
 	v.Render(ctx, a.term)
 	if err := a.term.Display(); err != nil {

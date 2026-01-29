@@ -105,7 +105,7 @@ func (b *Box) Width() types.Dimension {
 		calcWidth := fixedWidth + horizSpace
 		gtlog.Debug(
 			ctx,
-			"box.Box.Width[%s]: display=%s "+
+			"Box.Width[%s]: display=%s "+
 				"fixed_width=%d horiz_space=%d. "+
 				"calculated width of %d",
 			b.ID(), display, fixedWidth, horizSpace, calcWidth,
@@ -117,7 +117,7 @@ func (b *Box) Width() types.Dimension {
 	if parentNode == nil {
 		width := types.Dimension(b.Bounds().Dx())
 		gtlog.Debug(
-			ctx, "box.Box.Width[%s]: no parent. using width of bounds: %d",
+			ctx, "Box.Width[%s]: no parent. using width of bounds: %d",
 			b.ID(), width,
 		)
 		return width
@@ -149,7 +149,7 @@ func (b *Box) Width() types.Dimension {
 		}
 		gtlog.Debug(
 			ctx,
-			"box.Box.Width[%s]: using block display. "+
+			"Box.Width[%s]: using block display. "+
 				"calculated remaining available width %d "+
 				"from original parent width %d",
 			b.ID(), remainingWidth, parentWidth,
@@ -210,7 +210,7 @@ func (b *Box) Width() types.Dimension {
 		}
 		gtlog.Debug(
 			ctx,
-			"box.Box.Width[%s]: width_constraint=%s. "+
+			"Box.Width[%s]: width_constraint=%s. "+
 				"calculated width %d "+
 				"from total remaining available width %d",
 			b.ID(), constraint, percentWidth, remainingWidth,
@@ -218,7 +218,7 @@ func (b *Box) Width() types.Dimension {
 		if percentWidth != 0 {
 			gtlog.Debug(
 				ctx,
-				"box.Box.Width[%s]: display=%s "+
+				"Box.Width[%s]: display=%s "+
 					"horiz_space=%d width_constraint=%s. "+
 					"using min(calc_percent_width=%d, parent_width=%d)",
 				b.ID(), display,
@@ -231,7 +231,7 @@ func (b *Box) Width() types.Dimension {
 
 	gtlog.Debug(
 		ctx,
-		"box.Box.Width[%s]: display=%s horiz_space=%d. "+
+		"Box.Width[%s]: display=%s horiz_space=%d. "+
 			"using remaining horizontal width in parent %d.",
 		b.ID(), display, horizSpace, remainingWidth,
 	)
@@ -313,7 +313,7 @@ func (b *Box) Height() types.Dimension {
 		calcHeight := fixedHeight + vertSpace
 		gtlog.Debug(
 			ctx,
-			"box.Box.Height[%s]: "+
+			"Box.Height[%s]: "+
 				"display=%s vert_space=%d fixed_height=%d. "+
 				"calculated height of %d",
 			b.ID(), display, vertSpace, fixedHeight, calcHeight,
@@ -325,7 +325,7 @@ func (b *Box) Height() types.Dimension {
 	if parentNode == nil {
 		height := types.Dimension(b.Bounds().Dy())
 		gtlog.Debug(
-			ctx, "box.Box.Height[%s]: no parent. using height of bounds: %d",
+			ctx, "Box.Height[%s]: no parent. using height of bounds: %d",
 			b.ID(), height,
 		)
 		return height
@@ -365,7 +365,7 @@ func (b *Box) Height() types.Dimension {
 	remainingHeight -= lo.Sum(lo.Values(rowMaxHeights))
 	gtlog.Debug(
 		ctx,
-		"box.Box.Height[%s]: parent_height=%d row_max_heights=%v. "+
+		"Box.Height[%s]: parent_height=%d row_max_heights=%v. "+
 			"calculated remaining height %d",
 		b.ID(), parentHeight, rowMaxHeights, remainingHeight,
 	)
@@ -385,7 +385,7 @@ func (b *Box) Height() types.Dimension {
 		percentHeight += vertSpace
 		gtlog.Debug(
 			ctx,
-			"box.Box.Height[%s]: height_constraint=%s. "+
+			"Box.Height[%s]: height_constraint=%s. "+
 				"calculated height %d "+
 				"from total parent available height %d",
 			b.ID(), constraint, percentHeight, remainingHeight,
@@ -393,7 +393,7 @@ func (b *Box) Height() types.Dimension {
 		if percentHeight != 0 {
 			gtlog.Debug(
 				ctx,
-				"box.Box.Height[%s]: display=%s "+
+				"Box.Height[%s]: display=%s "+
 					"vert_space=%d height_constraint=%s "+
 					"using min(calc_percent_height=%d, parent_height=%d)",
 				b.ID(), display,
@@ -411,7 +411,7 @@ func (b *Box) Height() types.Dimension {
 	// Default to the remaining height of the parent container
 	gtlog.Debug(
 		ctx,
-		"box.Box.Height[%s]: display=%s "+
+		"Box.Height[%s]: display=%s "+
 			"vert_space=%d height_constraint=%s "+
 			"using parent remaining height %d",
 		b.ID(), display,

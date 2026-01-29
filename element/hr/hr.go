@@ -8,7 +8,7 @@ import (
 
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/render"
-	"github.com/jaypipes/gt/element/base"
+	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -19,8 +19,8 @@ const (
 
 // New returns a new HR instance.
 func New(ctx context.Context) *HR {
-	b := base.New(ctx, ElementClass)
-	h := &HR{Base: b}
+	e := element.New(ctx, ElementClass)
+	h := &HR{Element: e}
 	h.SetHeight(core.Fixed(1))
 	// An HR always starts on a new line.
 	h.SetDisplay(types.DisplayBlock)
@@ -33,11 +33,12 @@ func New(ctx context.Context) *HR {
 // An HR defaults to the width of the parent container. An HR's height defaults
 // to 1. By default, the HR is centered within the parent container.
 type HR struct {
-	base.Base
+	element.Element
 }
 
-// Render draws the HR to the supplied Screen.
-func (h *HR) Render(ctx context.Context, screen types.Screen) {
+// Draw draws the HR to the supplied Screen.
+func (h *HR) Draw(screen types.Screen, bounds types.Rectangle) {
+	ctx := context.TODO()
 	numCellsWide := h.Width()
 	inner := h.InnerBounds()
 	if numCellsWide == 0 {

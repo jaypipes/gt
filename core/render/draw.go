@@ -38,5 +38,5 @@ func Draw(
 		cr := child.(types.Drawable)
 		Draw(ctx, cr, screen)
 	}
-	r.DrawWithContext(ctx, screen)
+	r.Draw(screen, r.Bounds())
 }

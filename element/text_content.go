@@ -1,4 +1,4 @@
-package base
+package element
 
 import (
 	"strings"
@@ -9,30 +9,30 @@ import (
 )
 
 // SetTextContent sets the Element's raw, unstyled text content.
-func (b *Base) SetTextContent(textContent string) {
-	b.textContent = textContent
+func (e *Element) SetTextContent(textContent string) {
+	e.textContent = textContent
 }
 
 // WithTextContent sets the Element's raw, unstyled text content and returns
 // the Element.
-func (b *Base) WithTextContent(textContent string) types.Element {
-	b.textContent = textContent
-	return b
+func (e *Element) WithTextContent(textContent string) types.Element {
+	e.textContent = textContent
+	return e
 }
 
 // TextContent returns the Element's raw, unstyled text content.
-func (b *Base) TextContent() string {
-	return b.textContent
+func (e *Element) TextContent() string {
+	return e.textContent
 }
 
 // TextContentWidth returns width in cells of the Element's raw, unstyled text
 // content.
-func (b *Base) TextContentWidth() types.Dimension {
-	return types.Dimension(ansi.StringWidth(b.textContent))
+func (e *Element) TextContentWidth() types.Dimension {
+	return types.Dimension(ansi.StringWidth(e.textContent))
 }
 
 // TextContentHeight returns the height in lines of the Element's raw, unstyled
 // text content.
-func (b *Base) TextContentHeight() types.Dimension {
-	return types.Dimension(strings.Count(b.textContent, "\n")) + 1
+func (e *Element) TextContentHeight() types.Dimension {
+	return types.Dimension(strings.Count(e.textContent, "\n")) + 1
 }

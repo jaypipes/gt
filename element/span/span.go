@@ -3,7 +3,7 @@ package span
 import (
 	"context"
 
-	"github.com/jaypipes/gt/element/base"
+	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -16,8 +16,8 @@ func New(
 	ctx context.Context,
 	content string,
 ) *Span {
-	b := base.New(ctx, ElementClass)
-	s := &Span{Base: b}
+	e := element.New(ctx, ElementClass)
+	s := &Span{Element: e}
 	s.SetDisplay(types.DisplayInline)
 	s.SetTextContent(content)
 	return s
@@ -25,13 +25,13 @@ func New(
 
 // Span is an Element that uses inline display mode by default.
 type Span struct {
-	base.Base
+	element.Element
 }
 
 // SetSize sets the fixed width and height of the Span and also sets the
 // display mode to `inline-block`.
 func (s *Span) SetSize(constraint types.SizeConstraint) {
-	s.Base.SetSize(constraint)
+	s.Element.SetSize(constraint)
 	s.SetDisplay(types.DisplayInlineBlock)
 }
 
@@ -45,7 +45,7 @@ func (s *Span) WithSize(constraint types.SizeConstraint) types.Element {
 // SetWidth sets the fixed width of the Span and also sets the display mode to
 // `inline-block`.
 func (s *Span) SetWidth(constraint types.DimensionConstraint) {
-	s.Base.SetWidth(constraint)
+	s.Element.SetWidth(constraint)
 	s.SetDisplay(types.DisplayInlineBlock)
 }
 
@@ -59,7 +59,7 @@ func (s *Span) WithWidth(constraint types.DimensionConstraint) types.Element {
 // SetHeight sets the fixed height of the Span and also sets the display mode
 // to `inline-block`.
 func (s *Span) SetHeight(constraint types.DimensionConstraint) {
-	s.Base.SetHeight(constraint)
+	s.Element.SetHeight(constraint)
 	s.SetDisplay(types.DisplayInlineBlock)
 }
 

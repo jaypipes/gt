@@ -17,11 +17,10 @@ package types
 type Plottable interface {
 	Identifiable
 	Node
+	Bounded
 
 	// SetBounds sets the Plottable's outer bounding box.
 	SetBounds(Rectangle)
-	// Bounds returns the Plottable's outer bounding box.
-	Bounds() Rectangle
 	// SetAbsolutePosition sets the Plottable's outer bounding box's top-left
 	// coordinates and marks the Plottable as using absolute positioning.
 	SetAbsolutePosition(Point)

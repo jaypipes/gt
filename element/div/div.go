@@ -3,7 +3,7 @@ package div
 import (
 	"context"
 
-	"github.com/jaypipes/gt/element/base"
+	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -16,8 +16,8 @@ func New(
 	ctx context.Context,
 	content string,
 ) *Div {
-	b := base.New(ctx, ElementClass)
-	d := &Div{Base: b}
+	e := element.New(ctx, ElementClass)
+	d := &Div{Element: e}
 	d.SetDisplay(types.DisplayBlock)
 	d.SetTextContent(content)
 	return d
@@ -25,5 +25,5 @@ func New(
 
 // Div is an Element that uses the block display mode by default.
 type Div struct {
-	base.Base
+	element.Element
 }

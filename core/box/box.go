@@ -100,20 +100,28 @@ func (b *Box) String() string {
 	)
 }
 
-// Draw implements the uv.Drawable interface
-func (b *Box) Draw(screen types.Screen, bounds types.Rectangle) {
-	b.DrawBorder(screen)
-}
-
-// DrawWithContext wraps the [uv.Drawable] interface with a supplied context
-// and always calls Draw with the Box's pre-plotted bounds.
-func (b *Box) DrawWithContext(
+// drawBorder draws the border around the outer bounding box's cells.
+func (b *Box) drawBorder(
 	ctx context.Context,
 	screen types.Screen,
+	bounds types.Rectangle,
 ) {
-	bounds := b.bounds
+	// If we have a border, draw it around the outer bounding box.
+	border := b.border
+	if border == nil {
+		return
+	}
+	gtlog.Debug(ctx, "Box.drawBorder[%s]", b.id)
+	style := types.Style{Fg: b.borderFGColor, Bg: b.borderBGColor}
+	bb := border.Style(style)
+	bb.Draw(screen, b.bounds)
+}
+
+// Draw implements the uv.Drawable interface
+func (b *Box) Draw(screen types.Screen, bounds types.Rectangle) {
+	ctx := context.TODO()
 	gtlog.Debug(ctx, "Box.Draw[%s]: bounds=%s", b.id, bounds)
-	b.Draw(screen, bounds)
+	b.drawBorder(ctx, screen, bounds)
 }
 
 // Build allows the Box to dynamically generate content.
