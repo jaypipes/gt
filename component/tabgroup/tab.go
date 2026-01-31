@@ -14,6 +14,12 @@ type Tab struct {
 	title string
 	// content is the Element that represents the root of the Tab's content.
 	content types.Element
+	// currentTabKeyPress is the key combination that should trigger setting
+	// this Tab as the current Tab in the TabGroup.
+	currentTabKeyPress string
+	// keyPressMap contains key press combination callbacks registered for the
+	// Tab.
+	keyPressMap types.KeyPressMap
 }
 
 // Group returns a pointer to the TabGroup to which the Tab belongs.
@@ -47,4 +53,29 @@ func (t *Tab) SetContent(el types.Element) *Tab {
 // Content returns the Element that is the root of the Tab's content.
 func (t *Tab) Content() types.Element {
 	return t.content
+}
+
+// SetCurrentTabKeyPress sets the key combination that should trigger setting
+// this Tab as the current Tab in the TabGroup.
+func (t *Tab) SetCurrentTabKeyPress(key string) {
+	t.currentTabKeyPress = key
+}
+
+// SetCurrentTabKeyPress sets the key combination that should trigger setting
+// this Tab as the current Tab in the TabGroup and returns the Tab.
+func (t *Tab) WithCurrentTabKeyPress(key string) *Tab {
+	t.SetCurrentTabKeyPress(key)
+	return t
+}
+
+// CurrentTabKeyPress returns the key combination that triggers setting this
+// Tab as the current Tab in the TabGroup
+func (t *Tab) CurrentTabKeyPress() string {
+	return t.currentTabKeyPress
+}
+
+// KeyPressMap returns a map, keyed by key press string combination, of
+// callbacks to execute upon that key press.
+func (t *Tab) KeyPressMap() types.KeyPressMap {
+	return t.keyPressMap
 }

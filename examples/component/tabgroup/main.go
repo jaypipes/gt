@@ -44,6 +44,10 @@ func main() {
 	tab1 := tg.Tab(ctx, "tab-1")
 	tab1.SetTitle("tab one")
 
+	// You can set a key press combination to trigger the tab to become the
+	// active tab.
+	tab1.SetCurrentTabKeyPress("1")
+
 	div1 := gtdiv.New(ctx, "tab 1 content")
 	div1.SetID("div-1")
 	div1.SetHeight(gt.Percent(100))
@@ -54,6 +58,7 @@ func main() {
 
 	tab2 := tg.Tab(ctx, "tab-2")
 	tab2.SetTitle("tab two")
+	tab2.SetCurrentTabKeyPress("2")
 
 	div2 := gtdiv.New(ctx, "tab 2 content")
 	div2.SetID("div-2")

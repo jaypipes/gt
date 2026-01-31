@@ -25,8 +25,9 @@ func New(
 	b := box.New(ctx)
 	b.SetID("gt.app")
 	return &Application{
-		Box:   b,
-		views: map[string]*view.View{},
+		Box:         b,
+		views:       map[string]*view.View{},
+		keyPressMap: types.KeyPressMap{},
 	}
 }
 
@@ -51,6 +52,10 @@ type Application struct {
 	views map[string]*view.View
 	// curView is the ID of the currently active (displayed) View.
 	curView string
+
+	// keyPressMap contains key press combination callbacks registered for the
+	// Application itself -- i.e. global key press callbacks.
+	keyPressMap types.KeyPressMap
 }
 
 // SetTitle sets the Application's optional title, which by default also sets the
@@ -118,6 +123,158 @@ func (a *Application) SetBorderBackgroundColor(c types.Color) *Application {
 	return a
 }
 
+// KeyPressMap returns the Application's *global* map of key press
+// combination strings to callbacks that will execute when that key press
+// combination is entered.
+func (a *Application) KeyPressMap() types.KeyPressMap {
+	return a.keyPressMap
+}
+
+// OnKeyPress registers an Application-level (global)  callback to execute
+// upon a key press combination.
+func (a *Application) OnKeyPress(key string, cb types.KeyPressCallback) {
+	a.keyPressMap[key] = cb
+}
+
+// Start starts up the Application and its event loop, blocking until the event
+// loop is closed.
+func (a *Application) Start(ctx context.Context) error {
+	if a == nil {
+		return fmt.Errorf("cannot start nil Application.")
+	}
+	t := uv.NewTerminal(os.Stdin, os.Stdout, os.Environ())
+
+	// By entering alt screen we take control of the output of the terminal
+	// which means when we exit the application, the terminal screen will be
+	// returned to its original state.
+	t.EnterAltScreen()
+	defer func() {
+		if r := recover(); r != nil {
+			_ = t.Teardown()
+			fmt.Fprintf(os.Stderr, "recovered from panic: %v", r)
+			debug.PrintStack()
+		}
+	}()
+
+	if err := t.Start(); err != nil {
+		return fmt.Errorf("failed to start terminal program: %w", err)
+	}
+
+	a.term = t
+	if a.title != "" {
+		t.WriteString(ansi.SetWindowTitle(a.title))
+	}
+	keyMap := a.buildKeyPressMap()
+
+loop:
+	for ev := range t.Events() {
+		switch ev := ev.(type) {
+		case uv.WindowSizeEvent:
+			t.Resize(ev.Width, ev.Height)
+			t.Erase()
+		case uv.KeyPressEvent:
+			switch {
+			case ev.MatchString("q", "ctrl+c"):
+				break loop
+			case ev.MatchString("ctrl+z"):
+				t.Erase()
+				if err := t.Display(); err != nil {
+					log.Fatal(err)
+				}
+				if t.Pause() != nil {
+					log.Fatal("failed to pause terminal")
+				}
+
+				uv.Suspend()
+
+				if err := t.Resume(); err != nil {
+					log.Fatal("failed to resume terminal")
+				}
+			}
+			for kp, cb := range keyMap {
+				if ev.MatchString(kp) {
+					cb(ctx)
+					// rebuild the key map since we may have changed views.
+					keyMap = a.buildKeyPressMap()
+					break
+				}
+			}
+		}
+
+		a.draw(ctx)
+	}
+
+	if err := t.Shutdown(context.Background()); err != nil {
+		log.Fatal(err)
+	}
+	if gtlog.Level() < slog.LevelInfo {
+		fmt.Fprintf(os.Stderr, "%s", gtlog.Records())
+	}
+	return nil
+}
+
+// buildKeyPressMap builds the Application's outermost map of key press
+// combinations to callback functions to execute when those key press
+// combinations are entered.
+//
+// The outermost map will always be the "current view" key press combinations
+// that the Application's registered Views have along with any key press
+// combinations registered with the Application itself and any key press
+// combinations that the *current* View contains.
+func (a *Application) buildKeyPressMap() types.KeyPressMap {
+	ctx := context.TODO()
+	res := types.KeyPressMap{}
+
+	// copy in our global key press callbacks
+	for k, cb := range a.keyPressMap {
+		res[k] = cb
+	}
+	globalKPs := lo.Keys(a.keyPressMap)
+
+	// now add our "current view" key press callbacks
+	for viewID, view := range a.views {
+		currentViewKP := view.CurrentViewKeyPress()
+		if currentViewKP != "" {
+			if lo.Contains(globalKPs, currentViewKP) {
+				gtlog.Warn(
+					ctx,
+					"current view key press combination %q for view %q "+
+						"shadows global key press combination",
+					currentViewKP, viewID,
+				)
+			}
+			res[currentViewKP] = func(_ context.Context) {
+				a.SetCurrentView(viewID)
+			}
+		}
+	}
+
+	// finally, add all the current View's key press callbacks
+	curView := a.views[a.curView]
+	curViewKPMap := curView.KeyPressMap()
+	if len(curViewKPMap) > 0 {
+		appKPs := lo.Keys(res)
+		for k, cb := range curViewKPMap {
+			if lo.Contains(appKPs, k) {
+				gtlog.Warn(
+					ctx,
+					"view key press combination %q for view %q "+
+						"shadows application key press combination",
+					k, curView.ID(),
+				)
+			}
+			res[k] = cb
+		}
+	}
+
+	gtlog.Debug(
+		ctx,
+		"Application.buildKeyPressMap: built map for combinations %v",
+		lo.Keys(res),
+	)
+	return res
+}
+
 // draw renders the Application's active View to the Terminal screen.
 func (a *Application) draw(ctx context.Context) {
 	if a.term == nil {
@@ -150,89 +307,4 @@ func (a *Application) draw(ctx context.Context) {
 	if err := a.term.Display(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func (a *Application) currentViewKeyMap() map[string]string {
-	res := map[string]string{}
-	for viewID, view := range a.views {
-		currentKP := view.CurrentViewKeyPress()
-		if currentKP != "" {
-			res[currentKP] = viewID
-		}
-	}
-	return res
-}
-
-// Start starts up the Application and its event loop, blocking until the event
-// loop is closed.
-func (a *Application) Start(ctx context.Context) error {
-	if a == nil {
-		return fmt.Errorf("cannot start nil Application.")
-	}
-	t := uv.NewTerminal(os.Stdin, os.Stdout, os.Environ())
-
-	// By entering alt screen we take control of the output of the terminal
-	// which means when we exit the application, the terminal screen will be
-	// returned to its original state.
-	t.EnterAltScreen()
-	defer func() {
-		if r := recover(); r != nil {
-			_ = t.Teardown()
-			fmt.Fprintf(os.Stderr, "recovered from panic: %v", r)
-			debug.PrintStack()
-		}
-	}()
-
-	if err := t.Start(); err != nil {
-		return fmt.Errorf("failed to start terminal program: %w", err)
-	}
-
-	a.term = t
-	if a.title != "" {
-		t.WriteString(ansi.SetWindowTitle(a.title))
-	}
-	currentViewKeyMap := a.currentViewKeyMap()
-
-loop:
-	for ev := range t.Events() {
-		switch ev := ev.(type) {
-		case uv.WindowSizeEvent:
-			t.Resize(ev.Width, ev.Height)
-			t.Erase()
-		case uv.KeyPressEvent:
-			switch {
-			case ev.MatchString("q", "ctrl+c"):
-				break loop
-			case ev.MatchString("ctrl+z"):
-				t.Erase()
-				if err := t.Display(); err != nil {
-					log.Fatal(err)
-				}
-				if t.Pause() != nil {
-					log.Fatal("failed to pause terminal")
-				}
-
-				uv.Suspend()
-
-				if err := t.Resume(); err != nil {
-					log.Fatal("failed to resume terminal")
-				}
-			}
-			for viewKP, viewID := range currentViewKeyMap {
-				if ev.MatchString(viewKP) && a.curView != viewID {
-					a.SetCurrentView(viewID)
-				}
-			}
-		}
-
-		a.draw(ctx)
-	}
-
-	if err := t.Shutdown(context.Background()); err != nil {
-		log.Fatal(err)
-	}
-	if gtlog.Level() < slog.LevelInfo {
-		fmt.Fprintf(os.Stderr, "%s", gtlog.Records())
-	}
-	return nil
 }

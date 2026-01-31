@@ -6,6 +6,7 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 	uvscreen "github.com/charmbracelet/ultraviolet/screen"
+	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
@@ -32,6 +33,9 @@ type View struct {
 	// currentViewKeyPress is the key combination that should trigger setting
 	// this View as the current View in the Application.
 	currentViewKeyPress string
+	// keyPressMap stores the View's map of key press combinations to
+	// callbacks.
+	keyPressMap types.KeyPressMap
 }
 
 // String returns a short string representation of the View.
@@ -62,6 +66,55 @@ func (v *View) WithCurrentViewKeyPress(key string) *View {
 // View as the current View in the Application
 func (v *View) CurrentViewKeyPress() string {
 	return v.currentViewKeyPress
+}
+
+// KeyPressMap returns the View's map of key press combination strings to
+// callbacks that will execute when that key press combination is entered.
+func (v *View) KeyPressMap() types.KeyPressMap {
+	ctx := context.TODO()
+	res := types.KeyPressMap{}
+
+	// copy in our view-scoped key press callbacks
+	for k, cb := range v.keyPressMap {
+		res[k] = cb
+	}
+	viewKPs := lo.Keys(v.keyPressMap)
+
+	// now add all child key press maps
+	children := v.Children()
+	for _, child := range children {
+		kp, ok := child.(types.HasKeyPressMap)
+		if ok {
+			kpMap := kp.KeyPressMap()
+			for k, cb := range kpMap {
+				if lo.Contains(viewKPs, k) {
+					gtlog.Warn(
+						ctx,
+						"key press combination %q for view child %q "+
+							"shadows view-level key press combination",
+						k, child.NodeID(),
+					)
+				}
+				_, exists := res[k]
+				if exists {
+					gtlog.Warn(
+						ctx,
+						"key press combination %q for view child %q "+
+							"shadows prior key press combination",
+						k, child.NodeID(),
+					)
+				}
+				res[k] = cb
+			}
+		}
+	}
+	return res
+}
+
+// OnKeyPress registers an View-level callback to execute upon a key press
+// combination.
+func (v *View) OnKeyPress(key string, cb types.KeyPressCallback) {
+	v.keyPressMap[key] = cb
 }
 
 // SetContent sets the thing that will be rendered in the View.

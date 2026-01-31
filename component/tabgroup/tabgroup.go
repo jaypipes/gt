@@ -80,6 +80,43 @@ func (g *TabGroup) SetCurrentTab(id string) *TabGroup {
 	return g
 }
 
+// KeyPressMap returns a map, keyed by key press string combination, of
+// callbacks to execute upon that key press.
+func (g *TabGroup) KeyPressMap() types.KeyPressMap {
+	ctx := context.TODO()
+	res := types.KeyPressMap{}
+
+	// add our "current tab" key press callbacks
+	for _, tab := range g.tabs {
+		currentTabKP := tab.CurrentTabKeyPress()
+		if currentTabKP != "" {
+			res[currentTabKP] = func(_ context.Context) {
+				g.SetCurrentTab(tab.ID())
+			}
+		}
+	}
+
+	// finally, add all the current Tab's key press callbacks
+	curTab := g.tabs[g.curTab]
+	curTabKPMap := curTab.KeyPressMap()
+	if len(curTabKPMap) > 0 {
+		appKPs := lo.Keys(res)
+		for k, cb := range curTabKPMap {
+			if lo.Contains(appKPs, k) {
+				gtlog.Warn(
+					ctx,
+					"tab key press combination %q for tab %q "+
+						"shadows tab group key press combination",
+					k, curTab.ID(),
+				)
+			}
+			res[k] = cb
+		}
+	}
+
+	return res
+}
+
 // Build constructs the tab bar and tab content elements.
 func (g *TabGroup) Build(
 	ctx context.Context,
