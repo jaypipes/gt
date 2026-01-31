@@ -373,7 +373,7 @@ func (b *Box) Height() types.Dimension {
 		constraint := b.HeightConstraint()
 		ph := b.PercentHeight()
 		calcHeight = remainingHeight * ph / 100
-		if next == nil {
+		if next == nil && ph != 100 {
 			// If we're the last child in the column to use a percentage height
 			// constraint, we expand the height by a single line to consume the
 			// remainder of the available parent's height.

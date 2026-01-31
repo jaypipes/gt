@@ -36,6 +36,11 @@ func main() {
 	v.SetBorder(gt.RoundedBorder())
 
 	tg := tabgroup.New(ctx, "tg")
+
+	// The bar on the TabGroup can be styled separately.
+	bar := tg.Bar()
+	bar.SetBorderForegroundColor(yellow)
+
 	tab1 := tg.Tab(ctx, "tab-1")
 	tab1.SetTitle("tab one")
 
@@ -50,7 +55,7 @@ func main() {
 	tab2 := tg.Tab(ctx, "tab-2")
 	tab2.SetTitle("tab two")
 
-	div2 := gtdiv.New(ctx, "content 2")
+	div2 := gtdiv.New(ctx, "tab 2 content")
 	div2.SetID("div-2")
 	div2.SetHeight(gt.Percent(100))
 	div2.SetAlignment(gt.AlignmentMiddleCenter)
@@ -58,6 +63,7 @@ func main() {
 	div2.SetBackgroundColor(pink)
 	tab2.SetContent(div2)
 
+	// Add the TabGroup to our View.
 	v.AppendContent(tg)
 
 	if err := app.Start(ctx); err != nil {

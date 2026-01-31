@@ -11,11 +11,13 @@ import (
 	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/element/div"
+	"github.com/jaypipes/gt/types"
 )
 
 // New returns a new instance of a TabGroup.
 func New(ctx context.Context, id string) *TabGroup {
 	b := box.New(ctx)
+	b.SetDisplay(types.DisplayBlock)
 	b.SetHeight(core.Percent(100))
 	b.SetID(id)
 	g := &TabGroup{
@@ -36,6 +38,11 @@ type TabGroup struct {
 	tabs []*Tab
 	// curTab is the ID of the active Tab.
 	curTab int
+}
+
+// Bar returns the Bar object that can be styled separately.
+func (g *TabGroup) Bar() *Bar {
+	return g.bar
 }
 
 // Tab returns the Tab with the supplied ID. If no such Tab exists, a new
@@ -78,6 +85,9 @@ func (g *TabGroup) Build(
 	ctx context.Context,
 ) {
 	gtlog.Debug(ctx, "TabGroup.Build[%s]", g.ID())
+
+	// Clear any previously-built children from the TabGroup's container.
+	g.RemoveAllChildren()
 
 	g.bar.Build(ctx)
 	g.AppendChild(g.bar)

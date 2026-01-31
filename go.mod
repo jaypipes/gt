@@ -12,6 +12,8 @@ require (
 	github.com/samber/lo v1.52.0
 )
 
+replace github.com/charmbracelet/ultraviolet => ../../charmbracelet/ultraviolet
+
 require (
 	github.com/charmbracelet/colorprofile v0.4.1 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect

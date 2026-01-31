@@ -17,20 +17,44 @@ const (
 var (
 	// The default bar border is just a single line on the bottom of the bar.
 	DefaultBarBorder = types.Border{
-		Bottom: types.Side{Content: "─"},
+		Top:         types.Side{Content: ""},
+		Bottom:      types.Side{Content: "─"},
+		Left:        types.Side{Content: ""},
+		Right:       types.Side{Content: ""},
+		TopLeft:     types.Side{Content: ""},
+		TopRight:    types.Side{Content: ""},
+		BottomLeft:  types.Side{Content: ""},
+		BottomRight: types.Side{Content: ""},
 	}
 	DefaultTitlePadding      = types.Pad(1)
 	DefaultTitleActiveBorder = types.Border{
-		Top: types.Side{Content: "━"},
+		Top:         types.Side{Content: "━"},
+		Bottom:      types.Side{Content: ""},
+		Left:        types.Side{Content: ""},
+		Right:       types.Side{Content: ""},
+		TopLeft:     types.Side{Content: ""},
+		TopRight:    types.Side{Content: ""},
+		BottomLeft:  types.Side{Content: ""},
+		BottomRight: types.Side{Content: ""},
 	}
-	DefaultTitleInactiveBorder = types.Border{}
+	DefaultTitleInactiveBorder = types.Border{
+		Top:         types.Side{Content: ""},
+		Bottom:      types.Side{Content: ""},
+		Left:        types.Side{Content: ""},
+		Right:       types.Side{Content: ""},
+		TopLeft:     types.Side{Content: ""},
+		TopRight:    types.Side{Content: ""},
+		BottomLeft:  types.Side{Content: ""},
+		BottomRight: types.Side{Content: ""},
+	}
 )
 
 func defaultBar(ctx context.Context, group *TabGroup) *Bar {
 	b := box.New(ctx)
-	b.SetHeight(core.Fixed(10))
+	b.SetDisplay(types.DisplayBlock)
+	b.SetHeight(core.Fixed(5))
 	b.SetID(fmt.Sprintf("tab-group-%s-bar", group.ID()))
-	b.SetPadding(types.PadTBLR(1, 0, 2, 2))
+	b.SetPadding(types.PadHorizontal(2))
 	b.SetBorder(DefaultBarBorder)
 	return &Bar{
 		Box:                 b,
@@ -102,19 +126,21 @@ func (b *Bar) SetInactiveTitleBorder(border types.Border) {
 }
 
 func (b *Bar) Build(ctx context.Context) {
-	for _, tab := range b.group.tabs {
+	// Clear any previously-built children from the TabGroup's container.
+	b.RemoveAllChildren()
+	for x, tab := range b.group.tabs {
 		tabID := fmt.Sprintf("tab-group-%s-bar-tab-%s", b.group.ID(), tab.ID())
 		tabEl := span.New(ctx, tab.Title())
 		tabEl.SetID(tabID)
 		tabEl.SetDisplay(types.DisplayInlineBlock)
+		tabEl.SetAlignment(types.AlignmentCenter)
+		tabEl.SetWidth(core.Fixed(12))
 		tabEl.SetPadding(b.titlePadding)
-		/*
-			if tab.id == g.curTab {
-				tabEl.SetBorder(g.bar.titleActiveBorder)
-			} else {
-				tabEl.SetBorder(g.bar.titleInactiveBorder)
-			}
-		*/
+		if x == b.group.curTab {
+			tabEl.SetBorder(b.titleActiveBorder)
+		} else {
+			tabEl.SetBorder(b.titleInactiveBorder)
+		}
 		b.AppendChild(tabEl)
 	}
 }
