@@ -3,7 +3,6 @@ package box
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
@@ -11,13 +10,10 @@ import (
 
 // New returns a new instance of a Box.
 func New(ctx context.Context) Box {
-	return Box{
-		RWMutex: new(sync.RWMutex),
-	}
+	return Box{}
 }
 
-// Box is a container for things that can be plotted and rendered to a
-// Screen.
+// Box can be plotted and rendered to a Screen.
 //
 // Box has an optional border and padding and can be positioned either
 // relatively or absolutely on the Screen's grid.
@@ -25,18 +21,6 @@ func New(ctx context.Context) Box {
 // Box has an outer and inner bounding box representing the bounding box
 // outside the border and inside the padding of the Box.
 type Box struct {
-	*sync.RWMutex
-	// id is an identifier for the Box.
-	id string
-
-	// childIndex is the index of this Box in the parent's children.
-	childIndex int
-	// parent is the this Node's parent, if any.
-	parent types.Node
-	// children is the collection of Nodes that are the direct children of this
-	// Node, if any.
-	children []types.Node
-
 	// bounds is the outer bounding box and positioning coordinates of the
 	// Box
 	bounds types.Rectangle
@@ -71,30 +55,11 @@ type Box struct {
 	whitespace types.Whitespace
 }
 
-// SetID sets the Box's identifier.
-func (b *Box) SetID(id string) {
-	b.id = id
-}
-
-// ID returns the Box's identifier.
-func (b *Box) ID() string {
-	return b.id
-}
-
 // String returns a short string representation of the Box.
 func (b *Box) String() string {
-	parentStr := "nil"
-	if b.parent != nil {
-		parentEl, ok := b.parent.(types.Element)
-		if ok {
-			parentStr = parentEl.Tag()
-		}
-	}
 	return fmt.Sprintf(
-		"child_index=%d parent=%s children=%d "+
-			"absolute=%t bounds=%s pad=%s "+
+		"absolute=%t bounds=%s pad=%s "+
 			"display=%s align=%s whitespace=%s",
-		b.childIndex, parentStr, len(b.children),
 		b.absolute, b.bounds, b.padding,
 		b.display, b.alignment, b.whitespace,
 	)
@@ -111,7 +76,7 @@ func (b *Box) drawBorder(
 	if border == nil {
 		return
 	}
-	gtlog.Debug(ctx, "Box.drawBorder[%s]", b.id)
+	gtlog.Debug(ctx, "Box.drawBorder: %s", b)
 	style := types.Style{Fg: b.borderFGColor, Bg: b.borderBGColor}
 	bb := border.Style(style)
 	bb.Draw(screen, b.bounds)
@@ -120,13 +85,9 @@ func (b *Box) drawBorder(
 // Draw implements the uv.Drawable interface
 func (b *Box) Draw(screen types.Screen, bounds types.Rectangle) {
 	ctx := context.TODO()
-	gtlog.Debug(ctx, "Box.Draw[%s]: bounds=%s", b.id, bounds)
+	gtlog.Debug(ctx, "Box.Draw: bounds=%s", bounds)
 	b.drawBorder(ctx, screen, bounds)
 }
 
-// Build allows the Box to dynamically generate content.
-func (b *Box) Build(ctx context.Context) {}
-
 var _ types.Plottable = (*Box)(nil)
 var _ types.Drawable = (*Box)(nil)
-var _ types.Buildable = (*Box)(nil)

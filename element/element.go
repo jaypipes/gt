@@ -3,9 +3,11 @@ package element
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	uv "github.com/charmbracelet/ultraviolet"
 
+	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
@@ -14,18 +16,28 @@ import (
 
 // New returns a new instance of a [element.Element] with the specified type/class.
 func New(ctx context.Context, class string) Element {
-	b := box.New(ctx)
-	return Element{
-		Box:   b,
-		class: class,
+	e := Element{
+		RWMutex: new(sync.RWMutex),
+		class:   class,
 	}
+	return e
 }
 
 // Element is a base class that implements [types.Element] with some common
 // method implementations. Subclasses in the [element] subpackages embed
 // [element.Element] and implement various [types.Element] methods.
 type Element struct {
+	*sync.RWMutex
+	core.Identifiable
 	box.Box
+
+	// childIndex is the index of this Box in the parent's children.
+	childIndex int
+	// parent is the this Node's parent, if any.
+	parent types.Node
+	// children is the collection of Nodes that are the direct children of this
+	// Node, if any.
+	children []types.Node
 	// class is the Element's type/class, e.g. "gt.label" or "gt.canvas"
 	class string
 
@@ -43,15 +55,29 @@ func (e *Element) Tag() string {
 }
 
 func (e *Element) String() string {
+	parentStr := "nil"
+	if e.parent != nil {
+		parentEl, ok := e.parent.(types.Element)
+		if ok {
+			parentStr = parentEl.Tag()
+		} else {
+			parentID, ok := e.parent.(types.Identifiable)
+			if ok {
+				parentStr = parentID.ID()
+			}
+		}
+	}
 	return fmt.Sprintf(
-		"<%s %s>",
-		e.class, e.Box.String(),
+		"<%s id=%s child_index=%d parent=%s children=%d %s",
+		e.class, e.ID(),
+		e.childIndex, parentStr, len(e.children),
+		e.Box.String(),
 	)
 }
 
 // WithID sets the Element's unique identifier and returns the Element.
 func (e *Element) WithID(id string) types.Element {
-	e.Box.SetID(id)
+	e.SetID(id)
 	return e
 }
 
@@ -77,8 +103,33 @@ func (e *Element) Draw(screen types.Screen, bounds types.Rectangle) {
 	}
 	inner := e.InnerBounds()
 	innerClipped := render.Overlapping(bounds, inner)
+	// If there is no alignment set, inherit from the nearest parent with
+	// non-auto alignment.
+	align := e.Alignment()
+	if align == types.AlignmentAuto {
+		parentNode := e.Parent()
+		parent, ok := parentNode.(types.Plottable)
+		if !ok {
+			parentStr := ""
+			pid, ok := parentNode.(types.Identifiable)
+			if ok {
+				parentStr = pid.ID()
+			} else {
+				n, ok := parentNode.(types.Node)
+				if ok {
+					parentStr = n.NodeID()
+				}
+			}
+			gtlog.Debug(context.TODO(), "Element.Draw[%s]: parent %s is not plottable. it's a %T", e.ID(), parentStr, parentNode)
+		} else {
+			parentAlign := parent.Alignment()
+			if parentAlign != types.AlignmentAuto {
+				align = parentAlign
+			}
+		}
+	}
 	content = render.AlignString(
-		ctx, content, inner, e.Alignment(),
+		ctx, content, inner, align,
 	)
 	style := e.Style()
 	content = style.Styled(content)

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jaypipes/gt/core"
-	"github.com/jaypipes/gt/core/box"
+	"github.com/jaypipes/gt/element/div"
 	"github.com/jaypipes/gt/element/span"
 	"github.com/jaypipes/gt/types"
 )
@@ -50,14 +50,13 @@ var (
 )
 
 func defaultBar(ctx context.Context, group *TabGroup) *Bar {
-	b := box.New(ctx)
-	b.SetDisplay(types.DisplayBlock)
-	b.SetHeight(core.Fixed(5))
-	b.SetID(fmt.Sprintf("tab-group-%s-bar", group.ID()))
-	b.SetPadding(types.PadHorizontal(2))
-	b.SetBorder(DefaultBarBorder)
+	d := div.New(ctx, "")
+	d.SetDisplay(types.DisplayBlock)
+	d.SetHeight(core.Fixed(5))
+	d.SetPadding(types.PadHorizontal(2))
+	d.SetBorder(DefaultBarBorder)
 	return &Bar{
-		Box:                 b,
+		Div:                 *d,
 		group:               group,
 		location:            DefaultBarLocation,
 		titlePadding:        DefaultTitlePadding,
@@ -78,7 +77,7 @@ const (
 
 // Bar represents the bar of Tabs in a TabGroup.
 type Bar struct {
-	box.Box
+	div.Div
 	// group is the TabGroup this Bar will display Tab titles for.
 	group *TabGroup
 	// location is where the Bar will appear.
@@ -99,14 +98,14 @@ func (b *Bar) SetLocation(loc BarLocation) {
 // SetPadding sets the padding around the Bar itself. To set the padding around
 // individual titles of Tabs in the Bar, use SetTitlePadding.
 func (b *Bar) SetPadding(p types.Padding) {
-	b.Box.SetPadding(p)
+	b.Div.SetPadding(p)
 }
 
 // SetBorder sets the border around the Bar itself. To set the border around
 // the titles of the Tabs in the Bar, use SetInactiveTitleBorder and
 // SetActiveTitleBorder.
 func (b *Bar) SetBorder(border types.Border) {
-	b.Box.SetBorder(border)
+	b.Div.SetBorder(border)
 }
 
 // SetTitlePadding sets the padding around individual titles of Tabs in the the

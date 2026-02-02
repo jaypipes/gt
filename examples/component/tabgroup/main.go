@@ -44,28 +44,37 @@ func main() {
 	tab1 := tg.Tab(ctx, "tab-1")
 	tab1.SetTitle("tab one")
 
+	// Tabs default to receiving 100% of the width and height of the container,
+	// which is the TabGroup. The TabGroup likewise defaults to 100% of the
+	// width and height of its container, which is the View, which defaults to
+	// 100% of the width and height of its container, which is the Screen.
+	//
+	// You can style and decorate the Tab like any other element.
+	tab1.SetAlignment(gt.AlignmentMiddleCenter)
+	tab1.SetForegroundColor(black)
+	tab1.SetBackgroundColor(yellow)
+
 	// You can set a key press combination to trigger the tab to become the
 	// active tab.
 	tab1.SetCurrentTabKeyPress("1")
 
+	// Give the Tab some content by creating a new gt.Element or gt.Component
+	// and using Tab.SetContent or Tab.AppendContent.
 	div1 := gtdiv.New(ctx, "tab 1 content")
 	div1.SetID("div-1")
 	div1.SetHeight(gt.Percent(100))
-	div1.SetAlignment(gt.AlignmentMiddleCenter)
-	div1.SetForegroundColor(black)
-	div1.SetBackgroundColor(yellow)
 	tab1.SetContent(div1)
 
 	tab2 := tg.Tab(ctx, "tab-2")
 	tab2.SetTitle("tab two")
+	tab2.SetAlignment(gt.AlignmentMiddleCenter)
+	tab2.SetForegroundColor(black)
+	tab2.SetBackgroundColor(pink)
 	tab2.SetCurrentTabKeyPress("2")
 
 	div2 := gtdiv.New(ctx, "tab 2 content")
 	div2.SetID("div-2")
 	div2.SetHeight(gt.Percent(100))
-	div2.SetAlignment(gt.AlignmentMiddleCenter)
-	div2.SetForegroundColor(black)
-	div2.SetBackgroundColor(pink)
 	tab2.SetContent(div2)
 
 	// Add the TabGroup to our View.

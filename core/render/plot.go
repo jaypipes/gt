@@ -3,6 +3,7 @@ package render
 import (
 	"context"
 
+	"github.com/jaypipes/gt/core"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
 )
@@ -142,50 +143,55 @@ import (
 // is relative to the previous sibling or, if no previous sibling, the parent.
 func Plot(
 	ctx context.Context,
-	p types.Plottable,
+	n types.Node,
 	containerBounds types.Rectangle,
 ) {
+	p, ok := n.(types.Plottable)
+	if !ok {
+		return
+	}
 	// If bounds has already been set, no need to plot.
 	bounds := p.Bounds()
 	if !bounds.Empty() {
 		gtlog.Debug(
 			ctx, "render.Plot[%s]: bounds already set: %s",
-			p.ID(), bounds,
+			core.ID(n), bounds,
 		)
 	} else {
-		bounds = calculateBounds(ctx, p, containerBounds)
+		bounds = calculateBounds(ctx, n, containerBounds)
 		gtlog.Debug(
 			ctx,
 			"render.Plot[%s]: calculated bounds %s",
-			p.ID(), bounds,
+			core.ID(n), bounds,
 		)
 		p.SetBounds(bounds)
 	}
 	inner := p.InnerBounds()
-	for _, child := range p.Children() {
-		cp, ok := child.(types.Plottable)
-		if ok {
-			Plot(ctx, cp, inner)
-		}
+	for _, child := range n.Children() {
+		Plot(ctx, child, inner)
 	}
 }
 
 // calculateBounds determines the outer bounding box for the supplied Plottable.
 func calculateBounds(
 	ctx context.Context,
-	p types.Plottable,
+	n types.Node,
 	containerBounds types.Rectangle,
 ) types.Rectangle {
+	p, ok := n.(types.Plottable)
+	if !ok {
+		return types.Rectangle{}
+	}
 	var parent types.Plottable
 	var prevSibling types.Plottable
 
-	parentNode := p.Parent()
+	parentNode := n.Parent()
 	if parent != nil {
 		parent = parentNode.(types.Plottable)
 		containerBounds = parent.InnerBounds()
 	}
 
-	prevSiblingNode := p.PreviousSibling()
+	prevSiblingNode := n.PreviousSibling()
 	if prevSiblingNode != nil {
 		prevSibling = prevSiblingNode.(types.Plottable)
 	}
@@ -195,7 +201,7 @@ func calculateBounds(
 
 	gtlog.Debug(
 		ctx, "render.Plot[%s].start: container_bounds=%s display=%s",
-		p.ID(), containerBounds, display,
+		core.ID(n), containerBounds, display,
 	)
 	// First we calculate the anchoring coordinates (top-left of our bounding
 	// box)
@@ -204,7 +210,7 @@ func calculateBounds(
 		anchor = p.TL()
 		gtlog.Debug(
 			ctx, "render.Plot[%s]: using absolute positioning. anchor to %s",
-			p.ID(), anchor,
+			core.ID(n), anchor,
 		)
 	} else {
 		// We place our anchor position depending on the display mode of the
@@ -221,7 +227,7 @@ func calculateBounds(
 				ctx,
 				"render.Plot[%s]: using relative positioning. "+
 					"anchor to container top left %s",
-				p.ID(), anchor,
+				core.ID(n), anchor,
 			)
 		} else {
 			anchor = prevSibling.TR()
@@ -229,7 +235,7 @@ func calculateBounds(
 				ctx,
 				"render.Plot[%s]: using relative positioning. "+
 					"anchor to prev sibling outer top right %s",
-				p.ID(), anchor,
+				core.ID(n), anchor,
 			)
 		}
 
@@ -243,7 +249,7 @@ func calculateBounds(
 					ctx,
 					"render.Plot[%s]: using inline display. "+
 						"anchor y to min.y of previous sibling %d",
-					p.ID(), psy,
+					core.ID(n), psy,
 				)
 				anchor.Y = psy
 			}
@@ -251,13 +257,13 @@ func calculateBounds(
 			// For elements with block display mode, we need to start this
 			// element on the next line after the tallest previous sibling, or
 			// if none, the parent's inner bounds top left coordinates.
-			nextY := NextLineY(p)
+			nextY := NextLineY(n)
 			gtlog.Debug(
 				ctx,
 				"render.Plot[%s]: using block display. anchor y to "+
 					"max.y of previous siblings or "+
 					"min.y of container bounds %d",
-				p.ID(), nextY,
+				core.ID(n), nextY,
 			)
 			anchor.Y = nextY
 		}
@@ -269,8 +275,8 @@ func calculateBounds(
 
 	// Set the bottom right corner of our bounding box to the anchor
 	// point plus the element's outer width and height.
-	width := p.Width()
-	height := p.Height()
+	width := Width(ctx, n)
+	height := Height(ctx, n)
 
 	maxWidth := types.Dimension(containerBounds.Dx())
 	maxHeight := types.Dimension(containerBounds.Dy())
@@ -280,7 +286,7 @@ func calculateBounds(
 			ctx,
 			"render.Plot[%s]: calculated width %d exceeds container "+
 				"width %d. constraining to container width.",
-			p.ID(), width, maxWidth,
+			core.ID(n), width, maxWidth,
 		)
 		width = maxWidth
 	}
@@ -290,7 +296,7 @@ func calculateBounds(
 			ctx,
 			"render.Plot[%s]: calculated height %d exceeds container "+
 				"height %d. constraining to container height.",
-			p.ID(), height, maxHeight,
+			core.ID(n), height, maxHeight,
 		)
 		height = maxHeight
 	}
@@ -299,7 +305,7 @@ func calculateBounds(
 		ctx,
 		"render.Plot[%s]: expanding bounds by "+
 			"adding width %d and height %d to anchor %s",
-		p.ID(), width, height, anchor,
+		core.ID(n), width, height, anchor,
 	)
 	bounds.Max.X = anchor.X + int(width)
 	bounds.Max.Y = anchor.Y + int(height)
@@ -310,7 +316,7 @@ func calculateBounds(
 			ctx,
 			"render.Plot[%s]: plotted bounds %s exceeds container "+
 				"bounds %s. constraining to container bounds",
-			p.ID(), bounds, containerBounds,
+			core.ID(n), bounds, containerBounds,
 		)
 		if bounds.Dx() > containerBounds.Dx() {
 			bounds.Min.X = containerBounds.Min.X
@@ -326,14 +332,17 @@ func calculateBounds(
 
 // NextLineY returns the maximum Y value of any previous sibling, or if
 // no siblings, the parent inner bounds top-left coordinate's Y valub.
-func NextLineY(p types.Plottable) int {
-	parentNode := p.Parent()
+func NextLineY(n types.Node) int {
+	parentNode := n.Parent()
 	if parentNode == nil {
 		return 0
 	}
-	parent := parentNode.(types.Plottable)
+	parent, ok := parentNode.(types.Plottable)
+	if !ok {
+		return 0
+	}
 	y := parent.InnerBounds().Min.Y
-	for _, prevSiblingNode := range p.PreviousSiblings() {
+	for _, prevSiblingNode := range n.PreviousSiblings() {
 		prevSibling := prevSiblingNode.(types.Plottable)
 		y = max(y, prevSibling.MaxY())
 	}

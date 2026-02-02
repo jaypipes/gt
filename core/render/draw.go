@@ -31,12 +31,15 @@ func Overlapping(a, b types.Rectangle) types.Rectangle {
 // Draw calls Draw on the supplied Drawable.
 func Draw(
 	ctx context.Context,
-	r types.Drawable,
+	n types.Node,
 	screen types.Screen,
 ) {
+	r, ok := n.(types.Drawable)
+	if !ok {
+		return
+	}
 	r.Draw(screen, r.Bounds())
-	for _, child := range r.Children() {
-		cr := child.(types.Drawable)
-		Draw(ctx, cr, screen)
+	for _, child := range n.Children() {
+		Draw(ctx, child, screen)
 	}
 }

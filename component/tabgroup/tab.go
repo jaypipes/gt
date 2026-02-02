@@ -1,19 +1,33 @@
 package tabgroup
 
 import (
+	"context"
+
+	"github.com/jaypipes/gt/element/vdiv"
 	"github.com/jaypipes/gt/types"
 )
 
+// newTab returns a new Tab instance.
+func newTab(
+	ctx context.Context,
+	group *TabGroup,
+	id string,
+) *Tab {
+	d := vdiv.New(ctx, "")
+	d.SetID(id)
+	return &Tab{
+		VDiv:  *d,
+		group: group,
+	}
+}
+
 // Tab is a group of Elements displayed when the Tab is active in a TabGroup.
 type Tab struct {
+	vdiv.VDiv
 	// group is the TabGroup the Tab belongs to.
 	group *TabGroup
-	// id is the unique identifier of the Tab.
-	id string
 	// title is the text that appears in the Tab's tab.
 	title string
-	// content is the Element that represents the root of the Tab's content.
-	content types.Element
 	// currentTabKeyPress is the key combination that should trigger setting
 	// this Tab as the current Tab in the TabGroup.
 	currentTabKeyPress string
@@ -25,11 +39,6 @@ type Tab struct {
 // Group returns a pointer to the TabGroup to which the Tab belongs.
 func (t *Tab) Group() *TabGroup {
 	return t.group
-}
-
-// ID returns the ID of the Tab
-func (t *Tab) ID() string {
-	return t.id
 }
 
 // SetTitle sets the Tab's title, which is the text that appears in the Tab's
@@ -44,15 +53,24 @@ func (t *Tab) Title() string {
 	return t.title
 }
 
-// SetContent sets the Element that is the root of the Tab's content.
-func (t *Tab) SetContent(el types.Element) *Tab {
-	t.content = el
+// SetContent sets the thing that will be rendered in the Tab.
+func (t *Tab) SetContent(content types.Node) {
+	t.RemoveAllChildren()
+	t.AppendChild(content)
+}
+
+// WithContent sets the thing that will be rendered in the Tab and returns the
+// Tab.
+func (t *Tab) WithContent(content types.Node) *Tab {
+	t.SetContent(content)
 	return t
 }
 
-// Content returns the Element that is the root of the Tab's content.
-func (t *Tab) Content() types.Element {
-	return t.content
+// AppendContent adds a child Element to the Tab's content and returns the
+// Tab.
+func (t *Tab) AppendContent(content types.Node) *Tab {
+	t.AppendChild(content)
+	return t
 }
 
 // SetCurrentTabKeyPress sets the key combination that should trigger setting

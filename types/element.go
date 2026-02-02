@@ -20,8 +20,10 @@ import (
 // most of the Element interface's methods, one of which is Render, which wraps
 // [uv.Drawable.Draw] for the user.
 type Element interface {
-	Plottable
+	Node
 	Drawable
+	Plottable
+	Styleable
 
 	// WithID sets the Element's unique identifier and returns the Element.
 	WithID(string) Element
@@ -34,7 +36,7 @@ type Element interface {
 
 	// WithParent sets the Element's parent and index of the Element within the
 	// parent's children and returns the Element.
-	WithParent(Element, int) Element
+	WithParent(Node, int) Element
 	// WithBounds sets the Element's outer bounding box and returns the Element.
 	WithBounds(Rectangle) Element
 	// WithAbsolutePosition sets the Element's outer bounding box's top-left
@@ -72,6 +74,15 @@ type Element interface {
 	// WithBorderBackgroundColor sets the Element's border background color (i.e
 	// the background color of the border's cells and returns the Element.
 	WithBorderBackgroundColor(Color) Element
+	// WithStyle applies the supplied Style to the Element's text content and
+	// returns the Element.
+	WithStyle(Style) Element
+	// WithForegroundColor sets the thing's foreground color and  returns the
+	// Element.
+	WithForegroundColor(color.Color) Element
+	// WithBackgroundColor sets the Element's background color and returns the
+	// Element.
+	WithBackgroundColor(color.Color) Element
 
 	// SetTextContent sets the Element's raw, unstyled text contents.
 	SetTextContent(string)
@@ -85,25 +96,4 @@ type Element interface {
 	// TextContentHeight returns the height of the Element's raw string
 	// contents.
 	TextContentHeight() Dimension
-	// SetStyle sets the Element's style.
-	SetStyle(Style)
-	// WithStyle applies the supplied Style to the Element's text content and
-	// returns the Element.
-	WithStyle(Style) Element
-	// Style returns the thing's Style
-	Style() Style
-	// SetForegroundColor sets the Element's foreground color.
-	SetForegroundColor(color.Color)
-	// WithForegroundColor sets the thing's foreground color and  returns the
-	// Element.
-	WithForegroundColor(color.Color) Element
-	// ForegroundColor returns the Element's foreground color.
-	ForegroundColor() Color
-	// SetBackgroundColor sets the Element's background color.
-	SetBackgroundColor(color.Color)
-	// WithBackgroundColor sets the Element's background color and returns the
-	// Element.
-	WithBackgroundColor(color.Color) Element
-	// BackgroundColor returns the Element's background color.
-	BackgroundColor() Color
 }

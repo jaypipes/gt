@@ -9,11 +9,13 @@ import (
 // Build calls Build on the supplied Buildable.
 func Build(
 	ctx context.Context,
-	b types.Buildable,
+	n types.Node,
 ) {
-	for _, child := range b.Children() {
-		cb := child.(types.Buildable)
-		Build(ctx, cb)
+	for _, child := range n.Children() {
+		Build(ctx, child)
 	}
-	b.Build(ctx)
+	b, ok := n.(types.Buildable)
+	if ok {
+		b.Build(ctx)
+	}
 }

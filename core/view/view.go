@@ -8,25 +8,26 @@ import (
 	uvscreen "github.com/charmbracelet/ultraviolet/screen"
 	"github.com/samber/lo"
 
-	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
+	"github.com/jaypipes/gt/element/vdiv"
 	"github.com/jaypipes/gt/types"
 )
 
 // New returns a new View instance.
 func New(ctx context.Context, id string) *View {
-	b := box.New(ctx)
-	b.SetID(id)
-	return &View{Box: b}
+	d := vdiv.New(ctx, "")
+	d.SetID(id)
+	v := &View{
+		VDiv: *d,
+	}
+	return v
 }
 
 // View is the virtual representation of the tree of elements that will be
 // rendered to a Screen.
 type View struct {
-	box.Box
-	// bounds is the outer bounding box for the View.
-	bounds types.Rectangle
+	vdiv.VDiv
 	// restoreBuf is a pointer to a [uv.Buffer] that we save pre-rendered
 	// content from the View to. This is restored when View.Restore is called.
 	restoreBuf *uv.Buffer
@@ -45,7 +46,7 @@ func (v *View) String() string {
 
 // WithBounds sets the View's outer bounding box and returns the View.
 func (v *View) WithBounds(bounds types.Rectangle) *View {
-	v.Box.SetBounds(bounds)
+	v.SetBounds(bounds)
 	return v
 }
 
@@ -113,27 +114,27 @@ func (v *View) KeyPressMap() types.KeyPressMap {
 
 // OnKeyPress registers an View-level callback to execute upon a key press
 // combination.
-func (v *View) OnKeyPress(key string, cb types.KeyPressCallback) {
+func (v *View) OnKeyPress(key string, cb types.EventCallback) {
 	v.keyPressMap[key] = cb
 }
 
 // SetContent sets the thing that will be rendered in the View.
-func (v *View) SetContent(content types.Plottable) {
-	v.Box.RemoveAllChildren()
-	v.Box.AppendChild(content)
+func (v *View) SetContent(content types.Node) {
+	v.RemoveAllChildren()
+	v.AppendChild(content)
 }
 
 // WithContent sets the thing that will be rendered in the View and returns the
 // View.
-func (v *View) WithContent(content types.Plottable) *View {
+func (v *View) WithContent(content types.Node) *View {
 	v.SetContent(content)
 	return v
 }
 
 // AppendContent adds a child Element to the View's content and returns the
 // View.
-func (v *View) AppendContent(content types.Plottable) *View {
-	v.Box.AppendChild(content)
+func (v *View) AppendContent(content types.Node) *View {
+	v.AppendChild(content)
 	return v
 }
 

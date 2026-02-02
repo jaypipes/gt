@@ -1,13 +1,8 @@
 package types
 
-import "context"
-
-// KeyPressCallback describes a function that will execute upon a key press.
-type KeyPressCallback func(context.Context)
-
 // KeyPressMap maps key press combination strings to callbacks that will
 // execute upon that key press.
-type KeyPressMap map[string]KeyPressCallback
+type KeyPressMap map[string]EventCallback
 
 // HasKeyPressMap describes something that has a map of key press combinations
 // and callbacks associated with it.
@@ -23,5 +18,5 @@ type HasKeyPressMap interface {
 type KeyPressable interface {
 	HasKeyPressMap
 	// OnKeyPress registers a callback to execute upon a key press combination.
-	OnKeyPress(string, KeyPressCallback)
+	OnKeyPress(string, EventCallback)
 }

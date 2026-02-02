@@ -18,6 +18,7 @@ type (
 	Underline = ansi.Underline
 
 	Screen = uv.Screen
+	Event  = uv.Event
 	Border = uv.Border
 	Side   = uv.Side
 	// Style is semantically slightly different from uv.Style in that a Style

@@ -13,6 +13,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
+	"github.com/jaypipes/gt/core/eventloop"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/view"
 	"github.com/jaypipes/gt/types"
@@ -22,12 +23,10 @@ import (
 func New(
 	ctx context.Context,
 ) *Application {
-	b := box.New(ctx)
-	b.SetID("gt.app")
 	return &Application{
-		Box:         b,
 		views:       map[string]*view.View{},
 		keyPressMap: types.KeyPressMap{},
+		events:      eventloop.New(ctx),
 	}
 }
 
@@ -56,6 +55,10 @@ type Application struct {
 	// keyPressMap contains key press combination callbacks registered for the
 	// Application itself -- i.e. global key press callbacks.
 	keyPressMap types.KeyPressMap
+
+	// events is the event loop for Application events (separate from the event
+	// loop that the Application's Terminal runs)
+	events *eventloop.EventLoop
 }
 
 // SetTitle sets the Application's optional title, which by default also sets the
@@ -132,7 +135,7 @@ func (a *Application) KeyPressMap() types.KeyPressMap {
 
 // OnKeyPress registers an Application-level (global)  callback to execute
 // upon a key press combination.
-func (a *Application) OnKeyPress(key string, cb types.KeyPressCallback) {
+func (a *Application) OnKeyPress(key string, cb types.EventCallback) {
 	a.keyPressMap[key] = cb
 }
 
@@ -142,6 +145,10 @@ func (a *Application) Start(ctx context.Context) error {
 	if a == nil {
 		return fmt.Errorf("cannot start nil Application.")
 	}
+
+	// Start our Application's internal event loop.
+	a.events.Start()
+
 	t := uv.NewTerminal(os.Stdin, os.Stdout, os.Environ())
 
 	// By entering alt screen we take control of the output of the terminal
@@ -203,6 +210,8 @@ loop:
 
 		a.draw(ctx)
 	}
+
+	a.events.Stop()
 
 	if err := t.Shutdown(context.Background()); err != nil {
 		log.Fatal(err)

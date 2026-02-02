@@ -2,35 +2,33 @@ package tabgroup
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/samber/lo"
 
-	"github.com/jaypipes/gt/core"
-	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/element/div"
+	"github.com/jaypipes/gt/element/vdiv"
 	"github.com/jaypipes/gt/types"
 )
 
 // New returns a new instance of a TabGroup.
 func New(ctx context.Context, id string) *TabGroup {
-	b := box.New(ctx)
-	b.SetDisplay(types.DisplayBlock)
-	b.SetHeight(core.Percent(100))
-	b.SetID(id)
+	d := vdiv.New(ctx, "")
 	g := &TabGroup{
-		Box:  b,
-		tabs: []*Tab{},
+		VDiv:    *d,
+		tabs:    []*Tab{},
+		rebuild: true,
 	}
 	g.bar = defaultBar(ctx, g)
+	g.SetID(id)
 	return g
 }
 
 // TabGroup is a Component that groups a set of Tab Components.
 type TabGroup struct {
-	box.Box
+	vdiv.VDiv
+	// rebuild will be true when the TabGroup's content needs to be rebuilt.
+	rebuild bool
 	// bar contains styling and layout cues for the bar of Tabs in the
 	// TabGroup.
 	bar *Bar
@@ -52,7 +50,7 @@ func (g *TabGroup) Tab(ctx context.Context, id string) *Tab {
 		return strings.EqualFold(t.ID(), id)
 	})
 	if !ok {
-		t = &Tab{group: g, id: id}
+		t = newTab(ctx, g, id)
 		g.tabs = append(g.tabs, t)
 		g.curTab = len(g.tabs) - 1
 	}
@@ -75,7 +73,10 @@ func (g *TabGroup) SetCurrentTab(id string) *TabGroup {
 		return strings.EqualFold(t.ID(), id)
 	})
 	if ok {
-		g.curTab = idx
+		if g.curTab != idx {
+			g.curTab = idx
+			g.rebuild = true
+		}
 	}
 	return g
 }
@@ -121,6 +122,9 @@ func (g *TabGroup) KeyPressMap() types.KeyPressMap {
 func (g *TabGroup) Build(
 	ctx context.Context,
 ) {
+	if !g.rebuild {
+		return
+	}
 	gtlog.Debug(ctx, "TabGroup.Build[%s]", g.ID())
 
 	// Clear any previously-built children from the TabGroup's container.
@@ -131,15 +135,7 @@ func (g *TabGroup) Build(
 
 	curTab := g.CurrentTab()
 	if curTab != nil {
-		tabContentContainer := div.New(ctx, "")
-		containerID := fmt.Sprintf("tab-content-container-%s", curTab.ID())
-		tabContentContainer.SetID(containerID)
-		tabContentContainer.SetHeight(core.Percent(100))
-		tabContentContainer.SetWidth(core.Percent(100))
-		tabContent := curTab.Content()
-		if tabContent != nil {
-			tabContentContainer.AppendChild(tabContent)
-		}
-		g.AppendChild(tabContentContainer)
+		g.AppendChild(&curTab.VDiv)
 	}
+	g.rebuild = false
 }

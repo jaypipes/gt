@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 // Plottable represents a single node in gt's Document Object Model (DOM).
 //
 // The DOM is a single-rooted tree structure, and as such each Plottable in the
@@ -15,8 +17,7 @@ package types
 // will embed [core.box.Box] which has basic implementations of most of the
 // Plottable interface's methods.
 type Plottable interface {
-	Identifiable
-	Node
+	fmt.Stringer
 	Bounded
 
 	// SetBounds sets the Plottable's outer bounding box.
