@@ -7,6 +7,7 @@ import (
 	"github.com/mitchellh/go-wordwrap"
 
 	gtlog "github.com/jaypipes/gt/core/log"
+	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -58,7 +59,7 @@ func (e *Element) WithMinHeight(w types.Dimension) types.Element {
 // border width.
 func (e *Element) Width() types.Dimension {
 	ctx := context.TODO()
-	boxWidth := e.Box.Width()
+	boxWidth := render.Width(ctx, e)
 	display := e.Display()
 
 	// If we're not using inline display mode, we use the box-calculated width.
@@ -127,7 +128,7 @@ func (e *Element) Width() types.Dimension {
 func (e *Element) Height() types.Dimension {
 	ctx := context.TODO()
 	display := e.Display()
-	boxHeight := e.Box.Height()
+	boxHeight := render.Height(ctx, e)
 
 	// If we're not using inline display mode and there is a fixed height, we
 	// use the box-calculated height.

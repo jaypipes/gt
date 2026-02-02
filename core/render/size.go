@@ -64,7 +64,10 @@ func Width(ctx context.Context, n types.Node) types.Dimension {
 		if ok {
 			parentStr = pid.ID()
 		}
-		gtlog.Debug(context.TODO(), "parent %s is not plottable. it's a %T", parentStr, parentNode)
+		gtlog.Debug(
+			ctx, "parent %s is not plottable. it's a %T",
+			parentStr, parentNode,
+		)
 		return 0
 	}
 	parentInner := parent.InnerBounds()
@@ -215,7 +218,7 @@ func Height(ctx context.Context, n types.Node) types.Dimension {
 		height := types.Dimension(p.Bounds().Dy())
 		gtlog.Debug(
 			ctx,
-			"Box.Height[%s]: no parent. calculated height from bounds: %d",
+			"render.Height[%s]: no parent. calculated height from bounds: %d",
 			id, height,
 		)
 		// Note that the bounds already includes the vertical space, so no need
@@ -230,7 +233,10 @@ func Height(ctx context.Context, n types.Node) types.Dimension {
 		if ok {
 			parentStr = pid.ID()
 		}
-		gtlog.Debug(context.TODO(), "parent %s is not plottable. it's a %T", parentStr, parentNode)
+		gtlog.Debug(
+			ctx, "parent %s is not plottable. it's a %T",
+			parentStr, parentNode,
+		)
 		return 0
 	}
 	parentInner := parent.InnerBounds()
@@ -268,7 +274,7 @@ func Height(ctx context.Context, n types.Node) types.Dimension {
 	remainingHeight -= lo.Sum(lo.Values(rowMaxHeights))
 	gtlog.Debug(
 		ctx,
-		"Box.Height[%s]: parent_height=%d row_max_fixed_heights=%v. "+
+		"render.Height[%s]: parent_height=%d row_max_fixed_heights=%v. "+
 			"calculated remaining height %d",
 		id, parentHeight, rowMaxHeights, remainingHeight,
 	)
@@ -288,7 +294,7 @@ func Height(ctx context.Context, n types.Node) types.Dimension {
 		calcHeight += vertSpace
 		gtlog.Debug(
 			ctx,
-			"Box.Height[%s]: display=%s "+
+			"render.Height[%s]: display=%s "+
 				"vert_space=%d height_constraint=%s remaining_height=%d. "+
 				"calculated height of %d",
 			id, display,
@@ -304,7 +310,7 @@ func Height(ctx context.Context, n types.Node) types.Dimension {
 
 	gtlog.Debug(
 		ctx,
-		"Box.Height[%s]: display=%s vert_space=%d height_constraint=%s. "+
+		"render.Height[%s]: display=%s vert_space=%d height_constraint=%s. "+
 			"returning remaining height %d",
 		id, display,
 		vertSpace, p.HeightConstraint(),
