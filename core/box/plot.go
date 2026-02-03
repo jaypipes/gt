@@ -53,6 +53,12 @@ func (b *Box) InnerBounds() types.Rectangle {
 	return b.Padding().AdjustBounds(bounds)
 }
 
+// ContainsPoint returns true if the supplied Point lies inside the
+// Plottable's outer bounding box.
+func (b *Box) ContainsPoint(pos types.Point) bool {
+	return pos.In(b.bounds)
+}
+
 // SetAbsolutePosition sets the Box's outer bounding box's top-left
 // coordinates and marks the Box as using absolute positioning.
 func (b *Box) SetAbsolutePosition(pt types.Point) {

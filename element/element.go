@@ -38,6 +38,10 @@ type Element struct {
 	// style is the style mode of the Element's content (i.e. the non-border
 	// cells of the Element)
 	style types.Style
+
+	// onClick contains the stack of callbacks that execute when the Element is
+	// clicked.
+	onClick []types.ClickCallback
 }
 
 // Tag returns a string with the Element's type/class and ID

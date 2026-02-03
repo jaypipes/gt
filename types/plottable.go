@@ -38,6 +38,9 @@ type Plottable interface {
 	// InnerBounds returns the inner bounding box for the Plottable, which is the
 	// outer bounding box adjusted for any border and padding.
 	InnerBounds() Rectangle
+	// ContainsPoint returns true if the supplied Point lies inside the
+	// Plottable's outer bounding box.
+	ContainsPoint(Point) bool
 
 	// SetSize constrains the size of the Plottable.
 	SetSize(SizeConstraint)

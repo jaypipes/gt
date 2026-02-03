@@ -59,6 +59,9 @@ type Application struct {
 	// events is the event loop for Application events (separate from the event
 	// loop that the Application's Terminal runs)
 	events *eventloop.EventLoop
+
+	// mouseEnabled is true if we're trapping mouse events in the terminal.
+	mouseEnabled bool
 }
 
 // SetTitle sets the Application's optional title, which by default also sets the
@@ -70,6 +73,11 @@ func (a *Application) SetTitle(title string) {
 // Title returns the Application's optional title.
 func (a *Application) Title() string {
 	return a.title
+}
+
+// EnableMouse enables mouse event handling for the Application.
+func (a *Application) EnableMouse() {
+	a.mouseEnabled = true
 }
 
 // View returns the View with the supplied ID. If no such View exists, a new
@@ -167,18 +175,25 @@ func (a *Application) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to start terminal program: %w", err)
 	}
 
+	modes := a.terminalModes()
+	if len(modes) > 0 {
+		t.WriteString(ansi.SetMode(modes...))
+	}
+
 	a.term = t
 	if a.title != "" {
 		t.WriteString(ansi.SetWindowTitle(a.title))
 	}
 	keyMap := a.buildKeyPressMap()
 
+	a.draw(ctx)
 loop:
 	for ev := range t.Events() {
 		switch ev := ev.(type) {
 		case uv.WindowSizeEvent:
 			t.Resize(ev.Width, ev.Height)
 			t.Erase()
+			a.draw(ctx)
 		case uv.KeyPressEvent:
 			switch {
 			case ev.MatchString("q", "ctrl+c"):
@@ -201,14 +216,34 @@ loop:
 			for kp, cb := range keyMap {
 				if ev.MatchString(kp) {
 					cb(ctx)
+					a.draw(ctx)
 					// rebuild the key map since we may have changed views.
 					keyMap = a.buildKeyPressMap()
 					break
 				}
 			}
+		case uv.MouseClickEvent:
+			m := ev.Mouse()
+			cur := t.CellAt(m.X, m.Y)
+			if cur == nil {
+				// outside the screen bounds...
+				break
+			}
+			pos := types.Point{X: m.X, Y: m.Y}
+			v := a.CurrentView()
+			node := v.AtPoint(pos)
+			if node != nil {
+				el, ok := node.(types.Element)
+				if ok {
+					el.Click(ctx, ev)
+					a.draw(ctx)
+				}
+			}
 		}
+	}
 
-		a.draw(ctx)
+	if len(modes) > 0 {
+		t.WriteString(ansi.ResetMode(modes...))
 	}
 
 	a.events.Stop()
@@ -218,6 +253,18 @@ loop:
 	}
 	if gtlog.Level() < slog.LevelInfo {
 		fmt.Fprintf(os.Stderr, "%s", gtlog.Records())
+	}
+	return nil
+}
+
+// terminalModes returns the ANSI mode flags to set up the terminal.
+func (a *Application) terminalModes() []ansi.Mode {
+	if a.mouseEnabled {
+		return []ansi.Mode{
+			ansi.ButtonEventMouseMode,
+			ansi.SgrExtMouseMode,
+			ansi.FocusEventMode,
+		}
 	}
 	return nil
 }

@@ -143,6 +143,12 @@ func (b *Bar) Build(ctx context.Context) {
 		if x == b.group.curTab {
 			tabEl.SetBorder(b.titleActiveBorder)
 		} else {
+			onClick := func(ctx context.Context, ev types.MouseClickEvent) {
+				if ev.Button == types.MouseLeft {
+					b.group.SetCurrentTab(tab.ID())
+				}
+			}
+			tabEl.OnClick(onClick)
 			tabEl.SetBorder(b.titleInactiveBorder)
 		}
 		b.AppendChild(tabEl)

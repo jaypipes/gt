@@ -20,9 +20,10 @@ import (
 // most of the Element interface's methods, one of which is Render, which wraps
 // [uv.Drawable.Draw] for the user.
 type Element interface {
+	Clickable
+	Drawable
 	Identifiable
 	Node
-	Drawable
 	Plottable
 	Styleable
 

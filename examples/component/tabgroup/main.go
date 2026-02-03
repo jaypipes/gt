@@ -25,6 +25,11 @@ func main() {
 	// create a new myApp that wraps the gt.Application
 	app := myApp{gtapp.New(ctx)}
 
+	// TabGroup has built-in mouse click handlers for when you click on a tab
+	// in the tab bar to switch the current tab. Enable mouse handling on the
+	// gt.Application to take advantage of these handlers.
+	app.EnableMouse()
+
 	// gt.View is used to group displayable things that represent a
 	// logically-related view of something.
 	//
@@ -35,6 +40,8 @@ func main() {
 	// You can set an outer border on your View.
 	v.SetBorder(gt.RoundedBorder())
 
+	// gt.TabGroup contains zero or more Tabs in a bar that, by default,
+	// displays the tabs above the tab content.
 	tg := tabgroup.New(ctx, "tg")
 
 	// The bar on the TabGroup can be styled separately.

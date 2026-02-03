@@ -348,3 +348,25 @@ func NextLineY(n types.Node) int {
 	}
 	return y
 }
+
+// AtPoint returns the child element at the supplied position, or nil if no the
+// position is out of the element's bounding box. We perform a depth-first
+// search of the child nodes since we do not allow overlapping boxes therefore
+// the first matched leaf node is our match.
+func AtPoint(n types.Node, pos types.Point) types.Node {
+	p, ok := n.(types.Plottable)
+	if !ok || !p.ContainsPoint(pos) {
+		return nil
+	}
+	children := n.Children()
+	if len(children) == 0 {
+		return n
+	}
+	for _, child := range children {
+		found := AtPoint(child, pos)
+		if found != nil {
+			return found
+		}
+	}
+	return nil
+}
