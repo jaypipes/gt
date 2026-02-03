@@ -10,6 +10,7 @@ import (
 	gtcontext "github.com/jaypipes/gt/core/context"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/view"
+	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/element/div"
 	"github.com/jaypipes/gt/element/hr"
 	"github.com/jaypipes/gt/element/span"
@@ -34,6 +35,32 @@ type View = view.View
 
 var (
 	NewView = view.New
+)
+
+type Element = element.Element
+type WithOption = types.ElementWithOption
+
+var (
+	NewElement                = element.New
+	WithID                    = element.WithID
+	WithBounds                = element.WithBounds
+	WithAbsolutePosition      = element.WithAbsolutePosition
+	WithSize                  = element.WithSize
+	WithWidth                 = element.WithWidth
+	WithMinWidth              = element.WithMinWidth
+	WithHeight                = element.WithHeight
+	WithMinHeight             = element.WithMinHeight
+	WithDisplay               = element.WithDisplay
+	WithAlignment             = element.WithAlignment
+	WithWhitespace            = element.WithWhitespace
+	WithPadding               = element.WithPadding
+	WithBorder                = element.WithBorder
+	WithBorderForegroundColor = element.WithBorderForegroundColor
+	WithBorderBackgroundColor = element.WithBorderBackgroundColor
+	WithStyle                 = element.WithStyle
+	WithForegroundColor       = element.WithForegroundColor
+	WithBackgroundColor       = element.WithBackgroundColor
+	WithTextContent           = element.WithTextContent
 )
 
 type Div = div.Div

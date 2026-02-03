@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jaypipes/gt/core"
+	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/element/div"
 	"github.com/jaypipes/gt/element/span"
 	"github.com/jaypipes/gt/types"
@@ -50,7 +51,8 @@ var (
 )
 
 func defaultBar(ctx context.Context, group *TabGroup) *Bar {
-	d := div.New(ctx, "")
+	barID := fmt.Sprintf("%s-bar", group.ID())
+	d := div.New(ctx, element.WithID(barID))
 	d.SetDisplay(types.DisplayBlock)
 	d.SetHeight(core.Fixed(5))
 	d.SetPadding(types.PadHorizontal(2))
@@ -129,12 +131,15 @@ func (b *Bar) Build(ctx context.Context) {
 	b.RemoveAllChildren()
 	for x, tab := range b.group.tabs {
 		tabID := fmt.Sprintf("tab-group-%s-bar-tab-%s", b.group.ID(), tab.ID())
-		tabEl := span.New(ctx, tab.Title())
-		tabEl.SetID(tabID)
-		tabEl.SetDisplay(types.DisplayInlineBlock)
-		tabEl.SetAlignment(types.AlignmentCenter)
-		tabEl.SetWidth(core.Fixed(12))
-		tabEl.SetPadding(b.titlePadding)
+		tabEl := span.New(
+			ctx,
+			element.WithID(tabID),
+			element.WithTextContent(tab.Title()),
+			element.WithAlignment(types.AlignmentCenter),
+			element.WithPadding(b.titlePadding),
+			element.WithDisplay(types.DisplayInlineBlock),
+			element.WithWidth(core.Fixed(12)),
+		)
 		if x == b.group.curTab {
 			tabEl.SetBorder(b.titleActiveBorder)
 		} else {

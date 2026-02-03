@@ -10,14 +10,14 @@ import (
 
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
+	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/element/vdiv"
 	"github.com/jaypipes/gt/types"
 )
 
-// New returns a new View instance.
+// New returns a new View instance with the given ID.
 func New(ctx context.Context, id string) *View {
-	d := vdiv.New(ctx, "")
-	d.SetID(id)
+	d := vdiv.New(ctx, element.WithID(id))
 	v := &View{
 		VDiv: *d,
 	}

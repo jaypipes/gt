@@ -3,18 +3,18 @@ package tabgroup
 import (
 	"context"
 
+	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/element/vdiv"
 	"github.com/jaypipes/gt/types"
 )
 
-// newTab returns a new Tab instance.
+// newTab returns a new Tab instance with the supplied group and ID.
 func newTab(
 	ctx context.Context,
 	group *TabGroup,
 	id string,
 ) *Tab {
-	d := vdiv.New(ctx, "")
-	d.SetID(id)
+	d := vdiv.New(ctx, element.WithID(id))
 	return &Tab{
 		VDiv:  *d,
 		group: group,

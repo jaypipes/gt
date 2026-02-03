@@ -7,20 +7,20 @@ import (
 	"github.com/samber/lo"
 
 	gtlog "github.com/jaypipes/gt/core/log"
+	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/element/vdiv"
 	"github.com/jaypipes/gt/types"
 )
 
-// New returns a new instance of a TabGroup.
+// New returns a new instance of a TabGroup with the given ID.
 func New(ctx context.Context, id string) *TabGroup {
-	d := vdiv.New(ctx, "")
+	d := vdiv.New(ctx, element.WithID(id))
 	g := &TabGroup{
 		VDiv:    *d,
 		tabs:    []*Tab{},
 		rebuild: true,
 	}
 	g.bar = defaultBar(ctx, g)
-	g.SetID(id)
 	return g
 }
 

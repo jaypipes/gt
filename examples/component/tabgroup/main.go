@@ -60,9 +60,12 @@ func main() {
 
 	// Give the Tab some content by creating a new gt.Element or gt.Component
 	// and using Tab.SetContent or Tab.AppendContent.
-	div1 := gtdiv.New(ctx, "tab 1 content")
-	div1.SetID("div-1")
-	div1.SetHeight(gt.Percent(100))
+	div1 := gtdiv.New(
+		ctx,
+		gt.WithID("div-1"),
+		gt.WithTextContent("tab 1 content"),
+		gt.WithHeight(gt.Percent(100)),
+	)
 	tab1.SetContent(div1)
 
 	tab2 := tg.Tab(ctx, "tab-2")
@@ -72,9 +75,12 @@ func main() {
 	tab2.SetBackgroundColor(pink)
 	tab2.SetCurrentTabKeyPress("2")
 
-	div2 := gtdiv.New(ctx, "tab 2 content")
-	div2.SetID("div-2")
-	div2.SetHeight(gt.Percent(100))
+	div2 := gtdiv.New(
+		ctx,
+		gt.WithID("div-2"),
+		gt.WithTextContent("tab 2 content"),
+		gt.WithHeight(gt.Percent(100)),
+	)
 	tab2.SetContent(div2)
 
 	// Add the TabGroup to our View.

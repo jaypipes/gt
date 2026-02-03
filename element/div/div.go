@@ -11,15 +11,17 @@ const (
 	ElementClass = "gt.div"
 )
 
-// New returns a new Div instance containing the supplied raw string content.
+// New returns a new Div instance with the given options.
 func New(
 	ctx context.Context,
-	content string,
+	opts ...types.ElementWithOption,
 ) *Div {
 	e := element.New(ctx, ElementClass)
 	d := &Div{Element: e}
 	d.SetDisplay(types.DisplayBlock)
-	d.SetTextContent(content)
+	for _, opt := range opts {
+		opt(d)
+	}
 	return d
 }
 

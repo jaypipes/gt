@@ -11,15 +11,17 @@ const (
 	ElementClass = "gt.span"
 )
 
-// New returns a new Span instance containing the supplied raw text string.
+// New returns a new Span instance with the given options.
 func New(
 	ctx context.Context,
-	content string,
+	opts ...types.ElementWithOption,
 ) *Span {
 	e := element.New(ctx, ElementClass)
 	s := &Span{Element: e}
 	s.SetDisplay(types.DisplayInline)
-	s.SetTextContent(content)
+	for _, opt := range opts {
+		opt(s)
+	}
 	return s
 }
 

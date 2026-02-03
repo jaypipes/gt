@@ -14,15 +14,6 @@ import (
 	"github.com/jaypipes/gt/types"
 )
 
-// New returns a new instance of a [element.Element] with the specified type/class.
-func New(ctx context.Context, class string) Element {
-	e := Element{
-		RWMutex: new(sync.RWMutex),
-		class:   class,
-	}
-	return e
-}
-
 // Element is a base class that implements [types.Element] with some common
 // method implementations. Subclasses in the [element] subpackages embed
 // [element.Element] and implement various [types.Element] methods.
@@ -87,7 +78,7 @@ func (e *Element) WithClass(class string) types.Element {
 	return e
 }
 
-// Class returns the Element's type/class, e.g. "gt.label" or "gt.canvas"
+// Class returns the Element's type/class, e.g. "gt.span" or "gt.div"
 func (e *Element) Class() string {
 	return e.class
 }
@@ -109,19 +100,7 @@ func (e *Element) Draw(screen types.Screen, bounds types.Rectangle) {
 	if align == types.AlignmentAuto {
 		parentNode := e.Parent()
 		parent, ok := parentNode.(types.Plottable)
-		if !ok {
-			parentStr := ""
-			pid, ok := parentNode.(types.Identifiable)
-			if ok {
-				parentStr = pid.ID()
-			} else {
-				n, ok := parentNode.(types.Node)
-				if ok {
-					parentStr = n.NodeID()
-				}
-			}
-			gtlog.Debug(context.TODO(), "Element.Draw[%s]: parent %s is not plottable. it's a %T", e.ID(), parentStr, parentNode)
-		} else {
+		if ok {
 			parentAlign := parent.Alignment()
 			if parentAlign != types.AlignmentAuto {
 				align = parentAlign

@@ -12,16 +12,18 @@ const (
 	ElementClass = "gt.vdiv"
 )
 
-// New returns a new VDiv instance containing the supplied raw string content.
+// New returns a new VDiv instance with the given options.
 func New(
 	ctx context.Context,
-	content string,
+	opts ...types.ElementWithOption,
 ) *VDiv {
 	e := element.New(ctx, ElementClass)
 	v := &VDiv{Element: e}
 	v.SetDisplay(types.DisplayBlock)
 	v.SetHeight(core.Percent(100))
-	v.SetTextContent(content)
+	for _, opt := range opts {
+		opt(v)
+	}
 	return v
 }
 

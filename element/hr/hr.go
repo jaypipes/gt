@@ -17,13 +17,19 @@ const (
 	thinHorizontal = "─"
 )
 
-// New returns a new HR instance.
-func New(ctx context.Context) *HR {
+// New returns a new HR instance with the given options.
+func New(
+	ctx context.Context,
+	opts ...types.ElementWithOption,
+) *HR {
 	e := element.New(ctx, ElementClass)
 	h := &HR{Element: e}
-	h.SetHeight(core.Fixed(1))
-	// An HR always starts on a new line.
+	for _, opt := range opts {
+		opt(h)
+	}
+	// An HR always starts on a new line and is one line high.
 	h.SetDisplay(types.DisplayBlock)
+	h.SetHeight(core.Fixed(1))
 	h.SetAlignment(types.AlignmentCenter)
 	return h
 }

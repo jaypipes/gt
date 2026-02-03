@@ -12,16 +12,18 @@ const (
 	ElementClass = "gt.vspan"
 )
 
-// New returns a new VSpan instance containing the supplied raw string content.
+// New returns a new VSpan instance with the given options.
 func New(
 	ctx context.Context,
-	content string,
+	opts ...types.ElementWithOption,
 ) *VSpan {
 	e := element.New(ctx, ElementClass)
 	v := &VSpan{Element: e}
 	v.SetDisplay(types.DisplayInlineBlock)
 	v.SetHeight(core.Percent(100))
-	v.SetTextContent(content)
+	for _, opt := range opts {
+		opt(v)
+	}
 	return v
 }
 

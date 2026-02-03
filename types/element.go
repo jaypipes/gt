@@ -20,6 +20,7 @@ import (
 // most of the Element interface's methods, one of which is Render, which wraps
 // [uv.Drawable.Draw] for the user.
 type Element interface {
+	Identifiable
 	Node
 	Drawable
 	Plottable
@@ -97,3 +98,7 @@ type Element interface {
 	// contents.
 	TextContentHeight() Dimension
 }
+
+// ElementWithOption describes an optional varg parameter to [element.New] that
+// modifies the returned Element.
+type ElementWithOption func(Element)
