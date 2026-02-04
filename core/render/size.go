@@ -84,23 +84,70 @@ func Width(ctx context.Context, n types.Node) types.Dimension {
 	if display == types.DisplayBlock {
 		nextNode := n.NextSibling()
 		remainingWidth := parentWidth
+		siblingWidth := types.Dimension(0)
 		for nextNode != nil {
 			next := nextNode.(types.Plottable)
 			if next.Display() == types.DisplayBlock {
+				// We hit the next "row" of elements.
 				break
 			}
-			remainingWidth -= next.HorizontalSpace()
+			nextHorizSpace := next.HorizontalSpace()
+			remainingWidth -= nextHorizSpace
+			siblingWidth += nextHorizSpace
 			if next.HasFixedWidth() {
-				remainingWidth -= next.FixedWidth()
+				nextFixedWidth := next.FixedWidth()
+				remainingWidth -= nextFixedWidth
+				siblingWidth += nextFixedWidth
+			} else {
+				// If the sibling is not using fixed width and is using inline
+				// display mode, we need to calculate the minimum "natural"
+				// width that the element will consume.
+				if nextEl, ok := nextNode.(types.Element); ok {
+					scrollWidth := nextEl.ScrollWidth()
+					if scrollWidth >= remainingWidth {
+						nextIDer, ok := nextNode.(types.Identifiable)
+						if ok {
+							nextID := nextIDer.ID()
+							gtlog.Debug(
+								ctx,
+								"render.Width[%s]: sibling %s "+
+									"scroll width %d >= remaining width %d.",
+								id, nextID, scrollWidth, remainingWidth,
+							)
+						}
+						remainingWidth = 0
+						break
+					}
+					remainingWidth -= scrollWidth
+					siblingWidth += scrollWidth
+				}
 			}
 			nextNode = nextNode.NextSibling()
 		}
+		if remainingWidth == 0 {
+			// The natural width of the sibling element(s) will
+			// consume the remainder of the row's width, so we need
+			// to give *this* element its minimum width.
+			minWidth := p.MinWidth()
+			calcWidth := minWidth + horizSpace
+			gtlog.Debug(
+				ctx,
+				"render.Width[%s]: display=%s min_width=%d horiz_space=%d. "+
+					"siblings in row consumed %d which is greater "+
+					"than parent width of %d. "+
+					"using calculated width of %d",
+				id, display, minWidth, horizSpace,
+				siblingWidth, parentWidth, calcWidth,
+			)
+			return calcWidth
+		}
 		gtlog.Debug(
 			ctx,
-			"render.Width[%s]: using block display. "+
+			"render.Width[%s]: display=%s horiz_space=%d "+
+				"remaining_sibling_width=%d. "+
 				"calculated remaining available width %d "+
 				"from original parent width %d",
-			id, remainingWidth, parentWidth,
+			id, display, horizSpace, siblingWidth, remainingWidth, parentWidth,
 		)
 		return types.Dimension(
 			min(parentWidth, remainingWidth),
@@ -143,10 +190,10 @@ func Width(ctx context.Context, n types.Node) types.Dimension {
 		}
 	}
 
+	constraint := p.WidthConstraint()
 	if p.HasPercentWidth() {
 		calcWidth := types.Dimension(0)
 		nextNode := n.NextSibling()
-		constraint := p.WidthConstraint()
 		pw := p.PercentWidth()
 		calcWidth = remainingWidth * pw / 100
 		calcWidth += horizSpace
@@ -168,13 +215,46 @@ func Width(ctx context.Context, n types.Node) types.Dimension {
 		return calcWidth
 	}
 
+	e, ok := n.(types.Element)
+	if !ok {
+		gtlog.Debug(
+			ctx,
+			"render.Width[%s]: display=%s horiz_space=%d width_constraint=%s. "+
+				"node was not an element. using remaining width %d",
+			id, display,
+			horizSpace, constraint,
+			remainingWidth,
+		)
+		return remainingWidth
+	}
+
+	var next types.Plottable
+	nextNode := n.NextSibling()
+	if nextNode != nil {
+		next = nextNode.(types.Plottable)
+	}
+
+	if next != nil && next.Display() == types.DisplayBlock {
+		gtlog.Debug(
+			ctx,
+			"render.Width[%s]: display=%s horiz_space=%d "+
+				"next sibling is block display. "+
+				"using remaining width %d.",
+			id, display, horizSpace, remainingWidth,
+		)
+		return remainingWidth
+	}
+
+	scrollWidth := e.ScrollWidth()
+	calcWidth := scrollWidth + horizSpace
 	gtlog.Debug(
 		ctx,
-		"Box.Width[%s]: display=%s horiz_space=%d. "+
-			"using remaining horizontal width in parent %d.",
-		id, display, horizSpace, remainingWidth,
+		"render.Width[%s]: display=%s horiz_space=%d scroll_width=%d. "+
+			"using min(remaining_width=%d, calc_width=%d).",
+		id, display, horizSpace, scrollWidth,
+		remainingWidth, calcWidth,
 	)
-	return types.Dimension(min(parentWidth, remainingWidth))
+	return types.Dimension(min(remainingWidth, calcWidth))
 }
 
 // Height returns the height of the supplied element's outer bounding box.
@@ -366,7 +446,7 @@ func Height(ctx context.Context, n types.Node) types.Dimension {
 				"original_content_height=%d parent_height=%d "+
 				"content_width=%d parent_width=%d wrapped=%t "+
 				"calculated new content_height of %d",
-			e.Tag(), display, whitespace,
+			id, display, whitespace,
 			vertSpace, horizSpace, wrapWidth,
 			origContentHeight, parentHeight,
 			contentWidth, parentWidth, wrapped,
@@ -379,7 +459,7 @@ func Height(ctx context.Context, n types.Node) types.Dimension {
 		ctx,
 		"render.Height[%s]: display=%s whitespace=%s "+
 			"vert_space=%d using min(content_height=%d, remaining_height=%d)",
-		e.Tag(), display, whitespace,
+		id, display, whitespace,
 		vertSpace, contentHeight, parentHeight,
 	)
 	return types.Dimension(min(parentHeight, contentHeight))

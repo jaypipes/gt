@@ -7,6 +7,7 @@ import (
 	gtapp "github.com/jaypipes/gt/core/application"
 	gtdiv "github.com/jaypipes/gt/element/div"
 	gtpre "github.com/jaypipes/gt/element/pre"
+	gtspan "github.com/jaypipes/gt/element/span"
 	"github.com/lucasb-eyer/go-colorful"
 )
 
@@ -19,6 +20,8 @@ const (
 instead of			being wrapped.
 
 `
+	paragraphText = `The quick brown fox
+jumps over the lazy dog`
 )
 
 type myApp struct {
@@ -142,6 +145,28 @@ func main() {
 
 	// Add preformatted to our View as a sibling of short and long.
 	v.AppendContent(preformatted)
+
+	// gt.Span is similar to an HTML <span> element. It will display any
+	// content within a bounding box that by default will begin its content to
+	// the right of a previous sibling (display: inline), receive a width in
+	// cells equal to the "natural" width of its content and receive a height
+	// in lines equal to the "natural" height of its content.
+	//
+	// The default whitespace mode for gt.Span is "auto", which means that
+	// longer text content in the gt.Span will be wrapped at the container's
+	// bounding box at word boundaries. You can make a gt.Span behave like a
+	// gt.Pre by setting the whitespace mode to gt.WhitespaceModePreserve using
+	// the gt.WithWhitespace modifier.
+	paragraph := gtspan.New(
+		ctx,
+		gt.WithTextContent(paragraphText),
+		gt.WithID("paragraph"),
+		gt.WithBorder(gt.ThickBorder()),
+		gt.WithPadding(gt.PadHorizontal(2)),
+	)
+
+	// Add paragraph to our View as a sibling of short, long and preformatted.
+	v.AppendContent(paragraph)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)
