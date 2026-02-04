@@ -98,6 +98,14 @@ type Element interface {
 	// TextContentHeight returns the height of the Element's raw string
 	// contents.
 	TextContentHeight() Dimension
+	// ScrollWidth returns the minimum number of cells (width) that the Element
+	// would consume in order to fit all of its content in its containing box
+	// without using a horizontal scrollbar.
+	ScrollWidth() Dimension
+	// ScrollHeight returns the minimum number of lines (height) that the
+	// Element would consume in order to fit all of its content in its
+	// containing box without using a vertical scrollbar.
+	ScrollHeight() Dimension
 }
 
 // ElementWithOption describes an optional varg parameter to [element.New] that

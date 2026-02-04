@@ -10,17 +10,19 @@ import (
 	"github.com/jaypipes/gt/types"
 )
 
-// AlignString returns a string adjusted with padding to make the supplied string
-// align horizontally and vertically to the supplied alignment mode.
-func AlignString(
+// Align returns a string adjusted with padding to make the supplied string
+// align horizontally and vertically to the supplied alignment and whitespace
+// mode within the given bounding box.
+func Align(
 	ctx context.Context,
 	content string,
 	bounds types.Rectangle,
 	align types.Alignment,
+	whitespace types.Whitespace,
 ) string {
 	gtlog.Debug(
-		ctx, "render.AlignString: bounds=%s alignment=%s",
-		bounds, align,
+		ctx, "render.Align: bounds=%s alignment=%s whitespace=%s",
+		bounds, align, whitespace,
 	)
 	width := bounds.Dx()
 	height := bounds.Dy()

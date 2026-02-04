@@ -3,9 +3,11 @@ package element
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	uv "github.com/charmbracelet/ultraviolet"
+	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/box"
@@ -111,14 +113,36 @@ func (e *Element) Draw(screen types.Screen, bounds types.Rectangle) {
 			}
 		}
 	}
-	content = render.AlignString(
-		ctx, content, inner, align,
+	whitespace := e.Whitespace()
+	if whitespace&types.WhitespacePreserve != 0 {
+		// Preserve the whitespace by making the text content string we supply
+		// to render.Align already pre-padded with spaces.
+		sb := &strings.Builder{}
+		content = strings.ReplaceAll(content, "\t", "    ")
+		lines := strings.Split(content, "\n")
+		maxWidth := lo.Max(lo.Map(lines, func(line string, _ int) int {
+			return len(line)
+		}))
+		for x, line := range lines {
+			diffFromMax := len(line) - maxWidth
+			if diffFromMax > 0 {
+				pad := strings.Repeat(" ", diffFromMax)
+				sb.WriteString(pad)
+			}
+			sb.WriteString(line)
+			if x < len(line)-1 {
+				sb.WriteRune('\n')
+			}
+		}
+		content = sb.String()
+	}
+	content = render.Align(
+		ctx, content, inner, align, whitespace,
 	)
 	style := e.Style()
 	content = style.Styled(content)
 	ss := uv.NewStyledString(content)
-	ws := e.Whitespace()
-	if ws&types.WhitespaceWrapNever == 0 {
+	if whitespace&types.WhitespaceWrapNever == 0 {
 		ss.Wrap = true
 	}
 	ss.Draw(screen, innerClipped)

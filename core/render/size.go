@@ -2,9 +2,11 @@ package render
 
 import (
 	"context"
+	"strings"
 
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
+	"github.com/mitchellh/go-wordwrap"
 	"github.com/samber/lo"
 )
 
@@ -304,17 +306,81 @@ func Height(ctx context.Context, n types.Node) types.Dimension {
 		return calcHeight
 	}
 
-	if display != types.DisplayBlock {
-		remainingHeight += vertSpace
+	// If we get here, we're either inline display mode or no height constraint
+	// was specified. In this case, if we're plotting a types.Element, we
+	// determine the minimum number of lines that the element's content would
+	// consume given the container's width and return the minimum of that or
+	// the previously-calculated remaining height.
+	e, ok := n.(types.Element)
+	if !ok {
+		gtlog.Debug(
+			ctx,
+			"render.Height[%s]: display=%s vert_space=%d height_constraint=%s. "+
+				"node was not an element. using remaining height %d",
+			id, display,
+			vertSpace, p.HeightConstraint(),
+			remainingHeight,
+		)
+		return remainingHeight
+	}
+
+	parentWidth := types.Dimension(parentInner.Dx())
+
+	whitespace := p.Whitespace()
+	wrapNever := whitespace&types.WhitespaceWrapNever != 0
+	if wrapNever && remainingHeight == 0 {
+		gtlog.Debug(
+			ctx,
+			"render.Height[%s]: display=%s whitespace=%s "+
+				"vert_space=%d height_constraint=none. "+
+				"height is always 1 plus padding_vert + border_vert",
+			id, display, whitespace, vertSpace,
+		)
+		return vertSpace + 1
+	}
+
+	// "wrap-line" whitespace mode means don't wrap EXCEPT on existing
+	// newlines.
+	wrapLine := whitespace&types.WhitespaceWrapLine != 0
+	wrapped := false
+
+	// We use the "natural" height of the content, which is the number of
+	// newlines in the content. However, we first need to calculate any
+	// wrapping of long text content before returning the number of newlines.
+	horizSpace := p.HorizontalSpace()
+	content := e.TextContent()
+	contentHeight := e.TextContentHeight()
+	contentHeight += vertSpace
+	origContentHeight := contentHeight
+	contentWidth := e.TextContentWidth()
+	if !wrapLine && ((contentWidth + horizSpace) > parentWidth) {
+		wrapped = true
+		wrapWidth := uint(parentWidth - horizSpace)
+		wrappedContent := wordwrap.WrapString(content, wrapWidth)
+		contentHeight = types.Dimension(strings.Count(wrappedContent, "\n") + 1)
+		contentHeight += vertSpace
+		gtlog.Debug(
+			ctx,
+			"render.Height[%s]: display=%s whitespace=%s "+
+				"vert_space=%d horiz_space=%d wrap_width=%d "+
+				"original_content_height=%d parent_height=%d "+
+				"content_width=%d parent_width=%d wrapped=%t "+
+				"calculated new content_height of %d",
+			e.Tag(), display, whitespace,
+			vertSpace, horizSpace, wrapWidth,
+			origContentHeight, parentHeight,
+			contentWidth, parentWidth, wrapped,
+			contentHeight,
+		)
+		e.SetTextContent(wrappedContent)
 	}
 
 	gtlog.Debug(
 		ctx,
-		"render.Height[%s]: display=%s vert_space=%d height_constraint=%s. "+
-			"returning remaining height %d",
-		id, display,
-		vertSpace, p.HeightConstraint(),
-		remainingHeight,
+		"render.Height[%s]: display=%s whitespace=%s "+
+			"vert_space=%d using min(content_height=%d, remaining_height=%d)",
+		e.Tag(), display, whitespace,
+		vertSpace, contentHeight, parentHeight,
 	)
-	return remainingHeight
+	return types.Dimension(min(parentHeight, contentHeight))
 }

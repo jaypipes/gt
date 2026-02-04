@@ -31,6 +31,7 @@ func New(
 	h.SetDisplay(types.DisplayBlock)
 	h.SetHeight(core.Fixed(1))
 	h.SetAlignment(types.AlignmentCenter)
+	h.SetWhitespace(types.WhitespaceWrapNever)
 	return h
 }
 
@@ -51,8 +52,8 @@ func (h *HR) Draw(screen types.Screen, bounds types.Rectangle) {
 		numCellsWide = types.Dimension(inner.Dx())
 	}
 	line := strings.Repeat(thinHorizontal, int(numCellsWide))
-	line = render.AlignString(
-		ctx, line, inner, h.Alignment(),
+	line = render.Align(
+		ctx, line, inner, h.Alignment(), h.Whitespace(),
 	)
 	style := h.Style()
 	line = style.Styled(line)
