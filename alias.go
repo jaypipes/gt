@@ -163,8 +163,6 @@ var (
 	Rect = image.Rect
 	Pt   = image.Pt
 
-	Ration = uv.Ratio
-
 	NormalBorder         = uv.NormalBorder
 	RoundedBorder        = uv.RoundedBorder
 	BlockBorder          = uv.BlockBorder

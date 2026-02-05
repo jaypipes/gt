@@ -157,15 +157,19 @@ func (a *Application) Start(ctx context.Context) error {
 	// Start our Application's internal event loop.
 	a.events.Start()
 
-	t := uv.NewTerminal(os.Stdin, os.Stdout, os.Environ())
+	con := uv.NewConsole(os.Stdin, os.Stdout, os.Environ())
+	t := uv.NewTerminal(con, nil)
+
+	scr := t.Screen()
+	scr.ShowCursor()
 
 	// By entering alt screen we take control of the output of the terminal
 	// which means when we exit the application, the terminal screen will be
 	// returned to its original state.
-	t.EnterAltScreen()
+	scr.EnterAltScreen()
 	defer func() {
 		if r := recover(); r != nil {
-			_ = t.Teardown()
+			_ = t.Stop()
 			fmt.Fprintf(os.Stderr, "recovered from panic: %v", r)
 			debug.PrintStack()
 		}
@@ -177,12 +181,12 @@ func (a *Application) Start(ctx context.Context) error {
 
 	modes := a.terminalModes()
 	if len(modes) > 0 {
-		t.WriteString(ansi.SetMode(modes...))
+		scr.WriteString(ansi.SetMode(modes...))
 	}
 
 	a.term = t
 	if a.title != "" {
-		t.WriteString(ansi.SetWindowTitle(a.title))
+		scr.WriteString(ansi.SetWindowTitle(a.title))
 	}
 	keyMap := a.buildKeyPressMap()
 
@@ -191,26 +195,21 @@ loop:
 	for ev := range t.Events() {
 		switch ev := ev.(type) {
 		case uv.WindowSizeEvent:
-			t.Resize(ev.Width, ev.Height)
-			t.Erase()
+			scr.Resize(ev.Width, ev.Height)
 			a.draw(ctx)
 		case uv.KeyPressEvent:
 			switch {
 			case ev.MatchString("q", "ctrl+c"):
 				break loop
 			case ev.MatchString("ctrl+z"):
-				t.Erase()
-				if err := t.Display(); err != nil {
+				if err := scr.Flush(); err != nil {
 					log.Fatal(err)
-				}
-				if t.Pause() != nil {
-					log.Fatal("failed to pause terminal")
 				}
 
 				uv.Suspend()
 
-				if err := t.Resume(); err != nil {
-					log.Fatal("failed to resume terminal")
+				if err := scr.Restore(); err != nil {
+					log.Fatal(err)
 				}
 			}
 			for kp, cb := range keyMap {
@@ -224,7 +223,8 @@ loop:
 			}
 		case uv.MouseClickEvent:
 			m := ev.Mouse()
-			cur := t.CellAt(m.X, m.Y)
+			scr.SetCursorPosition(m.X, m.Y)
+			cur := scr.CellAt(m.X, m.Y)
 			if cur == nil {
 				// outside the screen bounds...
 				break
@@ -243,12 +243,12 @@ loop:
 	}
 
 	if len(modes) > 0 {
-		t.WriteString(ansi.ResetMode(modes...))
+		scr.WriteString(ansi.ResetMode(modes...))
 	}
 
 	a.events.Stop()
 
-	if err := t.Shutdown(context.Background()); err != nil {
+	if err := t.Stop(); err != nil {
 		log.Fatal(err)
 	}
 	if gtlog.Level() < slog.LevelInfo {
@@ -343,11 +343,13 @@ func (a *Application) draw(ctx context.Context) {
 		a.curView = "main"
 	}
 
+	scr := a.term.Screen()
+
 	// If the Application has had no bounds set, adopt the screen's max width and
 	// height.
 	bounds := a.Bounds()
 	if bounds.Empty() {
-		screenBounds := a.term.Bounds()
+		screenBounds := scr.Bounds()
 		gtlog.Debug(
 			ctx,
 			"Application.draw: setting application bounds to screen bounds %s",
@@ -357,10 +359,13 @@ func (a *Application) draw(ctx context.Context) {
 		a.Box.SetBounds(bounds)
 	}
 
-	a.Box.Draw(a.term, a.Bounds())
+	a.Box.Draw(scr, a.Bounds())
 	v.SetBounds(a.InnerBounds())
-	v.Render(ctx, a.term)
-	if err := a.term.Display(); err != nil {
+	v.Render(ctx, scr)
+	if err := scr.Render(); err != nil {
+		log.Fatal(err)
+	}
+	if err := scr.Flush(); err != nil {
 		log.Fatal(err)
 	}
 }

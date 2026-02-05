@@ -44,6 +44,14 @@ type Element struct {
 	// onClick contains the stack of callbacks that execute when the Element is
 	// clicked.
 	onClick []types.ClickCallback
+	// focused is true if the Element has the current focus.
+	focused bool
+	// onFocus contains the stack of callbacks that execute when the Element
+	// receives focus.
+	onFocus []types.FocusCallback
+	// onLoseFocus contains the stack of callbacks that execute when the
+	// Element loses focus.
+	onLoseFocus []types.FocusCallback
 }
 
 // Tag returns a string with the Element's type/class and ID

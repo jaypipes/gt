@@ -22,6 +22,7 @@ import (
 type Element interface {
 	Clickable
 	Drawable
+	Focusable
 	Identifiable
 	Node
 	Plottable
