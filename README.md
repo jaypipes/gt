@@ -13,11 +13,10 @@
 * Intuitive interface that does NOT use the Elm Architecture
 
     `gt` was borne out of frustration using the Bubbletea library, which uses
-    the Elm Architecture. I personally find the Elm Architecture obtuse and
-    overly complex for most applications. Its use in UI frameworks like
-    Bubbletea and React is lauded as an approach to cleanly separate and manage
-    state in client-side applications, but I personally find it overly
-    complicated and obtuse, difficult to debug and impossible to explain.
+    the Elm Architecture. Its use in UI frameworks like Bubbletea and React is
+    lauded as an approach to cleanly separate and manage state in client-side
+    applications, but I personally find it overly complicated and obtuse, difficult
+    to debug and impossible to explain.
 
 * Well-documented code and plenty of example code
 
@@ -28,32 +27,3 @@
     Each module in the library should be structured in a consistent fashion,
     and the structs returned by various library functions should have
     consistent attribute and method names.
-
-## Getting Started
-
-Create a `gt` TUI application by importing the library, creating a
-`*gt.Application` and calling `gt.Application.Start()`:
-
-```go
-package main
-
-import (
-    "fmt"
-    "log"
-
-    "github.com/jaypipes/gt"
-)
-
-const (
-    myAppName = "myapp"
-)
-
-func main() {
-    app := gt.NewApplication()
-    app.SetName(myAppName)
-
-    if err := app.Start(); err != nil {
-        log.Fatal(err)
-    }
-}
-```

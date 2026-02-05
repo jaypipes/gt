@@ -85,16 +85,18 @@ func main() {
 	// line and consume the width (in cells on the screen) of its parent
 	// container and consume the natural height (in lines on the screen) of its
 	// content.
-	top := div.New(ctx, "Top")
+	top := div.New(ctx)
 	top.SetID("top")
+	top.SetTextContent("Top")
 	top.SetForegroundColor(black)
 	top.SetBackgroundColor(yellow)
 	top.SetHeight(gt.Percent(25))
 	top.SetAlignment(gt.AlignmentMiddleCenter)
 	v.AppendContent(top)
 
-	mid := div.New(ctx, "Mid")
+	mid := div.New(ctx)
 	mid.SetID("mid")
+	mid.SetTextContent("Mid")
 	mid.SetHeight(gt.Percent(50))
 	mid.SetAlignment(gt.AlignmentMiddleCenter)
 	v.AppendContent(mid)
@@ -107,8 +109,9 @@ func main() {
 	// gt.Span's width to either a fixed or percent value, the display mode is
 	// automatically switched to "inline-block" which will cause the width to
 	// be either a fixed value or a percent of the parent container's width.
-	midA := span.New(ctx, "Mid A")
+	midA := span.New(ctx)
 	midA.SetID("mid-a")
+	midA.SetTextContent("Mid A")
 	midA.SetWidth(gt.Fixed(10))
 	// Setting a height of 100% here forces the height to be equal to the
 	// parent container's height.
@@ -119,8 +122,9 @@ func main() {
 	midA.SetBackgroundColor(pink)
 	mid.AppendChild(midA)
 
-	midB := span.New(ctx, "Mid B")
+	midB := span.New(ctx)
 	midB.SetID("mid-b")
+	midB.SetTextContent("Mid B")
 	midB.SetWidth(gt.Percent(20))
 	midB.SetHeight(gt.Percent(100))
 	midB.SetAlignment(gt.AlignmentMiddleCenter)
@@ -129,32 +133,36 @@ func main() {
 	midB.SetBackgroundColor(pink)
 	mid.AppendChild(midB)
 
-	midB1 := div.New(ctx, "Mid B-1")
+	midB1 := div.New(ctx)
 	midB1.SetID("mid-b1")
+	midB1.SetTextContent("Mid B-1")
 	midB1.SetHeight(gt.Percent(33))
 	midB1.SetAlignment(gt.AlignmentMiddleCenter)
 	midB1.SetForegroundColor(black)
 	midB1.SetBackgroundColor(lightblue)
 	midB.AppendChild(midB1)
 
-	midB2 := div.New(ctx, "Mid B-2")
+	midB2 := div.New(ctx)
 	midB2.SetID("mid-b2")
+	midB2.SetTextContent("Mid B-2")
 	midB2.SetHeight(gt.Percent(33))
 	midB2.SetAlignment(gt.AlignmentMiddleCenter)
 	midB2.SetForegroundColor(black)
 	midB2.SetBackgroundColor(lightblue)
 	midB.AppendChild(midB2)
 
-	midB3 := div.New(ctx, "Mid B-3")
+	midB3 := div.New(ctx)
 	midB3.SetID("mid-b3")
+	midB3.SetTextContent("Mid B-3")
 	midB3.SetHeight(gt.Percent(34))
 	midB3.SetAlignment(gt.AlignmentMiddleCenter)
 	midB3.SetForegroundColor(black)
 	midB3.SetBackgroundColor(lightblue)
 	midB.AppendChild(midB3)
 
-	midC := span.New(ctx, "Mid C")
+	midC := span.New(ctx)
 	midC.SetID("mid-c")
+	midC.SetTextContent("Mid C")
 	midC.SetWidth(gt.Percent(80))
 	midC.SetHeight(gt.Percent(100))
 	midC.SetAlignment(gt.AlignmentMiddleCenter)
@@ -163,8 +171,9 @@ func main() {
 	midC.SetBackgroundColor(pink)
 	mid.AppendChild(midC)
 
-	bottom := div.New(ctx, "Bottom")
+	bottom := div.New(ctx)
 	bottom.SetID("bottom")
+	bottom.SetTextContent("Bottom")
 	bottom.SetForegroundColor(black)
 	bottom.SetBackgroundColor(lightgreen)
 	bottom.SetHeight(gt.Percent(25))

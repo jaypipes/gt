@@ -2,6 +2,7 @@ package render
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/x/ansi"
@@ -33,6 +34,8 @@ func Align(
 	area := width * height
 	if area > 0 {
 		b.Grow(area)
+	} else {
+		panic(fmt.Sprintf("render.Align had no size. content was %q", content))
 	}
 
 	// First we process the vertical alignment of the supplied string and then

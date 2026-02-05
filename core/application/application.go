@@ -10,6 +10,7 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/charmbracelet/x/termios"
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
@@ -157,8 +158,7 @@ func (a *Application) Start(ctx context.Context) error {
 	// Start our Application's internal event loop.
 	a.events.Start()
 
-	con := uv.NewConsole(os.Stdin, os.Stdout, os.Environ())
-	t := uv.NewTerminal(con, nil)
+	t := uv.DefaultTerminal()
 
 	scr := t.Screen()
 	scr.ShowCursor()
@@ -170,8 +170,11 @@ func (a *Application) Start(ctx context.Context) error {
 	defer func() {
 		if r := recover(); r != nil {
 			_ = t.Stop()
-			fmt.Fprintf(os.Stderr, "recovered from panic: %v", r)
+			fmt.Fprintf(os.Stderr, "recovered from panic: %v\n", r)
 			debug.PrintStack()
+			if gtlog.Level() < slog.LevelInfo {
+				fmt.Fprintf(os.Stderr, "%s", gtlog.Records())
+			}
 		}
 	}()
 
@@ -349,7 +352,13 @@ func (a *Application) draw(ctx context.Context) {
 	// height.
 	bounds := a.Bounds()
 	if bounds.Empty() {
-		screenBounds := scr.Bounds()
+		winSize, err := termios.GetWinsize(int(os.Stdin.Fd()))
+		if err != nil {
+			panic(err.Error())
+		}
+		screenBounds := types.Rectangle{Min: types.Point{X: 0, Y: 0}, Max: types.Point{X: int(winSize.Col), Y: int(winSize.Row)}}
+		bounds = screenBounds
+		a.SetBounds(bounds)
 		gtlog.Debug(
 			ctx,
 			"Application.draw: setting application bounds to screen bounds %s",
