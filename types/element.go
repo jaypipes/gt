@@ -26,6 +26,7 @@ type Element interface {
 	Identifiable
 	Node
 	Plottable
+	ScreenControllable
 	Styleable
 
 	// WithID sets the Element's unique identifier and returns the Element.

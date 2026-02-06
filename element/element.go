@@ -24,6 +24,10 @@ type Element struct {
 	core.Identifiable
 	box.Box
 
+	// screenController can be used by the element can use to control the
+	// screen's cursor.
+	screenController types.ScreenController
+
 	// childIndex is the index of this Box in the parent's children.
 	childIndex int
 	// parent is the this Node's parent, if any.
@@ -95,6 +99,22 @@ func (e *Element) WithClass(class string) types.Element {
 // Class returns the Element's type/class, e.g. "gt.span" or "gt.div"
 func (e *Element) Class() string {
 	return e.class
+}
+
+// ScreenController returns the screen controller.
+func (e *Element) ScreenController() types.ScreenController {
+	return e.screenController
+}
+
+// SetScreenController sets the screen controller.
+func (e *Element) SetScreenController(sc types.ScreenController) {
+	e.screenController = sc
+}
+
+// WithScreenController sets the screen controller and returns the Element.
+func (e *Element) WithScreenController(sc types.ScreenController) types.Element {
+	e.SetScreenController(sc)
+	return e
 }
 
 // Draw implements the uv.Drawable interface

@@ -92,6 +92,18 @@ func (t *TextArea) Draw(screen types.Screen, bounds types.Rectangle) {
 	}
 	ss := uv.NewStyledString(content)
 	ss.Draw(screen, t.InnerBounds())
+	// If we have the focus, show the cursor at the end of the user-input text
+	// to indicate this is an editable thing.
+	if focused {
+		sc := t.ScreenController()
+		if sc != nil {
+			sc.ShowCursor()
+			sc.SetCursorStyle(types.CursorBar, true)
+			x := ss.Bounds().Max.X + 1
+			y := ss.Bounds().Max.Y
+			sc.SetCursorPosition(x, y)
+		}
+	}
 }
 
 // defaultOnFocus is executed when a TextArea receives the focus. If no

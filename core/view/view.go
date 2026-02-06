@@ -16,10 +16,15 @@ import (
 )
 
 // New returns a new View instance with the given ID.
-func New(ctx context.Context, id string) *View {
+func New(
+	ctx context.Context,
+	sc types.ScreenController,
+	id string,
+) *View {
 	d := vdiv.New(ctx, element.WithID(id))
 	v := &View{
-		VDiv: *d,
+		VDiv:             *d,
+		screenController: sc,
 	}
 	return v
 }
@@ -37,6 +42,8 @@ type View struct {
 	// keyPressMap stores the View's map of key press combinations to
 	// callbacks.
 	keyPressMap types.KeyPressMap
+	// screenController is the screen controller for this View
+	screenController types.ScreenController
 }
 
 // String returns a short string representation of the View.
@@ -120,6 +127,9 @@ func (v *View) OnKeyPress(key string, cb types.EventCallback) {
 
 // SetContent sets the thing that will be rendered in the View.
 func (v *View) SetContent(content types.Node) {
+	if sc, ok := content.(types.ScreenControllable); ok {
+		sc.SetScreenController(v.screenController)
+	}
 	v.RemoveAllChildren()
 	v.AppendChild(content)
 }
@@ -134,6 +144,9 @@ func (v *View) WithContent(content types.Node) *View {
 // AppendContent adds a child Element to the View's content and returns the
 // View.
 func (v *View) AppendContent(content types.Node) *View {
+	if sc, ok := content.(types.ScreenControllable); ok {
+		sc.SetScreenController(v.screenController)
+	}
 	v.AppendChild(content)
 	return v
 }

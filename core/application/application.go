@@ -23,7 +23,9 @@ import (
 func New(
 	ctx context.Context,
 ) *Application {
+	t := uv.DefaultTerminal()
 	return &Application{
+		term:        t,
 		views:       map[string]*view.View{},
 		keyPressMap: types.KeyPressMap{},
 		events:      eventloop.New(ctx),
@@ -85,7 +87,7 @@ func (a *Application) EnableMouse() {
 func (a *Application) View(ctx context.Context, id string) *view.View {
 	v, ok := a.views[id]
 	if !ok {
-		v = view.New(ctx, id)
+		v = view.New(ctx, a.term.Screen(), id)
 		a.views[id] = v
 		a.curView = id
 	}
@@ -157,10 +159,9 @@ func (a *Application) Start(ctx context.Context) error {
 	// Start our Application's internal event loop.
 	a.events.Start()
 
-	t := uv.DefaultTerminal()
+	t := a.term
 
 	scr := t.Screen()
-	scr.ShowCursor()
 
 	// By entering alt screen we take control of the output of the terminal
 	// which means when we exit the application, the terminal screen will be
@@ -186,7 +187,6 @@ func (a *Application) Start(ctx context.Context) error {
 		scr.WriteString(ansi.SetMode(modes...))
 	}
 
-	a.term = t
 	if a.title != "" {
 		scr.WriteString(ansi.SetWindowTitle(a.title))
 	}
@@ -357,7 +357,7 @@ func (a *Application) draw(ctx context.Context) {
 	}
 	v := a.CurrentView()
 	if v == nil {
-		v = view.New(context.TODO(), "main")
+		v = view.New(context.TODO(), a.term.Screen(), "main")
 		a.views["main"] = v
 		a.curView = "main"
 	}

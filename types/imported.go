@@ -28,6 +28,9 @@ type (
 	MouseMotionEvent  = uv.MouseMotionEvent
 	MouseButton       = ansi.MouseButton
 
+	Cursor      = uv.Cursor
+	CursorShape = uv.CursorShape
+
 	Border = uv.Border
 	Side   = uv.Side
 	// Style is semantically slightly different from uv.Style in that a Style
@@ -47,6 +50,12 @@ const (
 	MouseWheelRight = ansi.MouseWheelRight
 	MouseBackward   = ansi.MouseBackward
 	MouseForward    = ansi.MouseForward
+)
+
+const (
+	CursorBlock     = uv.CursorBlock
+	CursorUnderline = uv.CursorUnderline
+	CursorBar       = uv.CursorBar
 )
 
 const (
