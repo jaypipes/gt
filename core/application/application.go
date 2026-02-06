@@ -10,7 +10,6 @@ import (
 
 	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
-	"github.com/charmbracelet/x/termios"
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
@@ -193,12 +192,29 @@ func (a *Application) Start(ctx context.Context) error {
 	}
 	keyMap := a.buildKeyPressMap()
 
-	a.draw(ctx)
 loop:
 	for ev := range t.Events() {
 		switch ev := ev.(type) {
 		case uv.WindowSizeEvent:
+			// NOTE(jaypipes): When the uv terminal's event loop starts, it
+			// will always receive a window size event containing the screen's
+			// width and height. If the user hasn't overridden the
+			// application's bounds, we set the application's bounds to that
+			// returned screen width x height.
 			scr.Resize(ev.Width, ev.Height)
+			bounds := a.Bounds()
+			if bounds.Empty() {
+				area := types.Rectangle{
+					Min: types.Point{X: 0, Y: 0},
+					Max: types.Point{X: ev.Width, Y: ev.Height},
+				}
+				gtlog.Debug(
+					ctx,
+					"defaulting application bounds to screen bounds %s",
+					area,
+				)
+				a.SetBounds(area)
+			}
 			a.draw(ctx)
 		case uv.KeyPressEvent:
 			switch {
@@ -347,26 +363,6 @@ func (a *Application) draw(ctx context.Context) {
 	}
 
 	scr := a.term.Screen()
-
-	// If the Application has had no bounds set, adopt the screen's max width and
-	// height.
-	bounds := a.Bounds()
-	if bounds.Empty() {
-		winSize, err := termios.GetWinsize(int(os.Stdin.Fd()))
-		if err != nil {
-			panic(err.Error())
-		}
-		screenBounds := types.Rectangle{Min: types.Point{X: 0, Y: 0}, Max: types.Point{X: int(winSize.Col), Y: int(winSize.Row)}}
-		bounds = screenBounds
-		a.SetBounds(bounds)
-		gtlog.Debug(
-			ctx,
-			"Application.draw: setting application bounds to screen bounds %s",
-			screenBounds,
-		)
-		bounds = screenBounds
-		a.Box.SetBounds(bounds)
-	}
 
 	a.Box.Draw(scr, a.Bounds())
 	v.SetBounds(a.InnerBounds())

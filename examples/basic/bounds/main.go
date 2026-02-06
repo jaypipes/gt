@@ -45,8 +45,9 @@ func main() {
 	// cells on the screen) and the height of the Span is the natural number of
 	// lines that the text content will wrap within the Span's parent
 	// container.
-	span := gtspan.New(ctx, "some text")
+	span := gtspan.New(ctx)
 	span.SetID("content")
+	span.SetTextContent("some text")
 	// To demonstrate how bounds work, we will give this Span a fixed width and
 	// height instead of using the default width and height of a Span. The
 	// `gt.Element.SetSize()` method allows you to set the fixed width and
