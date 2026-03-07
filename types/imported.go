@@ -4,39 +4,27 @@ import (
 	"image"
 	"image/color"
 
-	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/gdamore/tcell/v3"
 )
 
-// Convenience wrappers around common ultraviolet and other package
-// structs/funcs
+// Convenience wrappers around common tcell and other package structs/funcs
 type (
 	Color     = color.Color
 	Rectangle = image.Rectangle
 	Point     = image.Point
 
-	Underline = ansi.Underline
+	Screen         = tcell.Screen
+	Key            = tcell.Key
+	CursorStyle    = tcell.CursorStyle
+	UnderlineStyle = tcell.UnderlineStyle
 
-	Screen = uv.Screen
-	Event  = uv.Event
+	MouseButton = ansi.MouseButton
+)
 
-	Mouse             = uv.Mouse
-	MouseMode         = uv.MouseMode
-	MouseEvent        = uv.MouseEvent
-	MouseClickEvent   = uv.MouseClickEvent
-	MouseReleaseEvent = uv.MouseReleaseEvent
-	MouseMotionEvent  = uv.MouseMotionEvent
-	MouseButton       = ansi.MouseButton
-
-	Cursor      = uv.Cursor
-	CursorShape = uv.CursorShape
-
-	Border = uv.Border
-	Side   = uv.Side
-	// Style is semantically slightly different from uv.Style in that a Style
-	// can apply to an entire Element not just a single uv.Cell.
-	Style        = uv.Style
-	StyledString = uv.StyledString
+const (
+	CursorStyleBar       = tcell.CursorStyleSteadyBar
+	CursorStyleSteadyBar = tcell.CursorStyleSteadyBar
 )
 
 const (
@@ -53,16 +41,10 @@ const (
 )
 
 const (
-	CursorBlock     = uv.CursorBlock
-	CursorUnderline = uv.CursorUnderline
-	CursorBar       = uv.CursorBar
-)
-
-const (
-	UnderlineNone   = ansi.UnderlineNone
-	UnderlineSingle = ansi.UnderlineSingle
-	UnderlineDouble = ansi.UnderlineDouble
-	UnderlineCurly  = ansi.UnderlineCurly
-	UnderlineDotted = ansi.UnderlineDotted
-	UnderlineDashed = ansi.UnderlineDashed
+	UnderlineStyleNone   = tcell.UnderlineStyleNone
+	UnderlineStyleSolid  = tcell.UnderlineStyleSolid
+	UnderlineStyleDouble = tcell.UnderlineStyleDouble
+	UnderlineStyleCurly  = tcell.UnderlineStyleCurly
+	UnderlineStyleDotted = tcell.UnderlineStyleDotted
+	UnderlineStyleDashed = tcell.UnderlineStyleDashed
 )

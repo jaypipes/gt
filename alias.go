@@ -3,10 +3,9 @@ package gt
 import (
 	"image"
 
-	uv "github.com/charmbracelet/ultraviolet"
-
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/application"
+	"github.com/jaypipes/gt/core/border"
 	gtcontext "github.com/jaypipes/gt/core/context"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/view"
@@ -112,6 +111,9 @@ const (
 )
 
 type (
+	Cell                = types.Cell
+	Cursor              = types.Cursor
+	CursorShape         = types.CursorShape
 	Rectangle           = types.Rectangle
 	Point               = types.Point
 	Size                = types.Size
@@ -119,7 +121,6 @@ type (
 	DimensionConstraint = types.DimensionConstraint
 	SizeConstraint      = types.SizeConstraint
 	Border              = types.Border
-	Side                = types.Side
 	Style               = types.Style
 	Text                = types.Text
 )
@@ -136,12 +137,20 @@ var (
 )
 
 const (
-	UnderlineNone   = types.UnderlineNone
-	UnderlineSingle = types.UnderlineSingle
-	UnderlineDouble = types.UnderlineDouble
-	UnderlineCurly  = types.UnderlineCurly
-	UnderlineDotted = types.UnderlineDotted
-	UnderlineDashed = types.UnderlineDashed
+	UnderlineStyleNone   = types.UnderlineStyleNone
+	UnderlineNone        = types.UnderlineStyleNone
+	UnderlineStyleSolid  = types.UnderlineStyleSolid
+	UnderlineSolid       = types.UnderlineStyleSolid
+	UnderlineSingle      = types.UnderlineStyleSolid
+	UnderlineStyleSingle = types.UnderlineStyleSolid
+	UnderlineStyleDouble = types.UnderlineStyleDouble
+	UnderlineDouble      = types.UnderlineStyleDouble
+	UnderlineStyleCurly  = types.UnderlineStyleCurly
+	UnderlineCurly       = types.UnderlineStyleCurly
+	UnderlineStyleDotted = types.UnderlineStyleDotted
+	UnderlineDotted      = types.UnderlineStyleDotted
+	UnderlineStyleDashed = types.UnderlineStyleDashed
+	UnderlineDashed      = types.UnderlineStyleDashed
 )
 
 var (
@@ -163,14 +172,14 @@ var (
 	Rect = image.Rect
 	Pt   = image.Pt
 
-	NormalBorder         = uv.NormalBorder
-	RoundedBorder        = uv.RoundedBorder
-	BlockBorder          = uv.BlockBorder
-	OuterHalfBlockBorder = uv.OuterHalfBlockBorder
-	InnerHalfBlockBorder = uv.InnerHalfBlockBorder
-	ThickBorder          = uv.ThickBorder
-	DoubleBorder         = uv.DoubleBorder
-	HiddenBorder         = uv.HiddenBorder
-	MarkdownBorder       = uv.MarkdownBorder
-	ASCIIBorder          = uv.ASCIIBorder
+	NormalBorder         = border.Normal
+	RoundedBorder        = border.Rounded
+	BlockBorder          = border.Block
+	OuterHalfBlockBorder = border.OuterHalfBlock
+	InnerHalfBlockBorder = border.InnerHalfBlock
+	ThickBorder          = border.Thick
+	DoubleBorder         = border.Double
+	HiddenBorder         = border.Hidden
+	MarkdownBorder       = border.Markdown
+	ASCIIBorder          = border.ASCII
 )

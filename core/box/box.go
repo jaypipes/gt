@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -30,13 +29,7 @@ type Box struct {
 	// padding is any padding applied to the Box.
 	padding types.Padding
 	// border is the optional Border information for the Box.
-	border *types.Border
-	// borderFGColor is the border foreground color (i.e the color of the
-	// border cell's underlying grapheme).
-	borderFGColor types.Color
-	// borderBGColor is the border background color, i.b. the background color
-	// of the border cells.
-	borderBGColor types.Color
+	border types.Border
 
 	// minWidth is the minimum width of the Element.
 	minWidth types.Dimension
@@ -65,29 +58,10 @@ func (b *Box) String() string {
 	)
 }
 
-// drawBorder draws the border around the outer bounding box's cells.
-func (b *Box) drawBorder(
-	ctx context.Context,
-	screen types.Screen,
-	bounds types.Rectangle,
-) {
-	// If we have a border, draw it around the outer bounding box.
-	border := b.border
-	if border == nil {
-		return
-	}
-	gtlog.Debug(ctx, "Box.drawBorder: %s", b)
-	style := types.Style{Fg: b.borderFGColor, Bg: b.borderBGColor}
-	bb := border.Style(style)
-	bb.Draw(screen, b.bounds)
-}
-
-// Draw implements the uv.Drawable interface
-func (b *Box) Draw(screen types.Screen, bounds types.Rectangle) {
-	ctx := context.TODO()
-	gtlog.Debug(ctx, "Box.Draw: bounds=%s", bounds)
-	b.drawBorder(ctx, screen, bounds)
+// Render implements the types.Renderable interface
+func (b *Box) Render(ctx context.Context, screen types.Screen) {
+	b.renderBorder(ctx, screen)
 }
 
 var _ types.Plottable = (*Box)(nil)
-var _ types.Drawable = (*Box)(nil)
+var _ types.Renderable = (*Box)(nil)

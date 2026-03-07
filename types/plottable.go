@@ -114,7 +114,7 @@ type Plottable interface {
 	// SetBounds sets the Plottable's bounding box.
 	SetBorder(Border)
 	// Bounds returns the bounding box for the Plottable.
-	Border() *Border
+	Border() Border
 	// SetBorderForegroundColor sets the Plottable's border foreground color
 	// (i.e the color of the border's cells underlying grapheme).
 	SetBorderForegroundColor(Color)

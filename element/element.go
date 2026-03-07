@@ -6,13 +6,13 @@ import (
 	"strings"
 	"sync"
 
-	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
+	"github.com/jaypipes/gt/core/style"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -24,9 +24,9 @@ type Element struct {
 	core.Identifiable
 	box.Box
 
-	// screenController can be used by the element can use to control the
+	// controller can be used by the element can use to control the
 	// screen's cursor.
-	screenController types.ScreenController
+	controller types.Controller
 
 	// childIndex is the index of this Box in the parent's children.
 	childIndex int
@@ -38,12 +38,12 @@ type Element struct {
 	// class is the Element's type/class, e.g. "gt.label" or "gt.canvas"
 	class string
 
-	// textContent is any unstyled raw text content for the Element.
-	textContent string
-
-	// style is the style mode of the Element's content (i.e. the non-border
+	// style this is the style of the Element's content (i.e. the non-border
 	// cells of the Element)
 	style types.Style
+
+	// textContent is any unstyle raw text content for the Element.
+	textContent string
 
 	// onClick contains the stack of callbacks that execute when the Element is
 	// clicked.
@@ -101,33 +101,32 @@ func (e *Element) Class() string {
 	return e.class
 }
 
-// ScreenController returns the screen controller.
-func (e *Element) ScreenController() types.ScreenController {
-	return e.screenController
+// Controller returns the controller.
+func (e *Element) Controller() types.Controller {
+	return e.controller
 }
 
-// SetScreenController sets the screen controller.
-func (e *Element) SetScreenController(sc types.ScreenController) {
-	e.screenController = sc
+// SetController sets the controller.
+func (e *Element) SetController(c types.Controller) {
+	e.controller = c
 }
 
-// WithScreenController sets the screen controller and returns the Element.
-func (e *Element) WithScreenController(sc types.ScreenController) types.Element {
-	e.SetScreenController(sc)
+// WithController sets the controller and returns the Element.
+func (e *Element) WithController(c types.Controller) types.Element {
+	e.SetController(c)
 	return e
 }
 
-// Draw implements the uv.Drawable interface
-func (e *Element) Draw(screen types.Screen, bounds types.Rectangle) {
-	ctx := context.TODO()
-	gtlog.Debug(ctx, "Element.Draw[%s]: bounds=%s", e.Tag(), bounds)
-	e.Box.Draw(screen, bounds)
+// Render implements the types.Renderable interface
+func (e *Element) Render(ctx context.Context, screen types.Screen) {
+	bounds := e.Bounds()
+	gtlog.Debug(ctx, "Element.Render[%s]: bounds=%s", e.Tag(), bounds)
+	e.Box.Render(ctx, screen)
 	content := e.TextContent()
 	if len(content) == 0 {
 		return
 	}
 	inner := e.InnerBounds()
-	innerClipped := render.Overlapping(bounds, inner)
 	// If there is no alignment set, inherit from the nearest parent with
 	// non-auto alignment.
 	align := e.Alignment()
@@ -167,13 +166,15 @@ func (e *Element) Draw(screen types.Screen, bounds types.Rectangle) {
 	content = render.Align(
 		ctx, content, inner, align, whitespace,
 	)
-	style := e.Style()
-	content = style.Styled(content)
-	ss := uv.NewStyledString(content)
-	if whitespace&types.WhitespaceWrapNever == 0 {
-		ss.Wrap = true
+	defStyle := e.Style()
+	lines := strings.Split(content, "\n")
+	startX := inner.Min.X
+	startY := inner.Min.Y
+	for y, line := range lines {
+		for x := range line {
+			screen.Put(startX+x, startY+y, string(line[x]), style.TCell(defStyle))
+		}
 	}
-	ss.Draw(screen, innerClipped)
 }
 
 var _ types.Element = (*Element)(nil)

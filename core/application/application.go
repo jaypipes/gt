@@ -6,15 +6,15 @@ import (
 	"log"
 	"log/slog"
 	"os"
-	"runtime/debug"
 
-	uv "github.com/charmbracelet/ultraviolet"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/gdamore/tcell/v3"
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
-	"github.com/jaypipes/gt/core/eventloop"
+	"github.com/jaypipes/gt/core/keypress"
 	gtlog "github.com/jaypipes/gt/core/log"
+	"github.com/jaypipes/gt/core/mouse"
 	"github.com/jaypipes/gt/core/view"
 	"github.com/jaypipes/gt/types"
 )
@@ -23,12 +23,9 @@ import (
 func New(
 	ctx context.Context,
 ) *Application {
-	t := uv.DefaultTerminal()
 	return &Application{
-		term:        t,
 		views:       map[string]*view.View{},
 		keyPressMap: types.KeyPressMap{},
-		events:      eventloop.New(ctx),
 	}
 }
 
@@ -42,7 +39,8 @@ func New(
 //	}
 type Application struct {
 	box.Box
-	term *uv.Terminal
+	screen     tcell.Screen
+	controller *Controller
 
 	// title is an optional title for the application, used as a title for the
 	// terminal when set.
@@ -57,10 +55,6 @@ type Application struct {
 	// keyPressMap contains key press combination callbacks registered for the
 	// Application itself -- i.e. global key press callbacks.
 	keyPressMap types.KeyPressMap
-
-	// events is the event loop for Application events (separate from the event
-	// loop that the Application's Terminal runs)
-	events *eventloop.EventLoop
 
 	// mouseEnabled is true if we're trapping mouse events in the terminal.
 	mouseEnabled bool
@@ -87,7 +81,7 @@ func (a *Application) EnableMouse() {
 func (a *Application) View(ctx context.Context, id string) *view.View {
 	v, ok := a.views[id]
 	if !ok {
-		v = view.New(ctx, a.term.Screen(), id)
+		v = view.New(ctx, a.controller, id)
 		a.views[id] = v
 		a.curView = id
 	}
@@ -155,121 +149,82 @@ func (a *Application) Start(ctx context.Context) error {
 	if a == nil {
 		return fmt.Errorf("cannot start nil Application.")
 	}
+	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 
-	// Start our Application's internal event loop.
-	a.events.Start()
-
-	t := a.term
-
-	scr := t.Screen()
-
-	// By entering alt screen we take control of the output of the terminal
-	// which means when we exit the application, the terminal screen will be
-	// returned to its original state.
-	scr.EnterAltScreen()
-	defer func() {
-		if r := recover(); r != nil {
-			_ = t.Stop()
-			fmt.Fprintf(os.Stderr, "recovered from panic: %v\n", r)
-			debug.PrintStack()
-			if gtlog.Level() < slog.LevelInfo {
-				fmt.Fprintf(os.Stderr, "%s", gtlog.Records())
-			}
-		}
-	}()
-
-	if err := t.Start(); err != nil {
-		return fmt.Errorf("failed to start terminal program: %w", err)
+	s, err := tcell.NewScreen()
+	if err != nil {
+		log.Fatalf("%+v", err)
 	}
-
-	modes := a.terminalModes()
-	if len(modes) > 0 {
-		scr.WriteString(ansi.SetMode(modes...))
+	err = s.Init()
+	if err != nil {
+		log.Fatalf("%+v", err)
 	}
+	c := newController(s)
+	a.screen = s
+	a.controller = c
 
 	if a.title != "" {
-		scr.WriteString(ansi.SetWindowTitle(a.title))
+		s.SetTitle(a.title)
 	}
 	keyMap := a.buildKeyPressMap()
+	a.controller.SetKeyPressMap(keyMap)
+
+	s.EnableMouse()
+	s.EnableFocus()
+	s.Clear()
+
+	quit := func() {
+		// You have to catch panics in a defer, clean up, and
+		// re-raise them - otherwise your application can
+		// die without leaving any diagnostic trace.
+		maybePanic := recover()
+		s.Fini()
+		if gtlog.Level() < slog.LevelInfo {
+			fmt.Fprintf(os.Stderr, "%s", gtlog.Records())
+		}
+		if maybePanic != nil {
+			panic(maybePanic)
+		}
+	}
+	defer quit()
+
+	a.draw(ctx)
 
 loop:
-	for ev := range t.Events() {
+	for ev := range s.EventQ() {
+		fmt.Fprintf(os.Stderr, "%v", ev)
 		switch ev := ev.(type) {
-		case uv.WindowSizeEvent:
-			// NOTE(jaypipes): When the uv terminal's event loop starts, it
-			// will always receive a window size event containing the screen's
-			// width and height. If the user hasn't overridden the
-			// application's bounds, we set the application's bounds to that
-			// returned screen width x height.
-			scr.Resize(ev.Width, ev.Height)
-			bounds := a.Bounds()
-			if bounds.Empty() {
-				area := types.Rectangle{
-					Min: types.Point{X: 0, Y: 0},
-					Max: types.Point{X: ev.Width, Y: ev.Height},
-				}
-				gtlog.Debug(
-					ctx,
-					"defaulting application bounds to screen bounds %s",
-					area,
-				)
-				a.SetBounds(area)
-			}
+		case *tcell.EventResize:
 			a.draw(ctx)
-		case uv.KeyPressEvent:
+			s.Sync()
+		case *tcell.EventKey:
 			switch {
-			case ev.MatchString("q", "ctrl+c"):
+			case ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC:
 				break loop
-			case ev.MatchString("ctrl+z"):
-				if err := scr.Flush(); err != nil {
-					log.Fatal(err)
-				}
-
-				uv.Suspend()
-
-				if err := scr.Restore(); err != nil {
-					log.Fatal(err)
-				}
 			}
-			for kp, cb := range keyMap {
-				if ev.MatchString(kp) {
-					cb(ctx)
-					a.draw(ctx)
-					// rebuild the key map since we may have changed views.
-					keyMap = a.buildKeyPressMap()
-					break
-				}
+			gev := keypress.EventFromTCell(ev)
+			if a.controller.HandleKeyPress(ctx, gev) {
+				a.draw(ctx)
+				// rebuild the key map since we may have changed views.
+				keyMap = a.buildKeyPressMap()
+				a.controller.SetKeyPressMap(keyMap)
 			}
-		case uv.MouseClickEvent:
-			m := ev.Mouse()
-			scr.SetCursorPosition(m.X, m.Y)
-			cur := scr.CellAt(m.X, m.Y)
-			if cur == nil {
-				// outside the screen bounds...
-				break
-			}
-			pos := types.Point{X: m.X, Y: m.Y}
+		case *tcell.EventMouse:
+			gev := mouse.EventFromTCell(ev)
+			pos := gev.Position()
+			s.ShowCursor(pos.X, pos.Y)
 			v := a.CurrentView()
 			node := v.AtPoint(pos)
 			if node != nil {
 				el, ok := node.(types.Element)
 				if ok {
-					el.Click(ctx, ev)
+					el.Click(ctx, gev)
 					a.draw(ctx)
 				}
 			}
 		}
 	}
-
-	if len(modes) > 0 {
-		scr.WriteString(ansi.ResetMode(modes...))
-	}
-
-	a.events.Stop()
-
-	if err := t.Stop(); err != nil {
-		log.Fatal(err)
-	}
+	s.Fini()
 	if gtlog.Level() < slog.LevelInfo {
 		fmt.Fprintf(os.Stderr, "%s", gtlog.Records())
 	}
@@ -352,25 +307,19 @@ func (a *Application) buildKeyPressMap() types.KeyPressMap {
 
 // draw renders the Application's active View to the Terminal screen.
 func (a *Application) draw(ctx context.Context) {
-	if a.term == nil {
-		panic("called Application.draw() with nil terminal.")
+	s := a.screen
+	if s == nil {
+		panic("called Application.draw() with nil screen.")
 	}
 	v := a.CurrentView()
 	if v == nil {
-		v = view.New(context.TODO(), a.term.Screen(), "main")
+		v = view.New(ctx, a.controller, "main")
 		a.views["main"] = v
 		a.curView = "main"
 	}
 
-	scr := a.term.Screen()
-
-	a.Box.Draw(scr, a.Bounds())
+	a.Box.Render(ctx, s)
 	v.SetBounds(a.InnerBounds())
-	v.Render(ctx, scr)
-	if err := scr.Render(); err != nil {
-		log.Fatal(err)
-	}
-	if err := scr.Flush(); err != nil {
-		log.Fatal(err)
-	}
+	v.Render(ctx, s)
+	s.Show()
 }

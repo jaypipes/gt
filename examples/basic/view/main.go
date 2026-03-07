@@ -43,8 +43,9 @@ func main() {
 	v1.SetBorder(gt.RoundedBorder())
 	v1.SetPadding(gt.Pad(1))
 
-	div1 := gtdiv.New(ctx, "content 1")
+	div1 := gtdiv.New(ctx)
 	div1.SetID("div-1")
+	div1.SetTextContent("content 1")
 	div1.SetHeight(gt.Percent(100))
 	div1.SetAlignment(gt.AlignmentMiddleCenter)
 	div1.SetForegroundColor(black)
@@ -57,8 +58,9 @@ func main() {
 	v2.SetBorder(gt.RoundedBorder())
 	v2.SetPadding(gt.Pad(1))
 
-	div2 := gtdiv.New(ctx, "content 2")
+	div2 := gtdiv.New(ctx)
 	div2.SetID("div-2")
+	div2.SetTextContent("content 2")
 	div2.SetHeight(gt.Percent(100))
 	div2.SetAlignment(gt.AlignmentMiddleCenter)
 	div2.SetForegroundColor(black)

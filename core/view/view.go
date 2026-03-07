@@ -18,13 +18,13 @@ import (
 // New returns a new View instance with the given ID.
 func New(
 	ctx context.Context,
-	sc types.ScreenController,
+	sc types.Controller,
 	id string,
 ) *View {
 	d := vdiv.New(ctx, element.WithID(id))
 	v := &View{
-		VDiv:             *d,
-		screenController: sc,
+		VDiv:       *d,
+		controller: sc,
 	}
 	return v
 }
@@ -42,8 +42,8 @@ type View struct {
 	// keyPressMap stores the View's map of key press combinations to
 	// callbacks.
 	keyPressMap types.KeyPressMap
-	// screenController is the screen controller for this View
-	screenController types.ScreenController
+	// controller is the controller for this View
+	controller types.Controller
 }
 
 // String returns a short string representation of the View.
@@ -127,8 +127,8 @@ func (v *View) OnKeyPress(key string, cb types.EventCallback) {
 
 // SetContent sets the thing that will be rendered in the View.
 func (v *View) SetContent(content types.Node) {
-	if sc, ok := content.(types.ScreenControllable); ok {
-		sc.SetScreenController(v.screenController)
+	if c, ok := content.(types.Controllable); ok {
+		c.SetController(v.controller)
 	}
 	v.RemoveAllChildren()
 	v.AppendChild(content)
@@ -144,8 +144,8 @@ func (v *View) WithContent(content types.Node) *View {
 // AppendContent adds a child Element to the View's content and returns the
 // View.
 func (v *View) AppendContent(content types.Node) *View {
-	if sc, ok := content.(types.ScreenControllable); ok {
-		sc.SetScreenController(v.screenController)
+	if c, ok := content.(types.Controllable); ok {
+		c.SetController(v.controller)
 	}
 	v.AppendChild(content)
 	return v
@@ -192,11 +192,11 @@ func (v *View) Render(
 
 	// clear the outer bounds before rendering the DOM rooted at the root
 	// Element.
-	render.Clear(screen, bounds)
+	screen.Clear()
 
 	// Then recursively plot all content in the View.
 	render.Plot(ctx, v, inner)
 
 	// And finally draw all the content to the Screen.
-	render.Draw(ctx, v, screen)
+	render.Render(ctx, v, screen)
 }

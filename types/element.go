@@ -1,9 +1,5 @@
 package types
 
-import (
-	"image/color"
-)
-
 // Element represents a single node in gt's Document Object Model (DOM).
 //
 // The DOM is a single-rooted tree structure, and as such each Element in the
@@ -21,13 +17,13 @@ import (
 // [uv.Drawable.Draw] for the user.
 type Element interface {
 	Clickable
-	Drawable
+	Controllable
 	Focusable
 	Identifiable
 	Node
 	Plottable
-	ScreenControllable
-	Styleable
+	Renderable
+	Style
 
 	// WithID sets the Element's unique identifier and returns the Element.
 	WithID(string) Element
@@ -78,15 +74,19 @@ type Element interface {
 	// WithBorderBackgroundColor sets the Element's border background color (i.e
 	// the background color of the border's cells and returns the Element.
 	WithBorderBackgroundColor(Color) Element
-	// WithStyle applies the supplied Style to the Element's text content and
-	// returns the Element.
+
+	// Style returns the Element's Style
+	Style() Style
+	// SetStyle sets the Element's style.
+	SetStyle(Style)
+	// WithStyle sets the Element's style and returns the Element.
 	WithStyle(Style) Element
 	// WithForegroundColor sets the thing's foreground color and  returns the
 	// Element.
-	WithForegroundColor(color.Color) Element
+	WithForegroundColor(Color) Element
 	// WithBackgroundColor sets the Element's background color and returns the
 	// Element.
-	WithBackgroundColor(color.Color) Element
+	WithBackgroundColor(Color) Element
 
 	// SetTextContent sets the Element's raw, unstyled text contents.
 	SetTextContent(string)

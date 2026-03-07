@@ -12,11 +12,3 @@ type HasKeyPressMap interface {
 	// is entered.
 	KeyPressMap() KeyPressMap
 }
-
-// KeyPressable describes something that can have key press combinations and
-// callbacks associated with it.
-type KeyPressable interface {
-	HasKeyPressMap
-	// OnKeyPress registers a callback to execute upon a key press combination.
-	OnKeyPress(string, EventCallback)
-}

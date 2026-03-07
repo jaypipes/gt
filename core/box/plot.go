@@ -45,10 +45,10 @@ func (b *Box) InnerBounds() types.Rectangle {
 	bounds := b.Bounds()
 	border := b.Border()
 	if border != nil {
-		bounds.Min.X += ansi.StringWidth(border.Left.Content)
-		bounds.Min.Y += ansi.StringWidth(border.Bottom.Content)
-		bounds.Max.X -= ansi.StringWidth(border.Right.Content)
-		bounds.Max.Y -= ansi.StringWidth(border.Top.Content)
+		bounds.Min.X += ansi.StringWidth(border.L().Content())
+		bounds.Min.Y += ansi.StringWidth(border.B().Content())
+		bounds.Max.X -= ansi.StringWidth(border.R().Content())
+		bounds.Max.Y -= ansi.StringWidth(border.T().Content())
 	}
 	return b.Padding().AdjustBounds(bounds)
 }

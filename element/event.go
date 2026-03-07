@@ -8,12 +8,17 @@ import (
 
 // Click executes any OnClick callbacks that were registered for the
 // Clickable.
-func (e *Element) Click(ctx context.Context, ev types.MouseClickEvent) {
+func (e *Element) Click(ctx context.Context, ev types.MouseEvent) {
 	for _, cb := range e.onClick {
 		cb(ctx, ev)
 	}
-	if ev.Button == types.MouseLeft {
-		e.SetFocus(ctx, true)
+	if ev.Button() == types.MouseLeft {
+		c := e.Controller()
+		if c != nil {
+			c.HandleFocus(ctx, e)
+		} else {
+			e.SetFocus(ctx, true)
+		}
 	}
 }
 

@@ -4,10 +4,10 @@ import (
 	"context"
 	"strings"
 
-	uv "github.com/charmbracelet/ultraviolet"
-
 	"github.com/jaypipes/gt/core"
+	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
+	"github.com/jaypipes/gt/core/style"
 	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/types"
 )
@@ -43,9 +43,10 @@ type HR struct {
 	element.Element
 }
 
-// Draw draws the HR to the supplied Screen.
-func (h *HR) Draw(screen types.Screen, bounds types.Rectangle) {
-	ctx := context.TODO()
+// Render implements the types.Renderable interface
+func (h *HR) Render(ctx context.Context, screen types.Screen) {
+	bounds := h.Bounds()
+	gtlog.Debug(ctx, "HR.Render[%s]: bounds=%s", h.Tag(), bounds)
 	numCellsWide := h.Width()
 	inner := h.InnerBounds()
 	if numCellsWide == 0 {
@@ -55,8 +56,10 @@ func (h *HR) Draw(screen types.Screen, bounds types.Rectangle) {
 	line = render.Align(
 		ctx, line, inner, h.Alignment(), h.Whitespace(),
 	)
-	style := h.Style()
-	line = style.Styled(line)
-	ss := uv.NewStyledString(line)
-	ss.Draw(screen, inner)
+	defStyle := h.Style()
+	startX := inner.Min.X
+	startY := inner.Min.Y
+	for x := range line {
+		screen.Put(startX+x, startY, string(line[x]), style.TCell(defStyle))
+	}
 }

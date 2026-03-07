@@ -2,10 +2,13 @@ package textarea
 
 import (
 	"context"
-
-	uv "github.com/charmbracelet/ultraviolet"
+	"fmt"
+	"strings"
 
 	"github.com/jaypipes/gt/core"
+	"github.com/jaypipes/gt/core/border"
+	gtlog "github.com/jaypipes/gt/core/log"
+	"github.com/jaypipes/gt/core/style"
 	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/types"
 )
@@ -32,13 +35,16 @@ func New(
 	opts ...types.ElementWithOption,
 ) *TextArea {
 	e := element.New(ctx, ElementClass)
-	t := &TextArea{Element: e}
+	t := &TextArea{
+		Element: e,
+		input:   &strings.Builder{},
+	}
 	// TextArea defaults to top-left alignment and preserving the user's exact
 	// input whitespacing and a square, thin-line border.
 	t.SetDisplay(types.DisplayInlineBlock)
 	t.SetAlignment(types.AlignmentTopLeft)
 	t.SetWhitespace(types.WhitespacePreserve)
-	t.SetBorder(uv.NormalBorder())
+	t.SetBorder(border.Normal())
 	// TextArea defaults to a width of 20 cells and a height of 2 lines, the
 	// same as the HTML element of the same name.
 	t.SetWidth(core.Fixed(DefaultWidth))
@@ -46,6 +52,23 @@ func New(
 	for _, opt := range opts {
 		opt(t)
 	}
+	t.OnFocus(
+		func(ctx context.Context) {
+			c := t.Controller()
+			if c != nil {
+				c.InterceptKeyPress("tab", t.input)
+			}
+		},
+	)
+	t.OnLoseFocus(
+		func(ctx context.Context) {
+			c := t.Controller()
+			if c != nil {
+				c.RestoreKeyPress()
+				c.HideCursor()
+			}
+		},
+	)
 	return t
 }
 
@@ -59,6 +82,8 @@ type TextArea struct {
 	// placeholder contains the text content that will be displayed in the
 	// absence of user-provided text content.
 	placeholder string
+	// input allows us to receive key press content
+	input *strings.Builder
 }
 
 // SetPlaceholder sets the TextArea's placeholder text. Placeholder text is
@@ -80,39 +105,46 @@ func (t *TextArea) Placeholder() string {
 	return t.placeholder
 }
 
-// Draw draws the TextArea to the supplied Screen.
-func (t *TextArea) Draw(screen types.Screen, bounds types.Rectangle) {
-	t.Box.Draw(screen, bounds)
-	focused := t.HasFocus()
+// Render implements the types.Renderable interface
+func (t *TextArea) Render(ctx context.Context, screen types.Screen) {
+	bounds := t.Bounds()
+	gtlog.Debug(ctx, "TextArea.Render[%s]: bounds=%s", t.Tag(), bounds)
+	t.Box.Render(ctx, screen)
 	content := t.TextContent()
+	focused := t.HasFocus()
+	if focused {
+		input := t.input
+		// If we've got some input text, update the stored text content
+		if input.Len() > 0 {
+			content = fmt.Sprintf("%s%s", content, input.String())
+			t.SetTextContent(content)
+			input.Reset()
+		}
+	}
 	if len(content) == 0 {
 		if !focused {
 			content = t.placeholder
 		}
 	}
-	ss := uv.NewStyledString(content)
-	ss.Draw(screen, t.InnerBounds())
+	defStyle := t.Style()
+	inner := t.InnerBounds()
+	lines := strings.Split(content, "\n")
+	startX := inner.Min.X
+	startY := inner.Min.Y
+	for y, line := range lines {
+		for x := range line {
+			screen.Put(startX+x, startY+y, string(line[x]), style.TCell(defStyle))
+		}
+	}
 	// If we have the focus, show the cursor at the end of the user-input text
 	// to indicate this is an editable thing.
 	if focused {
-		sc := t.ScreenController()
-		if sc != nil {
-			sc.ShowCursor()
-			sc.SetCursorStyle(types.CursorBar, true)
-			x := ss.Bounds().Max.X + 1
-			y := ss.Bounds().Max.Y
-			sc.SetCursorPosition(x, y)
+		c := t.Controller()
+		if c != nil {
+			x := inner.Max.X
+			y := inner.Max.Y
+			c.ShowCursor(x, y)
+			c.SetCursorStyle(types.CursorStyleBar)
 		}
-	}
-}
-
-// defaultOnFocus is executed when a TextArea receives the focus. If no
-// user-supplied text content has been set on the TextArea, when receiving
-// focus, the placeholder text is replaced with an empty cursor indicating the
-// user can input text in the TextArea.
-func (t *TextArea) defaultOnFocus(ctx context.Context) {
-	content := t.TextContent()
-	if len(content) == 0 {
-
 	}
 }
