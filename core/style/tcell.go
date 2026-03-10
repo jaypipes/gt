@@ -2,6 +2,7 @@ package style
 
 import (
 	"github.com/gdamore/tcell/v3"
+	tccolor "github.com/gdamore/tcell/v3/color"
 
 	"github.com/jaypipes/gt/types"
 )
@@ -30,6 +31,14 @@ func TCell(s types.Style) tcell.Style {
 			s.UnderlineColor(),
 		}
 		out = out.Underline(params...)
+	}
+	fg := s.ForegroundColor()
+	if fg != nil {
+		out = out.Foreground(tccolor.FromImageColor(fg))
+	}
+	bg := s.BackgroundColor()
+	if bg != nil {
+		out = out.Background(tccolor.FromImageColor(bg))
 	}
 	return out
 }

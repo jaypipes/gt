@@ -1,7 +1,10 @@
 package types
 
+import "fmt"
+
 // Style represents the style of a something being displayed in a [Screen].
 type Style interface {
+	fmt.Stringer
 	// Unstyled returns true if there is no styling applied.
 	Unstyled() bool
 	// SetBold returns whether the Style's bold attribute is set.

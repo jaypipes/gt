@@ -1,6 +1,9 @@
 package style
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/jaypipes/gt/types"
 )
 
@@ -28,6 +31,46 @@ type Style struct {
 	ulStyle types.UnderlineStyle
 	// ulColor is the style of the underline, if any
 	ulColor types.Color
+}
+
+// String returns a short string description of the Style.
+func (s *Style) String() string {
+	if s.Unstyled() {
+		return "none"
+	}
+	parts := []string{}
+	attrsOn := []string{}
+	if s.Bold() {
+		attrsOn = append(attrsOn, "bold")
+	}
+	if s.Italic() {
+		attrsOn = append(attrsOn, "italic")
+	}
+	if s.Dim() {
+		attrsOn = append(attrsOn, "dim")
+	}
+	if s.Strikethrough() {
+		attrsOn = append(attrsOn, "strikethrough")
+	}
+	if s.Blink() {
+		attrsOn = append(attrsOn, "blink")
+	}
+	if s.Underline() {
+		attrsOn = append(attrsOn, "underline")
+	}
+	if len(attrsOn) > 0 {
+		parts = append(
+			parts,
+			fmt.Sprintf("attrs:%s", strings.Join(attrsOn, ",")),
+		)
+	}
+	if s.fgColor != nil {
+		parts = append(parts, fmt.Sprintf("fg:%s", colorRGBHex(s.fgColor)))
+	}
+	if s.bgColor != nil {
+		parts = append(parts, fmt.Sprintf("bg:%s", colorRGBHex(s.bgColor)))
+	}
+	return strings.Join(parts, " ")
 }
 
 // Unstyled returns true if the Style hasn't had any attributes set.
@@ -206,6 +249,15 @@ func (s *Style) SetBackgroundColor(color types.Color) {
 func (s *Style) WithBackgroundColor(color types.Color) *Style {
 	s.SetBackgroundColor(color)
 	return s
+}
+
+// colorRGBHex returns the supplied color's 6-character (RRGGBB) hex string.
+func colorRGBHex(c types.Color) string {
+	cr, cg, cb, _ := c.RGBA()
+	r := uint8(cr >> 8)
+	g := uint8(cg >> 8)
+	b := uint8(cb >> 8)
+	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
 }
 
 var _ types.Style = (*Style)(nil)

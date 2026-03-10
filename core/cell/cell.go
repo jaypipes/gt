@@ -1,6 +1,7 @@
 package cell
 
 import (
+	"fmt"
 	"image/color"
 
 	"github.com/jaypipes/gt/core/style"
@@ -13,6 +14,14 @@ type Cell struct {
 	style types.Style
 	// content is the Cell's string content
 	content string
+}
+
+func (c *Cell) String() string {
+	s := "none"
+	if c.style != nil {
+		s = c.style.String()
+	}
+	return fmt.Sprintf("cell style=%s", s)
 }
 
 // Unstyled returns true if the Cell has no style applied.
