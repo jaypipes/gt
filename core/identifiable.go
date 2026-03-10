@@ -37,7 +37,7 @@ func ID(subject any) string {
 	case types.Node:
 		return subject.NodeID()
 	default:
-		return fmt.Sprintf("%T:%v", subject, subject)
+		return fmt.Sprintf("%T", subject)
 	}
 }
 

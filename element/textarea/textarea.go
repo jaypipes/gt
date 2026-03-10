@@ -2,13 +2,11 @@ package textarea
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/border"
 	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/style"
 	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/types"
 )
@@ -110,41 +108,44 @@ func (t *TextArea) Render(ctx context.Context, screen types.Screen) {
 	bounds := t.Bounds()
 	gtlog.Debug(ctx, "TextArea.Render[%s]: bounds=%s", t.Tag(), bounds)
 	t.Box.Render(ctx, screen)
-	content := t.TextContent()
-	focused := t.HasFocus()
-	if focused {
-		input := t.input
-		// If we've got some input text, update the stored text content
-		if input.Len() > 0 {
-			content = fmt.Sprintf("%s%s", content, input.String())
-			t.SetTextContent(content)
-			input.Reset()
+	return
+	/*
+		content := t.TextContent()
+		focused := t.HasFocus()
+		if focused {
+			input := t.input
+			// If we've got some input text, update the stored text content
+			if input.Len() > 0 {
+				content = fmt.Sprintf("%s%s", content, input.String())
+				t.SetTextContent(content)
+				input.Reset()
+			}
 		}
-	}
-	if len(content) == 0 {
-		if !focused {
-			content = t.placeholder
+		if len(content) == 0 {
+			if !focused {
+				content = t.placeholder
+			}
 		}
-	}
-	defStyle := t.Style()
-	inner := t.InnerBounds()
-	lines := strings.Split(content, "\n")
-	startX := inner.Min.X
-	startY := inner.Min.Y
-	for y, line := range lines {
-		for x := range line {
-			screen.Put(startX+x, startY+y, string(line[x]), style.TCell(defStyle))
+		defStyle := t.Style()
+		inner := t.InnerBounds()
+		lines := strings.Split(content, "\n")
+		startX := inner.Min.X
+		startY := inner.Min.Y
+		for y, line := range lines {
+			for x := range line {
+				screen.Put(startX+x, startY+y, string(line[x]), style.TCell(defStyle))
+			}
 		}
-	}
-	// If we have the focus, show the cursor at the end of the user-input text
-	// to indicate this is an editable thing.
-	if focused {
-		c := t.Controller()
-		if c != nil {
-			x := inner.Max.X
-			y := inner.Max.Y
-			c.ShowCursor(x, y)
-			c.SetCursorStyle(types.CursorStyleBar)
+		// If we have the focus, show the cursor at the end of the user-input text
+		// to indicate this is an editable thing.
+		if focused {
+			c := t.Controller()
+			if c != nil {
+				x := inner.Max.X
+				y := inner.Max.Y
+				c.ShowCursor(x, y)
+				c.SetCursorStyle(types.CursorStyleBar)
+			}
 		}
-	}
+	*/
 }

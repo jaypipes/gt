@@ -3,16 +3,11 @@ package element
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
-
-	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/box"
 	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/render"
-	"github.com/jaypipes/gt/core/style"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -122,59 +117,61 @@ func (e *Element) Render(ctx context.Context, screen types.Screen) {
 	bounds := e.Bounds()
 	gtlog.Debug(ctx, "Element.Render[%s]: bounds=%s", e.Tag(), bounds)
 	e.Box.Render(ctx, screen)
-	content := e.TextContent()
-	if len(content) == 0 {
-		return
-	}
-	inner := e.InnerBounds()
-	// If there is no alignment set, inherit from the nearest parent with
-	// non-auto alignment.
-	align := e.Alignment()
-	if align == types.AlignmentAuto {
-		parentNode := e.Parent()
-		parent, ok := parentNode.(types.Plottable)
-		if ok {
-			parentAlign := parent.Alignment()
-			if parentAlign != types.AlignmentAuto {
-				align = parentAlign
+	/*
+		content := e.TextContent()
+		if len(content) == 0 {
+			return
+		}
+		inner := e.InnerBounds()
+		// If there is no alignment set, inherit from the nearest parent with
+		// non-auto alignment.
+		align := e.Alignment()
+		if align == types.AlignmentAuto {
+			parentNode := e.Parent()
+			parent, ok := parentNode.(types.Plottable)
+			if ok {
+				parentAlign := parent.Alignment()
+				if parentAlign != types.AlignmentAuto {
+					align = parentAlign
+				}
 			}
 		}
-	}
-	whitespace := e.Whitespace()
-	if whitespace&types.WhitespacePreserve != 0 {
-		// Preserve the whitespace by making the text content string we supply
-		// to render.Align already pre-padded with spaces.
-		sb := &strings.Builder{}
-		content = strings.ReplaceAll(content, "\t", "    ")
+		whitespace := e.Whitespace()
+		if whitespace&types.WhitespacePreserve != 0 {
+			// Preserve the whitespace by making the text content string we supply
+			// to render.Align already pre-padded with spaces.
+			sb := &strings.Builder{}
+			content = strings.ReplaceAll(content, "\t", "    ")
+			lines := strings.Split(content, "\n")
+			maxWidth := lo.Max(lo.Map(lines, func(line string, _ int) int {
+				return len(line)
+			}))
+			for x, line := range lines {
+				diffFromMax := len(line) - maxWidth
+				if diffFromMax > 0 {
+					pad := strings.Repeat(" ", diffFromMax)
+					sb.WriteString(pad)
+				}
+				sb.WriteString(line)
+				if x < len(line)-1 {
+					sb.WriteRune('\n')
+				}
+			}
+			content = sb.String()
+		}
+		content = render.Align(
+			ctx, content, inner, align, whitespace,
+		)
+		defStyle := e.Style()
 		lines := strings.Split(content, "\n")
-		maxWidth := lo.Max(lo.Map(lines, func(line string, _ int) int {
-			return len(line)
-		}))
-		for x, line := range lines {
-			diffFromMax := len(line) - maxWidth
-			if diffFromMax > 0 {
-				pad := strings.Repeat(" ", diffFromMax)
-				sb.WriteString(pad)
-			}
-			sb.WriteString(line)
-			if x < len(line)-1 {
-				sb.WriteRune('\n')
+		startX := inner.Min.X
+		startY := inner.Min.Y
+		for y, line := range lines {
+			for x := range line {
+				screen.Put(startX+x, startY+y, string(line[x]), style.TCell(defStyle))
 			}
 		}
-		content = sb.String()
-	}
-	content = render.Align(
-		ctx, content, inner, align, whitespace,
-	)
-	defStyle := e.Style()
-	lines := strings.Split(content, "\n")
-	startX := inner.Min.X
-	startY := inner.Min.Y
-	for y, line := range lines {
-		for x := range line {
-			screen.Put(startX+x, startY+y, string(line[x]), style.TCell(defStyle))
-		}
-	}
+	*/
 }
 
 var _ types.Element = (*Element)(nil)

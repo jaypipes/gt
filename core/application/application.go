@@ -6,17 +6,22 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"sync"
+	"time"
 
-	"github.com/charmbracelet/x/ansi"
 	"github.com/gdamore/tcell/v3"
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
-	"github.com/jaypipes/gt/core/keypress"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/mouse"
 	"github.com/jaypipes/gt/core/view"
 	"github.com/jaypipes/gt/types"
+)
+
+const (
+	defaultEventQueueSize  = 50
+	defaultDrawMinInterval = 50 * time.Millisecond
 )
 
 // New returns a new Application.
@@ -24,8 +29,10 @@ func New(
 	ctx context.Context,
 ) *Application {
 	return &Application{
-		views:       map[string]*view.View{},
-		keyPressMap: types.KeyPressMap{},
+		screenEvents: make(chan tcell.Event, defaultEventQueueSize),
+		appEvents:    make(chan types.ApplicationEvent, defaultEventQueueSize),
+		views:        map[string]*view.View{},
+		keyPressMap:  types.KeyPressMap{},
 	}
 }
 
@@ -38,9 +45,19 @@ func New(
 //	 	myappstate string
 //	}
 type Application struct {
+	sync.RWMutex
 	box.Box
 	screen     tcell.Screen
 	controller *Controller
+
+	// screenEvents is a bounded queue for [Screen]-originating events.
+	screenEvents   chan tcell.Event
+	screenEventsWG sync.WaitGroup
+
+	// appEvents is a bounded queue for Application-level events. This queue
+	// serves as the main communication bus for Elements and Components in the
+	// Application's Views.
+	appEvents chan types.ApplicationEvent
 
 	// title is an optional title for the application, used as a title for the
 	// terminal when set.
@@ -58,6 +75,16 @@ type Application struct {
 
 	// mouseEnabled is true if we're trapping mouse events in the terminal.
 	mouseEnabled bool
+	// pasteEnabled is true if we support bracketed pasting of contents in the
+	// terminal.
+	pasteEnabled bool
+	// focusEnabled is true if we support focus events in the terminal.
+	focusEnabled bool
+}
+
+// Title returns the Application's optional title.
+func (a *Application) Title() string {
+	return a.title
 }
 
 // SetTitle sets the Application's optional title, which by default also sets the
@@ -66,14 +93,19 @@ func (a *Application) SetTitle(title string) {
 	a.title = title
 }
 
-// Title returns the Application's optional title.
-func (a *Application) Title() string {
-	return a.title
-}
-
 // EnableMouse enables mouse event handling for the Application.
 func (a *Application) EnableMouse() {
 	a.mouseEnabled = true
+}
+
+// EnablePaste enables bracketed paste for the Application.
+func (a *Application) EnablePaste() {
+	a.pasteEnabled = true
+}
+
+// EnableFocus enables focus events for the Application.
+func (a *Application) EnableFocus() {
+	a.focusEnabled = true
 }
 
 // View returns the View with the supplied ID. If no such View exists, a new
@@ -105,14 +137,25 @@ func (a *Application) SetCurrentView(id string) *Application {
 }
 
 // SetBounds sets the View's outer bounding box.
-func (a *Application) SetBounds(bounds types.Rectangle) *Application {
+func (a *Application) SetBounds(bounds types.Rectangle) {
 	a.Box.SetBounds(bounds)
+}
+
+// WithBounds sets the Application's outer bounding box and returns the
+// Application.
+func (a *Application) WithBounds(bounds types.Rectangle) *Application {
+	a.SetBounds(bounds)
 	return a
 }
 
-// SetRect sets the Element's bounding rectangle
-func (a *Application) SetBorder(border types.Border) *Application {
+// SetBorder sets the Application's border.
+func (a *Application) SetBorder(border types.Border) {
 	a.Box.SetBorder(border)
+}
+
+// WithBorder sets the Application's border and returns the Application.
+func (a *Application) WithBorder(border types.Border) *Application {
+	a.SetBorder(border)
 	return a
 }
 
@@ -149,7 +192,6 @@ func (a *Application) Start(ctx context.Context) error {
 	if a == nil {
 		return fmt.Errorf("cannot start nil Application.")
 	}
-	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 
 	s, err := tcell.NewScreen()
 	if err != nil {
@@ -169,8 +211,29 @@ func (a *Application) Start(ctx context.Context) error {
 	keyMap := a.buildKeyPressMap()
 	a.controller.SetKeyPressMap(keyMap)
 
-	s.EnableMouse()
-	s.EnableFocus()
+	if a.mouseEnabled {
+		s.EnableMouse()
+	}
+	if a.focusEnabled {
+		s.EnableFocus()
+	}
+	if a.pasteEnabled {
+		s.EnablePaste()
+	}
+	// If the user has not overridden the bounds for the Application, we
+	// default to the Screen area.
+	appBounds := a.Box.Bounds()
+	if appBounds.Empty() {
+		w, h := s.Size()
+		sb := types.Rect(0, 0, w, h)
+		gtlog.Debug(
+			ctx,
+			"Application.Start: no bounds set. defaulting to screen bounds %s",
+			sb,
+		)
+		a.SetBounds(sb)
+	}
+
 	s.Clear()
 
 	quit := func() {
@@ -178,7 +241,9 @@ func (a *Application) Start(ctx context.Context) error {
 		// re-raise them - otherwise your application can
 		// die without leaving any diagnostic trace.
 		maybePanic := recover()
-		s.Fini()
+		if s != nil {
+			s.Fini()
+		}
 		if gtlog.Level() < slog.LevelInfo {
 			fmt.Fprintf(os.Stderr, "%s", gtlog.Records())
 		}
@@ -189,25 +254,16 @@ func (a *Application) Start(ctx context.Context) error {
 	defer quit()
 
 	a.draw(ctx)
-
 loop:
-	for ev := range s.EventQ() {
-		fmt.Fprintf(os.Stderr, "%v", ev)
+
+	for {
+		ev := <-s.EventQ()
 		switch ev := ev.(type) {
 		case *tcell.EventResize:
-			a.draw(ctx)
 			s.Sync()
 		case *tcell.EventKey:
-			switch {
-			case ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC:
+			if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC {
 				break loop
-			}
-			gev := keypress.EventFromTCell(ev)
-			if a.controller.HandleKeyPress(ctx, gev) {
-				a.draw(ctx)
-				// rebuild the key map since we may have changed views.
-				keyMap = a.buildKeyPressMap()
-				a.controller.SetKeyPressMap(keyMap)
 			}
 		case *tcell.EventMouse:
 			gev := mouse.EventFromTCell(ev)
@@ -222,25 +278,52 @@ loop:
 					a.draw(ctx)
 				}
 			}
+		case *tcell.EventError:
+			return ev
 		}
 	}
-	s.Fini()
-	if gtlog.Level() < slog.LevelInfo {
-		fmt.Fprintf(os.Stderr, "%s", gtlog.Records())
-	}
+
 	return nil
 }
 
-// terminalModes returns the ANSI mode flags to set up the terminal.
-func (a *Application) terminalModes() []ansi.Mode {
-	if a.mouseEnabled {
-		return []ansi.Mode{
-			ansi.ButtonEventMouseMode,
-			ansi.SgrExtMouseMode,
-			ansi.FocusEventMode,
-		}
+// Stop stops the Application.
+func (a *Application) Stop() {
+	a.Lock()
+	defer a.Unlock()
+	s := a.screen
+	if s == nil {
+		return
 	}
-	return nil
+	a.screen = nil
+	s.Fini()
+}
+
+// startScreenEvents starts the screen event queue/loop in a separate
+// Goroutine.
+func (a *Application) startScreenEvents(ctx context.Context) {
+	a.screenEventsWG.Add(1)
+	go func() {
+		defer a.screenEventsWG.Done()
+		for {
+			a.RLock()
+			s := a.screen
+			a.RUnlock()
+			if s == nil {
+				// We have no screen. Let's stop.
+				a.screenEvents <- nil
+				break
+			}
+
+			// Wait for next event and queue it.
+			ev := <-s.EventQ()
+			gtlog.Debug(ctx, "screen event forwarded to queue: %T", ev)
+			if ev != nil {
+				// Regular event. Queue.
+				a.screenEvents <- ev
+				continue
+			}
+		}
+	}()
 }
 
 // buildKeyPressMap builds the Application's outermost map of key press
@@ -318,8 +401,10 @@ func (a *Application) draw(ctx context.Context) {
 		a.curView = "main"
 	}
 
+	s.Clear()
+
 	a.Box.Render(ctx, s)
 	v.SetBounds(a.InnerBounds())
-	v.Render(ctx, s)
+	v.Draw(ctx, s)
 	s.Show()
 }

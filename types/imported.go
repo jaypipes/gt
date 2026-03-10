@@ -22,6 +22,10 @@ type (
 	MouseButton = ansi.MouseButton
 )
 
+var (
+	Rect = image.Rect
+)
+
 const (
 	CursorStyleBar       = tcell.CursorStyleSteadyBar
 	CursorStyleSteadyBar = tcell.CursorStyleSteadyBar

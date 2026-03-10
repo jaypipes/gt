@@ -5,6 +5,7 @@ import (
 
 	"github.com/jaypipes/gt"
 	gtapp "github.com/jaypipes/gt/core/application"
+	"github.com/jaypipes/gt/core/border"
 	gttextarea "github.com/jaypipes/gt/element/textarea"
 )
 
@@ -22,6 +23,7 @@ func main() {
 	// create a new myApp that wraps the gt.Application
 	app := myApp{gtapp.New(ctx)}
 	app.EnableMouse()
+	app.SetBorder(border.Normal())
 
 	// gt.View is used to group displayable things that represent a
 	// logically-related view of something.

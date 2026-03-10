@@ -13,12 +13,17 @@ type EventCallback func(context.Context)
 // Event is the base interface for all gt events.
 type Event interface {
 	fmt.Stringer
+}
+
+// ScreenEvent is an event originating from a [tcell.Screen] trigger.
+type ScreenEvent interface {
+	Event
 	tcell.Event
 }
 
 // KeyPressEvent describes events received when a key press occurs.
 type KeyPressEvent interface {
-	Event
+	ScreenEvent
 	KeyModifiable
 	// Key returns the virtual key code
 	Key() Key
@@ -33,10 +38,16 @@ type KeyPressEvent interface {
 // MouseEvent describes events received when a mouse moved, clicked or
 // released.
 type MouseEvent interface {
-	Event
+	ScreenEvent
 	KeyModifiable
 	// Button returns the mouse button that was depressed, if any.
 	Button() MouseButton
 	// Position returns where the mouse was when the MouseEvent was triggered.
 	Position() Point
+}
+
+// ApplicationEvent is used as the message payload for communicating
+// Application, Element and Component state changes.
+type ApplicationEvent interface {
+	Event
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"image/color"
 
-	"github.com/jaypipes/gt/core"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/style"
 	"github.com/jaypipes/gt/types"
@@ -65,7 +64,7 @@ func (b *Box) renderBorder(
 
 	bounds := b.bounds
 
-	gtlog.Debug(ctx, "Box[%s].renderBorder: bounds=%s", core.ID(b), bounds)
+	gtlog.Debug(ctx, "Box.renderBorder: bounds=%s", bounds)
 
 	// default style to use if a border edge has no style of its own
 	defStyle := style.Empty()
@@ -78,88 +77,96 @@ func (b *Box) renderBorder(
 		defStyle.SetBackgroundColor(bbg)
 	}
 
-	minY := bounds.Min.Y
-	maxY := bounds.Max.Y
 	minX := bounds.Min.X
-	maxX := bounds.Max.X
-	for y := minY; y < maxY; y++ {
-		for x := minX; x < maxX; x++ {
-			switch {
-			case y == minY && x == minX:
-				corner := border.TL()
-				if corner != nil {
-					s := corner.Style()
-					if s == nil {
-						s = defStyle
-					}
-					screen.PutStrStyled(x, y, corner.Content(), style.TCell(s))
-				}
-			case y == minY && x == maxX-1:
-				corner := border.TR()
-				if corner != nil {
-					s := corner.Style()
-					if s == nil {
-						s = defStyle
-					}
-					screen.PutStrStyled(x, y, corner.Content(), style.TCell(s))
-				}
-			case y == maxY-1 && x == minX:
-				corner := border.BL()
-				if corner != nil {
-					s := corner.Style()
-					if s == nil {
-						s = defStyle
-					}
-					screen.PutStrStyled(x, y, corner.Content(), style.TCell(s))
-				}
-			case y == maxY-1 && x == maxX-1:
-				corner := border.BR()
-				if corner != nil {
-					s := corner.Style()
-					if s == nil {
-						s = defStyle
-					}
-					screen.PutStrStyled(x, y, corner.Content(), style.TCell(s))
-				}
-			case y == minY:
-				edge := border.T()
-				if edge != nil {
-					s := edge.Style()
-					if s == nil {
-						s = defStyle
-					}
-					screen.PutStrStyled(x, y, edge.Content(), style.TCell(s))
-				}
-			case y == maxY-1:
-				edge := border.B()
-				if edge != nil {
-					s := edge.Style()
-					if s == nil {
-						s = defStyle
-					}
-					screen.PutStrStyled(x, y, edge.Content(), style.TCell(s))
-				}
-			case x == minX:
-				edge := border.L()
-				if edge != nil {
-					s := edge.Style()
-					if s == nil {
-						s = defStyle
-					}
-					screen.PutStrStyled(x, y, edge.Content(), style.TCell(s))
-				}
-			case x == maxX-1:
-				edge := border.R()
-				if edge != nil {
-					s := edge.Style()
-					if s == nil {
-						s = defStyle
-					}
-					screen.PutStrStyled(x, y, edge.Content(), style.TCell(s))
-				}
-			default:
-				continue
-			}
+	maxX := bounds.Max.X - 1
+	minY := bounds.Min.Y
+	maxY := bounds.Max.Y - 1
+
+	// Draw the corners
+
+	tl := border.TL()
+	if tl != nil {
+		s := tl.Style()
+		if s == nil {
+			s = defStyle
+		}
+		screen.PutStrStyled(minX, minY, tl.Content(), style.TCell(s))
+	}
+
+	tr := border.TR()
+	if tr != nil {
+		s := tr.Style()
+		if s == nil {
+			s = defStyle
+		}
+		screen.PutStrStyled(maxX, minY, tr.Content(), style.TCell(s))
+	}
+
+	bl := border.BL()
+	if bl != nil {
+		s := bl.Style()
+		if s == nil {
+			s = defStyle
+		}
+		screen.PutStrStyled(minX, maxY, bl.Content(), style.TCell(s))
+	}
+
+	br := border.BR()
+	if br != nil {
+		s := br.Style()
+		if s == nil {
+			s = defStyle
+		}
+		screen.PutStrStyled(maxX, maxY, br.Content(), style.TCell(s))
+	}
+
+	// Draw the edges
+
+	te := border.T()
+	if te != nil {
+		s := te.Style()
+		if s == nil {
+			s = defStyle
+		}
+		ch := te.Content()
+		for x := minX + 1; x < maxX; x++ {
+			screen.PutStrStyled(x, minY, ch, style.TCell(s))
+		}
+	}
+
+	be := border.B()
+	if be != nil {
+		s := be.Style()
+		if s == nil {
+			s = defStyle
+		}
+		ch := be.Content()
+		for x := minX + 1; x < maxX; x++ {
+			screen.PutStrStyled(x, maxY, ch, style.TCell(s))
+		}
+	}
+
+	le := border.L()
+	if le != nil {
+		s := le.Style()
+		if s == nil {
+			s = defStyle
+		}
+		ch := le.Content()
+		for y := minY + 1; y < maxY; y++ {
+			screen.PutStrStyled(minX, y, ch, style.TCell(s))
+		}
+	}
+
+	re := border.R()
+	if re != nil {
+		s := re.Style()
+		if s == nil {
+			s = defStyle
+		}
+		ch := re.Content()
+		for y := minY + 1; y < maxY; y++ {
+			screen.PutStrStyled(maxX, y, ch, style.TCell(s))
 		}
 	}
 }

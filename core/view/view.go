@@ -173,10 +173,10 @@ func (v *View) Save(
 	v.restoreBuf = uvscreen.CloneArea(screen, bounds)
 }
 
-// Render ensures that any bounds placed on the View are applied to all the
+// Draw ensures that any bounds placed on the View are applied to all the
 // View's element tree and draws all elements in the DOM to the supplied
 // Screen.
-func (v *View) Render(
+func (v *View) Draw(
 	ctx context.Context,
 	screen types.Screen,
 ) {
@@ -189,10 +189,6 @@ func (v *View) Render(
 
 	// Allow any components to dynamically create renderable content.
 	render.Build(ctx, v)
-
-	// clear the outer bounds before rendering the DOM rooted at the root
-	// Element.
-	screen.Clear()
 
 	// Then recursively plot all content in the View.
 	render.Plot(ctx, v, inner)
