@@ -20,6 +20,8 @@ type Event struct {
 	modifiers types.KeyModifiers
 	// key is the key code that was pressed.
 	key tcell.Key
+	// str is the string representation of the pressed key.
+	str string
 }
 
 // String returns a simple string representation of the event.
@@ -34,6 +36,9 @@ func (e *Event) String() string {
 
 // Printable returns the printable character(s) that were pressed.
 func (e *Event) Printable() string {
+	if e.key == tcell.KeyRune {
+		return e.str
+	}
 	return keyCodeToString(e.key)
 }
 
@@ -83,14 +88,14 @@ func (e *Event) MatchAny(subjects ...any) bool {
 						return false
 					}
 				}
-				return matchesKey(finalKey, e.key)
+				return e.matchesKey(finalKey)
 			case numParts == 1:
 				key := parts[0]
 				if lo.Contains(types.KeyModifierStrings, key) {
 					// finalKey cannot be a modifier... ignore and return false.
 					return false
 				}
-				return matchesKey(key, e.key)
+				return e.matchesKey(key)
 			default:
 				// empty string...
 				return false
@@ -103,17 +108,8 @@ func (e *Event) MatchAny(subjects ...any) bool {
 	return false
 }
 
-func matchesKey(key string, code tcell.Key) bool {
-	// quick lookup on simple printable runes...
-	if len(key) == 1 {
-		r := rune(key[0])
-		if strconv.IsPrint(r) {
-			if int16(r) == int16(code) {
-				return true
-			}
-		}
-	}
-	return false
+func (e *Event) matchesKey(key string) bool {
+	return strings.EqualFold(key, e.Printable())
 }
 
 func keyCodeToString(code tcell.Key) string {
@@ -133,6 +129,7 @@ func EventFromTCell(
 		Event:     event.New(),
 		modifiers: types.KeyModifiers(mods),
 		key:       te.Key(),
+		str:       te.Str(),
 	}
 	e.SetWhen(te.When())
 

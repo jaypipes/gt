@@ -13,6 +13,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
+	"github.com/jaypipes/gt/core/keypress"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/mouse"
 	"github.com/jaypipes/gt/core/view"
@@ -265,6 +266,13 @@ loop:
 			if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC {
 				break loop
 			}
+			gev := keypress.EventFromTCell(ev)
+			if a.controller.HandleKeyPress(ctx, gev) {
+				a.draw(ctx)
+				// rebuild the key map since we may have changed views.
+				keyMap = a.buildKeyPressMap()
+				a.controller.SetKeyPressMap(keyMap)
+			}
 		case *tcell.EventMouse:
 			gev := mouse.EventFromTCell(ev)
 			pos := gev.Position()
@@ -296,34 +304,6 @@ func (a *Application) Stop() {
 	}
 	a.screen = nil
 	s.Fini()
-}
-
-// startScreenEvents starts the screen event queue/loop in a separate
-// Goroutine.
-func (a *Application) startScreenEvents(ctx context.Context) {
-	a.screenEventsWG.Add(1)
-	go func() {
-		defer a.screenEventsWG.Done()
-		for {
-			a.RLock()
-			s := a.screen
-			a.RUnlock()
-			if s == nil {
-				// We have no screen. Let's stop.
-				a.screenEvents <- nil
-				break
-			}
-
-			// Wait for next event and queue it.
-			ev := <-s.EventQ()
-			gtlog.Debug(ctx, "screen event forwarded to queue: %T", ev)
-			if ev != nil {
-				// Regular event. Queue.
-				a.screenEvents <- ev
-				continue
-			}
-		}
-	}()
 }
 
 // buildKeyPressMap builds the Application's outermost map of key press
