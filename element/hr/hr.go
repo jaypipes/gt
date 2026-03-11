@@ -24,14 +24,15 @@ func New(
 ) *HR {
 	e := element.New(ctx, ElementClass)
 	h := &HR{Element: e}
-	for _, opt := range opts {
-		opt(h)
-	}
-	// An HR always starts on a new line and is one line high.
+	// An HR defaults to starting on a new line and is one line high and is
+	// centered within the width of the parent container.
 	h.SetDisplay(types.DisplayBlock)
 	h.SetHeight(core.Fixed(1))
 	h.SetAlignment(types.AlignmentCenter)
 	h.SetWhitespace(types.WhitespaceWrapNever)
+	for _, opt := range opts {
+		opt(h)
+	}
 	return h
 }
 
@@ -56,10 +57,8 @@ func (h *HR) Render(ctx context.Context, screen types.Screen) {
 	line = render.Align(
 		ctx, line, inner, h.Alignment(), h.Whitespace(),
 	)
-	defStyle := h.Style()
+	s := h.Style()
 	startX := inner.Min.X
 	startY := inner.Min.Y
-	for x := range line {
-		screen.Put(startX+x, startY, string(line[x]), style.TCell(defStyle))
-	}
+	screen.PutStrStyled(startX, startY, line, style.TCell(s))
 }

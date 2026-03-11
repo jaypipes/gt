@@ -38,45 +38,57 @@ func main() {
 	// gt.Elements.
 	v := app.View(ctx, "main")
 
-	spanA := gtspan.New(ctx, "A")
-	spanA.SetID("A")
-	spanA.SetWidth(gt.Fixed(20))
-	spanA.SetForegroundColor(black)
-	spanA.SetBackgroundColor(yellow)
-	spanA.SetAlignment(gt.AlignmentLeft)
+	a := gtspan.New(
+		ctx,
+		gt.WithTextContent("A"),
+		gt.WithID("A"),
+		gt.WithWidth(gt.Fixed(20)),
+		gt.WithForegroundColor(black),
+		gt.WithBackgroundColor(yellow),
+		gt.WithAlignment(gt.AlignmentLeft),
+	)
 
-	spanB := gtspan.New(ctx, "B")
-	spanB.SetID("B")
-	spanB.SetWidth(gt.Fixed(20))
-	spanB.SetForegroundColor(black)
-	spanB.SetBackgroundColor(pink)
-	spanB.SetAlignment(gt.AlignmentCenter)
+	b := gtspan.New(
+		ctx,
+		gt.WithTextContent("B"),
+		gt.WithID("B"),
+		gt.WithWidth(gt.Fixed(20)),
+		gt.WithForegroundColor(black),
+		gt.WithBackgroundColor(pink),
+		gt.WithAlignment(gt.AlignmentCenter),
+	)
 
-	spanC := gtspan.New(ctx, "C")
-	spanC.SetID("C")
-	spanC.SetWidth(gt.Fixed(20))
-	// We set a fixed height of 2 for this span to demonstrate how inline-block
-	// Elements will lay out on the Screen. This will have the effect of making
-	// this span twice the height of spans "A" and "B", since the natural
-	// (content) height of those spans is 1.
-	spanC.SetHeight(gt.Fixed(2))
-	spanC.SetForegroundColor(black)
-	spanC.SetBackgroundColor(lightblue)
-	spanC.SetAlignment(gt.AlignmentRight)
+	c := gtspan.New(
+		ctx,
+		gt.WithTextContent("C"),
+		gt.WithID("C"),
+		gt.WithWidth(gt.Fixed(20)),
+		// We set a fixed height of 2 for this span to demonstrate how inline-block
+		// Elements will lay out on the Screen. This will have the effect of making
+		// this span twice the height of spans "A" and "B", since the natural
+		// (content) height of those spans is 1.
+		gt.WithHeight(gt.Fixed(2)),
+		gt.WithForegroundColor(black),
+		gt.WithBackgroundColor(lightblue),
+		gt.WithAlignment(gt.AlignmentRight),
+	)
 
-	divD := gtdiv.New(ctx, "D")
-	divD.SetID("D")
-	divD.SetForegroundColor(black)
-	divD.SetBackgroundColor(lightgreen)
-	divD.SetAlignment(gt.AlignmentCenter)
+	d := gtdiv.New(
+		ctx,
+		gt.WithTextContent("D"),
+		gt.WithID("D"),
+		gt.WithForegroundColor(black),
+		gt.WithBackgroundColor(lightgreen),
+		gt.WithAlignment(gt.AlignmentCenter),
+	)
 
 	// Calling gt.View.AppendContent pushes the element into the View. Elements
 	// pushed into the View are displayed top-down on the Screen in the order
 	// they are pushed/appended.
-	v.AppendContent(spanA)
-	v.AppendContent(spanB)
-	v.AppendContent(spanC)
-	v.AppendContent(divD)
+	v.AppendContent(a)
+	v.AppendContent(b)
+	v.AppendContent(c)
+	v.AppendContent(d)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)
