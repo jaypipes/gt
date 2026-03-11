@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	uv "github.com/charmbracelet/ultraviolet"
-	uvscreen "github.com/charmbracelet/ultraviolet/screen"
 	"github.com/samber/lo"
 
 	gtlog "github.com/jaypipes/gt/core/log"
@@ -33,9 +31,6 @@ func New(
 // rendered to a Screen.
 type View struct {
 	vdiv.VDiv
-	// restoreBuf is a pointer to a [uv.Buffer] that we save pre-rendered
-	// content from the View to. This is restored when View.Restore is called.
-	restoreBuf *uv.Buffer
 	// currentViewKeyPress is the key combination that should trigger setting
 	// this View as the current View in the Application.
 	currentViewKeyPress string
@@ -149,28 +144,6 @@ func (v *View) AppendContent(content types.Node) *View {
 	}
 	v.AppendChild(content)
 	return v
-}
-
-// Restore redraws any previously-saved content from the View to the supplied
-// [uv.Terminal].
-func (v *View) Restore(
-	ctx context.Context,
-	screen uv.Screen,
-) {
-	if v.restoreBuf != nil {
-		bounds := v.Bounds()
-		v.restoreBuf.Draw(screen, bounds)
-	}
-}
-
-// Save saves any pre-rendered content from the View's root Element's bounds to
-// a buffer that can be quickly restored when View.Restore is called.
-func (v *View) Save(
-	ctx context.Context,
-	screen uv.Screen,
-) {
-	bounds := v.Bounds()
-	v.restoreBuf = uvscreen.CloneArea(screen, bounds)
 }
 
 // Draw ensures that any bounds placed on the View are applied to all the
