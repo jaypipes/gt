@@ -10,6 +10,9 @@ import (
 // TCell returns a tcell.Style given a gt Style
 func TCell(s types.Style) tcell.Style {
 	out := tcell.StyleDefault
+	if s == nil {
+		return out
+	}
 	if s.Bold() {
 		out = out.Bold(true)
 	}

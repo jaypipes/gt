@@ -1,8 +1,6 @@
 package style
 
 import (
-	"context"
-
 	"github.com/jaypipes/gt/types"
 )
 
@@ -10,10 +8,7 @@ import (
 //
 // You can pass zero or more StyleWithOptions to optionally set certain
 // attributes on the returned Styled.
-func New(
-	ctx context.Context,
-	opts ...types.StyleWithOption,
-) *Style {
+func New(opts ...types.StyleWithOption) *Style {
 	s := &Style{}
 	for _, opt := range opts {
 		opt(s)

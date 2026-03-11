@@ -1,8 +1,6 @@
 package box
 
 import (
-	"github.com/charmbracelet/x/ansi"
-
 	"github.com/jaypipes/gt/types"
 )
 
@@ -45,10 +43,10 @@ func (b *Box) InnerBounds() types.Rectangle {
 	bounds := b.Bounds()
 	border := b.Border()
 	if border != nil {
-		bounds.Min.X += ansi.StringWidth(border.L().Content())
-		bounds.Min.Y += ansi.StringWidth(border.B().Content())
-		bounds.Max.X -= ansi.StringWidth(border.R().Content())
-		bounds.Max.Y -= ansi.StringWidth(border.T().Content())
+		bounds.Min.X += int(border.LSize())
+		bounds.Min.Y += int(border.BSize())
+		bounds.Max.X -= int(border.RSize())
+		bounds.Max.Y -= int(border.TSize())
 	}
 	return b.Padding().AdjustBounds(bounds)
 }

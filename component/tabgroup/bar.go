@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jaypipes/gt/core"
+	"github.com/jaypipes/gt/core/border"
 	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/element/div"
 	"github.com/jaypipes/gt/element/span"
@@ -17,37 +18,10 @@ const (
 
 var (
 	// The default bar border is just a single line on the bottom of the bar.
-	DefaultBarBorder = types.Border{
-		Top:         types.Side{Content: ""},
-		Bottom:      types.Side{Content: "─"},
-		Left:        types.Side{Content: ""},
-		Right:       types.Side{Content: ""},
-		TopLeft:     types.Side{Content: ""},
-		TopRight:    types.Side{Content: ""},
-		BottomLeft:  types.Side{Content: ""},
-		BottomRight: types.Side{Content: ""},
-	}
-	DefaultTitlePadding      = types.Pad(1)
-	DefaultTitleActiveBorder = types.Border{
-		Top:         types.Side{Content: "━"},
-		Bottom:      types.Side{Content: ""},
-		Left:        types.Side{Content: ""},
-		Right:       types.Side{Content: ""},
-		TopLeft:     types.Side{Content: ""},
-		TopRight:    types.Side{Content: ""},
-		BottomLeft:  types.Side{Content: ""},
-		BottomRight: types.Side{Content: ""},
-	}
-	DefaultTitleInactiveBorder = types.Border{
-		Top:         types.Side{Content: ""},
-		Bottom:      types.Side{Content: ""},
-		Left:        types.Side{Content: ""},
-		Right:       types.Side{Content: ""},
-		TopLeft:     types.Side{Content: ""},
-		TopRight:    types.Side{Content: ""},
-		BottomLeft:  types.Side{Content: ""},
-		BottomRight: types.Side{Content: ""},
-	}
+	DefaultBarBorder           = border.New(border.WithB("-"))
+	DefaultTitlePadding        = types.Pad(1)
+	DefaultTitleActiveBorder   = border.New(border.WithT("━"))
+	DefaultTitleInactiveBorder = border.None()
 )
 
 func defaultBar(ctx context.Context, group *TabGroup) *Bar {
@@ -143,8 +117,8 @@ func (b *Bar) Build(ctx context.Context) {
 		if x == b.group.curTab {
 			tabEl.SetBorder(b.titleActiveBorder)
 		} else {
-			onClick := func(ctx context.Context, ev types.MouseClickEvent) {
-				if ev.Button == types.MouseLeft {
+			onClick := func(ctx context.Context, ev types.MouseEvent) {
+				if ev.Button() == types.MouseLeft {
 					b.group.SetCurrentTab(tab.ID())
 				}
 			}

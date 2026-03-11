@@ -5,7 +5,12 @@ import (
 	"github.com/jaypipes/gt/types"
 )
 
-// NormalBorder returns a standard-type border with a normal weight and 90
+// None returns an empty border.
+func None() types.Border {
+	return &Border{}
+}
+
+// Normal returns a standard-type border with a normal weight and 90
 // degree corners.
 func Normal() types.Border {
 	return &Border{
@@ -20,7 +25,7 @@ func Normal() types.Border {
 	}
 }
 
-// RoundedBorder returns a border with rounded corners.
+// Rounded returns a border with rounded corners.
 func Rounded() types.Border {
 	return &Border{
 		t:  cell.New(cell.WithContent("─")),
@@ -34,7 +39,7 @@ func Rounded() types.Border {
 	}
 }
 
-// BlockBorder returns a border that takes the whole block.
+// Block returns a border that takes the whole block.
 func Block() types.Border {
 	return &Border{
 		t:  cell.New(cell.WithContent("█")),
@@ -48,7 +53,7 @@ func Block() types.Border {
 	}
 }
 
-// OuterHalfBlockBorder returns a half-block border that sits outside the frame.
+// OuterHalfBlock returns a half-block border that sits outside the frame.
 func OuterHalfBlock() types.Border {
 	return &Border{
 		t:  cell.New(cell.WithContent("▀")),
@@ -62,7 +67,7 @@ func OuterHalfBlock() types.Border {
 	}
 }
 
-// InnerHalfBlockBorder returns a half-block border that sits inside the frame.
+// InnerHalfBlock returns a half-block border that sits inside the frame.
 func InnerHalfBlock() types.Border {
 	return &Border{
 		t:  cell.New(cell.WithContent("▄")),
@@ -76,8 +81,8 @@ func InnerHalfBlock() types.Border {
 	}
 }
 
-// ThickBorder returns a border that's thicker than the one returned by
-// NormalBorder.
+// Thick returns a border that's thicker than the one returned by
+// Normal.
 func Thick() types.Border {
 	return &Border{
 		t:  cell.New(cell.WithContent("━")),
@@ -91,7 +96,7 @@ func Thick() types.Border {
 	}
 }
 
-// DoubleBorder returns a border comprised of two thin strokes.
+// Double returns a border comprised of two thin strokes.
 func Double() types.Border {
 	return &Border{
 		t:  cell.New(cell.WithContent("═")),
@@ -105,10 +110,10 @@ func Double() types.Border {
 	}
 }
 
-// HiddenBorder returns a border that renders as a series of single-cell
-// spaces. It's useful for cases when you want to remove a standard border but
-// maintain layout positioning. This said, you can still apply a background
-// color to a hidden border.
+// Hidden returns a border that renders as a series of single-cell spaces. It's
+// useful for cases when you want to remove a standard border but maintain
+// layout positioning. This said, you can still apply a background color to a
+// hidden border.
 func Hidden() types.Border {
 	return &Border{
 		t:  cell.New(cell.WithContent(" ")),
@@ -122,7 +127,7 @@ func Hidden() types.Border {
 	}
 }
 
-// MarkdownBorder return a table border in markdown style.
+// Markdown return a table border in markdown style.
 func Markdown() types.Border {
 	return &Border{
 		l:  cell.New(cell.WithContent("|")),
@@ -134,7 +139,7 @@ func Markdown() types.Border {
 	}
 }
 
-// ASCIIBorder returns a table border with ASCII characters.
+// ASCII returns a table border with ASCII characters.
 func ASCII() types.Border {
 	return &Border{
 		t:  cell.New(cell.WithContent("-")),
