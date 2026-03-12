@@ -34,7 +34,7 @@ type Element struct {
 	// children is the collection of Nodes that are the direct children of this
 	// Node, if any.
 	children []types.Node
-	// class is the Element's type/class, e.g. "gt.label" or "gt.canvas"
+	// class is the Element's type/class, e.g. "gt.div" or "gt.span"
 	class string
 
 	// style this is the style of the Element's content (i.e. the non-border
@@ -43,6 +43,10 @@ type Element struct {
 
 	// textContent is any unstyle raw text content for the Element.
 	textContent string
+
+	// disabled indicates the Element is not focusable and does not accept
+	// input.
+	disabled bool
 
 	// onClick contains the stack of callbacks that execute when the Element is
 	// clicked.
@@ -113,6 +117,23 @@ func (e *Element) SetController(c types.Controller) {
 // WithController sets the controller and returns the Element.
 func (e *Element) WithController(c types.Controller) types.Element {
 	e.SetController(c)
+	return e
+}
+
+// SetDisabled sets whether the Element is disabled. Disabled Elements cannot
+// receive the focus.
+func (e *Element) SetDisabled(on bool) {
+	e.disabled = on
+}
+
+// Disabled returns true if the Element cannot get the focus.
+func (e *Element) Disabled() bool {
+	return e.disabled
+}
+
+// WithDisabled sets whether the Element is disabled and returns the Element.
+func (e *Element) WithDisabled(on bool) types.Element {
+	e.SetDisabled(on)
 	return e
 }
 

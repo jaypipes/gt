@@ -34,6 +34,14 @@ func WithID(id string) types.ElementWithOption {
 	}
 }
 
+// WithDisabled sets whether the Element is disabled. Disabled Elements cannot
+// receive the focus.
+func WithDisabled(on bool) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetDisabled(on)
+	}
+}
+
 // WithBounds sets the types.Element's bounds to the supplied value.
 func WithBounds(bounds types.Rectangle) types.ElementWithOption {
 	return func(e types.Element) {

@@ -282,7 +282,7 @@ loop:
 			node := v.AtPoint(pos)
 			if node != nil {
 				el, ok := node.(types.Element)
-				if ok {
+				if ok && !el.Disabled() {
 					el.Click(ctx, mev)
 					a.draw(ctx)
 				}

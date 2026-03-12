@@ -34,6 +34,15 @@ type Element interface {
 	// Tag returns a string with the Element's type/class and ID
 	Tag() string
 
+	// SetDisabled sets whether the Element is disabled. Disabled Elements cannot
+	// receive the focus.
+	SetDisabled(bool)
+	// Disabled returns true if the Element cannot get the focus.
+	Disabled() bool
+	// WithDisabled sets whether the Element is disabled and returns the
+	// Element.
+	WithDisabled(bool) Element
+
 	// WithParent sets the Element's parent and index of the Element within the
 	// parent's children and returns the Element.
 	WithParent(Node, int) Element

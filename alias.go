@@ -42,6 +42,7 @@ type WithOption = types.ElementWithOption
 var (
 	NewElement                = element.New
 	WithID                    = element.WithID
+	WithDisabled              = element.WithDisabled
 	WithBounds                = element.WithBounds
 	WithAbsolutePosition      = element.WithAbsolutePosition
 	WithSize                  = element.WithSize
