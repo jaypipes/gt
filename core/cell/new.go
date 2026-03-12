@@ -6,8 +6,8 @@ import (
 
 // New returns a new instance of a Cell.
 //
-// You can pass zero or more WithOptions to optionally set certain attributes
-// on the returned Element.
+// You can pass zero or more CellWithOptions to optionally set certain
+// attributes on the returned Cell.
 func New(
 	opts ...types.CellWithOption,
 ) *Cell {

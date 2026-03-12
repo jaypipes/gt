@@ -8,6 +8,7 @@ import (
 	"github.com/gdamore/tcell/v3"
 	"github.com/samber/lo"
 
+	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/event"
 	"github.com/jaypipes/gt/types"
 )
@@ -16,8 +17,7 @@ import (
 // Implements [types.KeyPressEvent].
 type Event struct {
 	event.Event
-	// modifiers are the modifier keys that were held down
-	modifiers types.KeyModifiers
+	core.KeyModifiable
 	// key is the key code that was pressed.
 	key tcell.Key
 	// str is the string representation of the pressed key.
@@ -26,7 +26,7 @@ type Event struct {
 
 // String returns a simple string representation of the event.
 func (e *Event) String() string {
-	mods := e.modifiers.String()
+	mods := e.KeyModifiers().String()
 	key := e.Printable()
 	return fmt.Sprintf(
 		"keypress:%s%s",
@@ -42,24 +42,26 @@ func (e *Event) Printable() string {
 	return keyCodeToString(e.key)
 }
 
-// Shift returns true if the Shift modifier key was held.
-func (e *Event) Shift() bool {
-	return tcell.ModMask(e.modifiers)&tcell.ModShift != 0
-}
-
-// Ctrl returns true if the Ctrl modifier key was held.
-func (e *Event) Ctrl() bool {
-	return tcell.ModMask(e.modifiers)&tcell.ModCtrl != 0
-}
-
-// Alt returns true if the Alt modifier key was held.
-func (e *Event) Alt() bool {
-	return tcell.ModMask(e.modifiers)&tcell.ModAlt != 0
+// SetKey sets the underlying key code that was pressed.
+func (e *Event) SetKey(key tcell.Key) {
+	e.key = key
 }
 
 // Key returns the underlying key code that was pressed.
 func (e *Event) Key() tcell.Key {
 	return e.key
+}
+
+// SetStr sets the string representation of the key that was pressed. Only
+// applicable when Key() == tcell.KeyRune.
+func (e *Event) SetStr(str string) {
+	e.str = str
+}
+
+// Str returns the string representation of the key that was pressed. Only
+// applicable when Key() == tcell.KeyRune.
+func (e *Event) Str() string {
+	return e.str
 }
 
 // MatchAny returns true if the event matches for any of the supplied
@@ -70,6 +72,7 @@ func (e *Event) MatchAny(subjects ...any) bool {
 		case string:
 			parts := strings.Split(strings.ToLower(subject), "+")
 			numParts := len(parts)
+			mods := tcell.ModMask(e.KeyModifiers())
 			switch {
 			case numParts > 1:
 				// modifiers were passed, e.g. "ctrl+alt+p"
@@ -84,7 +87,7 @@ func (e *Event) MatchAny(subjects ...any) bool {
 						// modKey must be a modifier... ignore and return false.
 						return false
 					}
-					if tcell.ModMask(e.modifiers)&tcell.ModMask(modIndex+1) == 0 {
+					if mods&tcell.ModMask(modIndex+1) == 0 {
 						return false
 					}
 				}
@@ -118,22 +121,6 @@ func keyCodeToString(code tcell.Key) string {
 		return strings.ToLower(named)
 	}
 	return strconv.QuoteRune(rune(code))
-}
-
-// EventFromTCell returns an Event from a [tcell.EventKey]
-func EventFromTCell(
-	te *tcell.EventKey,
-) *Event {
-	mods := te.Modifiers()
-	e := &Event{
-		Event:     event.New(),
-		modifiers: types.KeyModifiers(mods),
-		key:       te.Key(),
-		str:       te.Str(),
-	}
-	e.SetWhen(te.When())
-
-	return e
 }
 
 var _ tcell.Event = (*Event)(nil)

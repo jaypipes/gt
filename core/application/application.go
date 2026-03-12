@@ -13,9 +13,9 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
-	"github.com/jaypipes/gt/core/keypress"
+	kpevent "github.com/jaypipes/gt/core/event/keypress"
+	mevent "github.com/jaypipes/gt/core/event/mouse"
 	gtlog "github.com/jaypipes/gt/core/log"
-	"github.com/jaypipes/gt/core/mouse"
 	"github.com/jaypipes/gt/core/view"
 	"github.com/jaypipes/gt/types"
 )
@@ -29,11 +29,20 @@ const (
 func New(
 	ctx context.Context,
 ) *Application {
+	s, err := tcell.NewScreen()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	err = s.Init()
+	if err != nil {
+		log.Fatalf("%+v", err)
+	}
+	c := newController(s)
 	return &Application{
-		screenEvents: make(chan tcell.Event, defaultEventQueueSize),
-		appEvents:    make(chan types.ApplicationEvent, defaultEventQueueSize),
-		views:        map[string]*view.View{},
-		keyPressMap:  types.KeyPressMap{},
+		screen:      s,
+		controller:  c,
+		views:       map[string]*view.View{},
+		keyPressMap: types.KeyPressMap{},
 	}
 }
 
@@ -49,16 +58,7 @@ type Application struct {
 	sync.RWMutex
 	box.Box
 	screen     tcell.Screen
-	controller *Controller
-
-	// screenEvents is a bounded queue for [Screen]-originating events.
-	screenEvents   chan tcell.Event
-	screenEventsWG sync.WaitGroup
-
-	// appEvents is a bounded queue for Application-level events. This queue
-	// serves as the main communication bus for Elements and Components in the
-	// Application's Views.
-	appEvents chan types.ApplicationEvent
+	controller types.Controller
 
 	// title is an optional title for the application, used as a title for the
 	// terminal when set.
@@ -81,6 +81,11 @@ type Application struct {
 	pasteEnabled bool
 	// focusEnabled is true if we support focus events in the terminal.
 	focusEnabled bool
+
+	// lastMouseEvent stores the event from the last mouse action.
+	lastMouseEvent types.MouseEvent
+	// mouseDownEvent stores the event when the user pressed a mouse button.
+	mouseDownEvent types.MouseEvent
 }
 
 // Title returns the Application's optional title.
@@ -193,18 +198,14 @@ func (a *Application) Start(ctx context.Context) error {
 	if a == nil {
 		return fmt.Errorf("cannot start nil Application.")
 	}
-
-	s, err := tcell.NewScreen()
-	if err != nil {
-		log.Fatalf("%+v", err)
+	s := a.screen
+	if s == nil {
+		return fmt.Errorf("cannot start Application will nil Screen.")
 	}
-	err = s.Init()
-	if err != nil {
-		log.Fatalf("%+v", err)
+	c := a.controller
+	if s == nil {
+		return fmt.Errorf("cannot start Application will nil Controller.")
 	}
-	c := newController(s)
-	a.screen = s
-	a.controller = c
 
 	if a.title != "" {
 		s.SetTitle(a.title)
@@ -255,8 +256,8 @@ func (a *Application) Start(ctx context.Context) error {
 	defer quit()
 
 	a.draw(ctx)
-loop:
 
+loop:
 	for {
 		ev := <-s.EventQ()
 		switch ev := ev.(type) {
@@ -266,44 +267,41 @@ loop:
 			if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC {
 				break loop
 			}
-			gev := keypress.EventFromTCell(ev)
-			if a.controller.HandleKeyPress(ctx, gev) {
+			kev := kpevent.New(kpevent.WithTCell(ev))
+			if c.HandleKeyPress(ctx, kev) {
 				a.draw(ctx)
 				// rebuild the key map since we may have changed views.
 				keyMap = a.buildKeyPressMap()
-				a.controller.SetKeyPressMap(keyMap)
+				c.SetKeyPressMap(keyMap)
 			}
 		case *tcell.EventMouse:
-			gev := mouse.EventFromTCell(ev)
-			pos := gev.Position()
+			mev := mevent.New(mevent.WithTCell(ev)) //, a.lastMouseEvent, a.mouseDownEvent)
+			pos := mev.Position()
 			s.ShowCursor(pos.X, pos.Y)
 			v := a.CurrentView()
 			node := v.AtPoint(pos)
 			if node != nil {
 				el, ok := node.(types.Element)
 				if ok {
-					el.Click(ctx, gev)
+					el.Click(ctx, mev)
 					a.draw(ctx)
 				}
 			}
+			a.lastMouseEvent = mev
+			if mev.Action().MouseDown() {
+				a.mouseDownEvent = mev
+				gtlog.Debug(
+					ctx,
+					"mouse down event @%s", mev.Position(),
+				)
+			}
+
 		case *tcell.EventError:
 			return ev
 		}
 	}
 
 	return nil
-}
-
-// Stop stops the Application.
-func (a *Application) Stop() {
-	a.Lock()
-	defer a.Unlock()
-	s := a.screen
-	if s == nil {
-		return
-	}
-	a.screen = nil
-	s.Fini()
 }
 
 // buildKeyPressMap builds the Application's outermost map of key press

@@ -4,7 +4,6 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/charmbracelet/x/ansi"
 	"github.com/gdamore/tcell/v3"
 )
 
@@ -18,8 +17,6 @@ type (
 	Key            = tcell.Key
 	CursorStyle    = tcell.CursorStyle
 	UnderlineStyle = tcell.UnderlineStyle
-
-	MouseButton = ansi.MouseButton
 )
 
 var (
@@ -29,19 +26,6 @@ var (
 const (
 	CursorStyleBar       = tcell.CursorStyleSteadyBar
 	CursorStyleSteadyBar = tcell.CursorStyleSteadyBar
-)
-
-const (
-	MouseNone       = ansi.MouseNone
-	MouseLeft       = ansi.MouseLeft
-	MouseMiddle     = ansi.MouseMiddle
-	MouseRight      = ansi.MouseRight
-	MouseWheelUp    = ansi.MouseWheelUp
-	MouseWheelDown  = ansi.MouseWheelDown
-	MouseWheelLeft  = ansi.MouseWheelLeft
-	MouseWheelRight = ansi.MouseWheelRight
-	MouseBackward   = ansi.MouseBackward
-	MouseForward    = ansi.MouseForward
 )
 
 const (

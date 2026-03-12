@@ -12,7 +12,7 @@ func (e *Element) Click(ctx context.Context, ev types.MouseEvent) {
 	for _, cb := range e.onClick {
 		cb(ctx, ev)
 	}
-	if ev.Button() == types.MouseLeft {
+	if ev.Button() == types.MouseButtonPrimary {
 		c := e.Controller()
 		if c != nil {
 			c.HandleFocus(ctx, e)
