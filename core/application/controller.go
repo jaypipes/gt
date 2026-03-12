@@ -5,25 +5,18 @@ import (
 	"io"
 	"sync"
 
-	"github.com/gdamore/tcell/v3"
-
 	"github.com/jaypipes/gt/types"
 )
 
-func newController(s tcell.Screen) *Controller {
+func newController(s types.Screen) *Controller {
 	return &Controller{
-		Screen: s,
+		screen: s,
 	}
 }
 
 type Controller struct {
 	sync.RWMutex
-	tcell.Screen
-
-	// prevFocused is the Focusable that previously had the focus.
-	prevFocused types.Focusable
-	// focused is the Focusable that currently has the focus.
-	focused types.Focusable
+	screen types.Screen
 
 	// keyPressMap contains the key press combination callbacks managed by the
 	// Controller.
@@ -36,15 +29,9 @@ type Controller struct {
 	keyEscape string
 }
 
-// HandleFocus sets the focus on the supplied Focusable and releases the focus
-// on any previously-focused Focusable.
-func (c *Controller) HandleFocus(ctx context.Context, f types.Focusable) {
-	if c.prevFocused != nil {
-		c.prevFocused.SetFocus(ctx, false)
-	}
-	c.prevFocused = f
-	f.SetFocus(ctx, true)
-	c.focused = f
+// Screen returns the [types.Screen] controlled by the Controller.
+func (c *Controller) Screen() types.Screen {
+	return c.screen
 }
 
 // HandleKeyPress performs the necessary action when the supplied key press

@@ -2,11 +2,13 @@ package textarea
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/border"
 	gtlog "github.com/jaypipes/gt/core/log"
+	"github.com/jaypipes/gt/core/style"
 	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/types"
 )
@@ -56,6 +58,7 @@ func New(
 			if c != nil {
 				c.InterceptKeyPress("tab", t.input)
 			}
+			gtlog.Debug(ctx, "%s received focus", t.ID())
 		},
 	)
 	t.OnLoseFocus(
@@ -63,8 +66,24 @@ func New(
 			c := t.Controller()
 			if c != nil {
 				c.RestoreKeyPress()
-				c.HideCursor()
+				c.Screen().HideCursor()
 			}
+			gtlog.Debug(ctx, "%s lost focus", t.ID())
+		},
+	)
+	t.OnMouseDragMove(
+		func(ctx context.Context, ev types.MouseDragMoveEvent) {
+			gtlog.Debug(ctx, "mouse drag move on %s @%s start-pos@%s", t.ID(), ev.Position(), ev.Start().Position())
+		},
+	)
+	t.OnMouseDragStop(
+		func(ctx context.Context, ev types.MouseDragStopEvent) {
+			gtlog.Debug(ctx, "mouse drag stop on %s @%s start-pos@%s", t.ID(), ev.Position(), ev.Start().Position())
+		},
+	)
+	t.OnMouseClick(
+		func(ctx context.Context, ev types.MouseClickEvent) {
+			gtlog.Debug(ctx, "mouse click on %s @%s double-clicked? %t", t.ID(), ev.Position(), ev.DoubleClicked())
 		},
 	)
 	return t
@@ -108,44 +127,39 @@ func (t *TextArea) Render(ctx context.Context, screen types.Screen) {
 	bounds := t.Bounds()
 	gtlog.Debug(ctx, "TextArea.Render[%s]: bounds=%s", t.Tag(), bounds)
 	t.Box.Render(ctx, screen)
-	return
-	/*
-		content := t.TextContent()
-		focused := t.HasFocus()
-		if focused {
-			input := t.input
-			// If we've got some input text, update the stored text content
-			if input.Len() > 0 {
-				content = fmt.Sprintf("%s%s", content, input.String())
-				t.SetTextContent(content)
-				input.Reset()
-			}
+	content := t.TextContent()
+	focused := t.HasFocus()
+	if focused {
+		input := t.input
+		// If we've got some input text, update the stored text content
+		if input.Len() > 0 {
+			content = fmt.Sprintf("%s%s", content, input.String())
+			t.SetTextContent(content)
+			input.Reset()
 		}
-		if len(content) == 0 {
-			if !focused {
-				content = t.placeholder
-			}
+	}
+	if len(content) == 0 {
+		if !focused {
+			content = t.placeholder
 		}
-		defStyle := t.Style()
-		inner := t.InnerBounds()
-		lines := strings.Split(content, "\n")
-		startX := inner.Min.X
-		startY := inner.Min.Y
-		for y, line := range lines {
-			for x := range line {
-				screen.Put(startX+x, startY+y, string(line[x]), style.TCell(defStyle))
-			}
+	}
+	s := t.Style()
+	inner := t.InnerBounds()
+	lines := strings.Split(content, "\n")
+	startX := inner.Min.X
+	startY := inner.Min.Y
+	for y, line := range lines {
+		screen.PutStrStyled(startX, startY+y, line, style.TCell(s))
+	}
+	// If we have the focus, show the cursor at the end of the user-input text
+	// to indicate this is an editable thing.
+	if focused {
+		c := t.Controller()
+		if c != nil {
+			x := inner.Max.X
+			y := inner.Max.Y
+			screen.ShowCursor(x, y)
+			screen.SetCursorStyle(types.CursorStyleBar)
 		}
-		// If we have the focus, show the cursor at the end of the user-input text
-		// to indicate this is an editable thing.
-		if focused {
-			c := t.Controller()
-			if c != nil {
-				x := inner.Max.X
-				y := inner.Max.Y
-				c.ShowCursor(x, y)
-				c.SetCursorStyle(types.CursorStyleBar)
-			}
-		}
-	*/
+	}
 }

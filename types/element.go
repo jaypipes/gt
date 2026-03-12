@@ -10,16 +10,13 @@ package types
 // its inner and outer bounding boxes, and how to style itself with a border,
 // padding, foreground and background color, etc.
 //
-// Element implements [uv.Drawable] which means that every Element can draw
-// itself onto a [uv.Screen]. That said, structures that implement Element
-// generally will embed [element.base.Base] which has basic implementations of
-// most of the Element interface's methods, one of which is Render, which wraps
-// [uv.Drawable.Draw] for the user.
+// Element implements [types.Plottable] and [types.Renderable] which means that
+// every Element can draw itself onto a [types.Screen].
 type Element interface {
-	Clickable
 	Controllable
 	Focusable
 	Identifiable
+	MouseEventHandler
 	Node
 	Plottable
 	Renderable

@@ -47,10 +47,6 @@ type Element struct {
 	// disabled indicates the Element is not focusable and does not accept
 	// input.
 	disabled bool
-
-	// onClick contains the stack of callbacks that execute when the Element is
-	// clicked.
-	onClick []types.ClickCallback
 	// focused is true if the Element has the current focus.
 	focused bool
 	// onFocus contains the stack of callbacks that execute when the Element
@@ -59,6 +55,22 @@ type Element struct {
 	// onLoseFocus contains the stack of callbacks that execute when the
 	// Element loses focus.
 	onLoseFocus []types.FocusCallback
+
+	// onMouseClick contains the stack of callbacks that execute when the
+	// Element is clicked on by the mouse.
+	onMouseClick []types.MouseClickEventCallback
+	// onMouseDoubleClick contains the stack of callbacks that execute when the
+	// Element is double-clicked on by the mouse.
+	onMouseDoubleClick []types.MouseClickEventCallback
+	// onMouseScroll contains the stack of callbacks that execute when the
+	// mouse wheel is scrolled while the Element has focus.
+	onMouseScroll []types.MouseEventCallback
+	// onMouseDragMove contains the stack of callbacks that execute when the
+	// user performs a mouse drag action.
+	onMouseDragMove []types.MouseDragMoveEventCallback
+	// onMouseDragStop contains the stack of callbacks that execute when the
+	// user ends a mouse drag action.
+	onMouseDragStop []types.MouseDragStopEventCallback
 }
 
 // Tag returns a string with the Element's type/class and ID

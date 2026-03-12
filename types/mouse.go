@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"time"
 
 	"github.com/gdamore/tcell/v3"
@@ -52,61 +53,11 @@ func (b MouseButton) String() string {
 	return mouseButtonNames[int(b)]
 }
 
-// MouseAction indicates one of the actions the mouse is logically doing.
-type MouseAction int16
-
-const (
-	MouseActionNone MouseAction = iota
-	MouseActionMove
-	MouseActionLeftDown
-	MouseActionLeftUp
-	MouseActionLeftClick
-	MouseActionLeftDoubleClick
-	MouseActionMiddleDown
-	MouseActionMiddleUp
-	MouseActionMiddleClick
-	MouseActionMiddleDoubleClick
-	MouseActionRightDown
-	MouseActionRightUp
-	MouseActionRightClick
-	MouseActionRightDoubleClick
-	MouseActionScrollUp
-	MouseActionScrollDown
-	MouseActionScrollLeft
-	MouseActionScrollRight
-)
-
-var (
-	mouseActionNames = []string{
-		"none",
-		"move",
-		"left-down",
-		"left-up",
-		"left-click",
-		"left-double-click",
-		"middle-down",
-		"middle-up",
-		"middle-click",
-		"middle-double-click",
-		"right-down",
-		"right-up",
-		"right-click",
-		"right-double-click",
-		"scroll-up",
-		"scroll-down",
-		"scroll-left",
-		"scroll-right",
-	}
-)
-
-func (a MouseAction) String() string {
-	return mouseActionNames[int(a)]
-}
-
-func (a MouseAction) MouseDown() bool {
-	return a == MouseActionLeftDown ||
-		a == MouseActionRightDown ||
-		a == MouseActionMiddleDown
+// Pressable returns true if the button is pressable (i.e. clickable)
+func (b MouseButton) Pressable() bool {
+	return b == MouseButtonPrimary ||
+		b == MouseButtonMiddle ||
+		b == MouseButtonSecondary
 }
 
 // MouseEvent describes events received when a mouse moved, clicked or
@@ -122,12 +73,84 @@ type MouseEvent interface {
 	Position() Point
 	// SetPosition sets the coordinates of the mouse when the event fired.
 	SetPosition(Point)
-	// Action returns the semantic action that was taken by the user.
-	Action() MouseAction
-	// SetAction sets the semantic action that was taken by the user.
-	SetAction(MouseAction)
+}
+
+// MouseClickEvent describes a mouse event for when the user clicked or
+// double-clicked a mouse button.
+type MouseClickEvent interface {
+	MouseEvent
+	// DoubleClicked returns true if the user double-clicked.
+	DoubleClicked() bool
+}
+
+// MouseDragMoveEvent describes a mouse event for when the user held a mouse
+// button down and moved the mouse.
+type MouseDragMoveEvent interface {
+	MouseEvent
+	// Start returns the MouseDragStartEvent associated with the start of the
+	// drag action.
+	Start() MouseEvent
+}
+
+// MouseDragStopEvent describes a mouse event for when the user released the mouse
+// button after dragging the mouse.
+type MouseDragStopEvent interface {
+	MouseEvent
+	// Start returns the MouseDragStartEvent associated with the start of the
+	// drag action.
+	Start() MouseEvent
 }
 
 // MouseEventWithOption describes an optional varg parameter to
 // [core.event.mouse.New] that modifies the returned MouseEvent.
 type MouseEventWithOption func(MouseEvent)
+
+// MouseEventCallback is the function signature for callbacks executed on mouse
+// events.
+type MouseEventCallback func(context.Context, MouseEvent)
+
+// MouseClickEventCallback is the function signature for callbacks executed on
+// mouse click and double-click events.
+type MouseClickEventCallback func(context.Context, MouseClickEvent)
+
+// MouseDragMoveEventCallback is the function signature for callbacks executed
+// on mouse drag move events.
+type MouseDragMoveEventCallback func(context.Context, MouseDragMoveEvent)
+
+// MouseDragStopEventCallback is the function signature for callbacks executed
+// on mouse drag stop events.
+type MouseDragStopEventCallback func(context.Context, MouseDragStopEvent)
+
+// MouseEventHandler represents something that can handle mouse events.
+type MouseEventHandler interface {
+	// MouseClick executes any OnMouseClick callbacks that were registered for
+	// the MouseEventHandler.
+	MouseClick(context.Context, MouseClickEvent)
+	// OnMouseClick registers a callback that will be executed when the
+	// MouseEventHandler is clicked.
+	OnMouseClick(MouseClickEventCallback)
+	// MouseDoubleClick executes any OnMouseDoubleClick callbacks that were
+	// registered for the MouseEventHandler.
+	MouseDoubleClick(context.Context, MouseClickEvent)
+	// OnMouseDoubleClick registers a callback that will be executed when the
+	// MouseEventHandler is double-clicked.
+	OnMouseDoubleClick(MouseClickEventCallback)
+	// MouseScroll executes any OnMouseScroll callbacks that were registered for
+	// the MouseEventHandler.
+	MouseScroll(context.Context, MouseEvent)
+	// OnMouseScroll registers a callback that will be executed when the mouse
+	// wheel is scrolled and the MouseEventHandler has the focus.
+	OnMouseScroll(MouseEventCallback)
+	// MouseDragMove executes any OnMouseDragMove callbacks that were
+	// registered for the MouseEventHandler.
+	MouseDragMove(context.Context, MouseDragMoveEvent)
+	// OnMouseDragMove registers a callback that will be executed when a mouse
+	// button is held down and the mouse is moved.
+	OnMouseDragMove(MouseDragMoveEventCallback)
+	// MouseDragStop executes any OnMouseDragStop callbacks that were
+	// registered for the MouseEventHandler.
+	MouseDragStop(context.Context, MouseDragStopEvent)
+	// OnMouseDragStop registers a callback that will be executed when the
+	// mouse button is released after dragging the mouse.
+	OnMouseDragStop(MouseDragStopEventCallback)
+}

@@ -3,16 +3,12 @@ package types
 import (
 	"context"
 	"io"
-
-	"github.com/gdamore/tcell/v3"
 )
 
 // Controller represents something that controls screen and cursor display.
 type Controller interface {
-	tcell.Screen
-	// HandleFocus sets the focus on the supplied Focusable and releases the
-	// focus on any previously-focused Focusable.
-	HandleFocus(context.Context, Focusable)
+	// Screen returns the Screen controlled by the Controller.
+	Screen() Screen
 	// HandleKeyPress performs the necessary action when the supplied key press
 	// event is received. Returns a bool indicating whether the event was handled.
 	HandleKeyPress(context.Context, KeyPressEvent) bool

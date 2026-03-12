@@ -81,9 +81,13 @@ type Application struct {
 	pasteEnabled bool
 	// focusEnabled is true if we support focus events in the terminal.
 	focusEnabled bool
+	// focused contains the thing that currently has the focus.
+	focused types.Focusable
 
 	// lastMouseEvent stores the event from the last mouse action.
 	lastMouseEvent types.MouseEvent
+	// lastMouseClickTime stores the time when the last mouse click happened.
+	lastMouseClickTime time.Time
 	// mouseDownEvent stores the event when the user pressed a mouse button.
 	mouseDownEvent types.MouseEvent
 }
@@ -177,6 +181,32 @@ func (a *Application) SetBorderForegroundColor(c types.Color) *Application {
 func (a *Application) SetBorderBackgroundColor(c types.Color) *Application {
 	a.Box.SetBorderBackgroundColor(c)
 	return a
+}
+
+// setFocus sets the currently-focused thing and calls Focus(false) on the
+// previously-focused thing, returning whether there was a change in focus.
+func (a *Application) setFocus(ctx context.Context, f types.Focusable) bool {
+	if a.focused != nil {
+		if f == nil {
+			a.focused.SetFocus(ctx, false)
+			a.focused = nil
+			return true
+		}
+		if f.HasFocus() {
+			// already has the focus, no need to do anything...
+			return false
+		}
+		a.focused.SetFocus(ctx, false)
+	} else {
+		if f == nil {
+			return false
+		}
+	}
+	if f != nil {
+		f.SetFocus(ctx, true)
+	}
+	a.focused = f
+	return true
 }
 
 // KeyPressMap returns the Application's *global* map of key press
@@ -276,32 +306,118 @@ loop:
 			}
 		case *tcell.EventMouse:
 			mev := mevent.New(mevent.WithTCell(ev)) //, a.lastMouseEvent, a.mouseDownEvent)
-			pos := mev.Position()
-			s.ShowCursor(pos.X, pos.Y)
-			v := a.CurrentView()
-			node := v.AtPoint(pos)
-			if node != nil {
-				el, ok := node.(types.Element)
-				if ok && !el.Disabled() {
-					el.Click(ctx, mev)
-					a.draw(ctx)
-				}
+			redraw := a.handleMouseEvent(ctx, mev)
+			if redraw {
+				a.draw(ctx)
 			}
-			a.lastMouseEvent = mev
-			if mev.Action().MouseDown() {
-				a.mouseDownEvent = mev
-				gtlog.Debug(
-					ctx,
-					"mouse down event @%s", mev.Position(),
-				)
-			}
-
 		case *tcell.EventError:
 			return ev
 		}
 	}
 
 	return nil
+}
+
+// NOTE(jaypipes): Some of this code adapted from:
+// https://github.com/rivo/tview/blob/f39b95c73dbb30877f4b5145b835333002afb2a8/application.go
+
+// handleMouseEvent determines what logical action the user took with the mouse
+// and executes the appropriate mouse event handler for the target element.
+// The method returns a bool indicating whether the screen should be redrawn.
+func (a *Application) handleMouseEvent(
+	ctx context.Context,
+	ev types.MouseEvent,
+) bool {
+	// First, we determine if the mouse is over a thing that can handle to
+	// mouse events. If the mouse is over something that can handle mouse
+	// events and is not disabled, we set the focus on that thing.
+	var target types.MouseEventHandler
+
+	pos := ev.Position()
+	v := a.CurrentView()
+	node := v.AtPoint(pos)
+	changedFocus := false
+	if node != nil {
+		el, ok := node.(types.Element)
+		if ok && !el.Disabled() {
+			target = el.(types.MouseEventHandler)
+			changedFocus = a.setFocus(ctx, el.(types.Focusable))
+		}
+	} else {
+		changedFocus = a.setFocus(ctx, nil)
+	}
+
+	// Next, we determine what logical mouse action the user has taken by
+	// examining our stored state of previous mouse events.
+	x, y := pos.X, pos.Y
+	button := ev.Button()
+	lastX, lastY := x, y
+	if a.lastMouseEvent != nil {
+		lastPos := a.lastMouseEvent.Position()
+		lastX, lastY = lastPos.X, lastPos.Y
+	}
+
+	buttonWasDown := a.mouseDownEvent != nil
+	buttonNowDown := button.Pressable()
+
+	if x != lastX || y != lastY {
+		// The mouse has moved. If a mouse button had previously been down and
+		// is now *not* down, we fire off a MouseDragStop event. If the mouse
+		// button had previously *not* been down and is now down, we save the
+		// current mouse event as the "mouse down" event to use in later
+		// constructing a MouseDragStopEvent.
+		if buttonWasDown {
+			if !buttonNowDown {
+				if target != nil {
+					de := mevent.NewDragStopEvent(ev, a.lastMouseEvent)
+					target.MouseDragStop(ctx, de)
+				}
+				a.lastMouseEvent = ev
+				a.mouseDownEvent = nil
+				return true
+			} else {
+				if target != nil {
+					de := mevent.NewDragMoveEvent(ev, a.lastMouseEvent)
+					target.MouseDragMove(ctx, de)
+				}
+				a.lastMouseEvent = ev
+				a.mouseDownEvent = ev
+				return true
+			}
+		}
+	}
+
+	downX, downY := x, y
+	if buttonWasDown {
+		downPos := a.mouseDownEvent.Position()
+		downX, downY = downPos.X, downPos.Y
+	}
+
+	clickMoved := x != downX || y != downY
+
+	if !buttonWasDown {
+		if buttonNowDown {
+			a.mouseDownEvent = ev
+			if !clickMoved {
+				if a.lastMouseClickTime.Add(types.DefaultMouseDoubleClickInterval).Before(time.Now()) {
+					if target != nil {
+						ce := mevent.NewClickEvent(ev, false)
+						target.MouseClick(ctx, ce)
+					}
+					a.lastMouseClickTime = time.Now()
+				} else {
+					if target != nil {
+						ce := mevent.NewClickEvent(ev, true)
+						target.MouseClick(ctx, ce)
+						a.lastMouseClickTime = time.Time{}
+					}
+				}
+			}
+		}
+	}
+
+	a.lastMouseEvent = ev
+	return changedFocus
 }
 
 // buildKeyPressMap builds the Application's outermost map of key press
