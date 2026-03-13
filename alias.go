@@ -36,7 +36,13 @@ var (
 	NewView = view.New
 )
 
-type Element = element.Element
+type Event = types.Event
+type MouseEvent = types.MouseEvent
+type MouseClickEvent = types.MouseClickEvent
+type MouseDragEvent = types.MouseDragEvent
+type KeyPressEvent = types.KeyPressEvent
+
+type Element = types.Element
 type WithOption = types.ElementWithOption
 
 var (

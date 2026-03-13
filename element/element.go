@@ -56,6 +56,10 @@ type Element struct {
 	// Element loses focus.
 	onLoseFocus []types.FocusCallback
 
+	// onMouseHover contains the stack of callbacks that execute when the
+	// Element is hovered over by the mouse but the Element does *not* have the
+	// focus.
+	onMouseHover []types.MouseEventCallback
 	// onMouseClick contains the stack of callbacks that execute when the
 	// Element is clicked on by the mouse.
 	onMouseClick []types.MouseClickEventCallback
@@ -67,10 +71,10 @@ type Element struct {
 	onMouseScroll []types.MouseEventCallback
 	// onMouseDragMove contains the stack of callbacks that execute when the
 	// user performs a mouse drag action.
-	onMouseDragMove []types.MouseDragMoveEventCallback
+	onMouseDragMove []types.MouseDragEventCallback
 	// onMouseDragStop contains the stack of callbacks that execute when the
 	// user ends a mouse drag action.
-	onMouseDragStop []types.MouseDragStopEventCallback
+	onMouseDragStop []types.MouseDragEventCallback
 }
 
 // Tag returns a string with the Element's type/class and ID

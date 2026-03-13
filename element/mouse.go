@@ -6,6 +6,20 @@ import (
 	"github.com/jaypipes/gt/types"
 )
 
+// MouseHover executes any OnMouseHover callbacks that were registered for the
+// Element.
+func (e *Element) MouseHover(ctx context.Context, ev types.MouseEvent) {
+	for _, cb := range e.onMouseHover {
+		cb(ctx, ev)
+	}
+}
+
+// OnMouseHover registers a callback that will be executed when the Element is
+// hovered over but does *not* have the focus.
+func (e *Element) OnMouseHover(cb types.MouseEventCallback) {
+	e.onMouseHover = append(e.onMouseHover, cb)
+}
+
 // MouseClick executes any OnMouseClick callbacks that were registered for the
 // Element.
 func (e *Element) MouseClick(ctx context.Context, ev types.MouseClickEvent) {
@@ -52,7 +66,7 @@ func (e *Element) OnMouseScroll(cb types.MouseEventCallback) {
 // the Element.
 func (e *Element) MouseDragMove(
 	ctx context.Context,
-	ev types.MouseDragMoveEvent,
+	ev types.MouseDragEvent,
 ) {
 	for _, cb := range e.onMouseDragMove {
 		cb(ctx, ev)
@@ -61,7 +75,7 @@ func (e *Element) MouseDragMove(
 
 // OnMouseDragMove registers a callback that will be executed when the user
 // performs a mouse drag action.
-func (e *Element) OnMouseDragMove(cb types.MouseDragMoveEventCallback) {
+func (e *Element) OnMouseDragMove(cb types.MouseDragEventCallback) {
 	e.onMouseDragMove = append(e.onMouseDragMove, cb)
 }
 
@@ -69,7 +83,7 @@ func (e *Element) OnMouseDragMove(cb types.MouseDragMoveEventCallback) {
 // the Element.
 func (e *Element) MouseDragStop(
 	ctx context.Context,
-	ev types.MouseDragStopEvent,
+	ev types.MouseDragEvent,
 ) {
 	for _, cb := range e.onMouseDragStop {
 		cb(ctx, ev)
@@ -78,6 +92,6 @@ func (e *Element) MouseDragStop(
 
 // OnMouseDragStop registers a callback that will be executed when the user
 // ends a mouse drag action.
-func (e *Element) OnMouseDragStop(cb types.MouseDragStopEventCallback) {
+func (e *Element) OnMouseDragStop(cb types.MouseDragEventCallback) {
 	e.onMouseDragStop = append(e.onMouseDragStop, cb)
 }

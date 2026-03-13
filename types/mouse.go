@@ -83,18 +83,9 @@ type MouseClickEvent interface {
 	DoubleClicked() bool
 }
 
-// MouseDragMoveEvent describes a mouse event for when the user held a mouse
-// button down and moved the mouse.
-type MouseDragMoveEvent interface {
-	MouseEvent
-	// Start returns the MouseDragStartEvent associated with the start of the
-	// drag action.
-	Start() MouseEvent
-}
-
-// MouseDragStopEvent describes a mouse event for when the user released the mouse
-// button after dragging the mouse.
-type MouseDragStopEvent interface {
+// MouseDragEvent describes a mouse event for when the user held a mouse button
+// down and moved the mouse.
+type MouseDragEvent interface {
 	MouseEvent
 	// Start returns the MouseDragStartEvent associated with the start of the
 	// drag action.
@@ -113,16 +104,18 @@ type MouseEventCallback func(context.Context, MouseEvent)
 // mouse click and double-click events.
 type MouseClickEventCallback func(context.Context, MouseClickEvent)
 
-// MouseDragMoveEventCallback is the function signature for callbacks executed
-// on mouse drag move events.
-type MouseDragMoveEventCallback func(context.Context, MouseDragMoveEvent)
-
 // MouseDragStopEventCallback is the function signature for callbacks executed
-// on mouse drag stop events.
-type MouseDragStopEventCallback func(context.Context, MouseDragStopEvent)
+// on mouse drag move or stop events.
+type MouseDragEventCallback func(context.Context, MouseDragEvent)
 
 // MouseEventHandler represents something that can handle mouse events.
 type MouseEventHandler interface {
+	// MouseHover executes any OnMouseHover callbacks that were registered for
+	// the MouseEventHandler.
+	MouseHover(context.Context, MouseEvent)
+	// OnMouseHover registers a callback that will be executed when the mouse
+	// is over top of an element but the element does *not* have the focus.
+	OnMouseHover(MouseEventCallback)
 	// MouseClick executes any OnMouseClick callbacks that were registered for
 	// the MouseEventHandler.
 	MouseClick(context.Context, MouseClickEvent)
@@ -143,14 +136,14 @@ type MouseEventHandler interface {
 	OnMouseScroll(MouseEventCallback)
 	// MouseDragMove executes any OnMouseDragMove callbacks that were
 	// registered for the MouseEventHandler.
-	MouseDragMove(context.Context, MouseDragMoveEvent)
+	MouseDragMove(context.Context, MouseDragEvent)
 	// OnMouseDragMove registers a callback that will be executed when a mouse
 	// button is held down and the mouse is moved.
-	OnMouseDragMove(MouseDragMoveEventCallback)
+	OnMouseDragMove(MouseDragEventCallback)
 	// MouseDragStop executes any OnMouseDragStop callbacks that were
 	// registered for the MouseEventHandler.
-	MouseDragStop(context.Context, MouseDragStopEvent)
+	MouseDragStop(context.Context, MouseDragEvent)
 	// OnMouseDragStop registers a callback that will be executed when the
 	// mouse button is released after dragging the mouse.
-	OnMouseDragStop(MouseDragStopEventCallback)
+	OnMouseDragStop(MouseDragEventCallback)
 }

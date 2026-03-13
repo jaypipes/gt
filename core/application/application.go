@@ -341,10 +341,7 @@ func (a *Application) handleMouseEvent(
 		el, ok := node.(types.Element)
 		if ok && !el.Disabled() {
 			target = el.(types.MouseEventHandler)
-			changedFocus = a.setFocus(ctx, el.(types.Focusable))
 		}
-	} else {
-		changedFocus = a.setFocus(ctx, nil)
 	}
 
 	// Next, we determine what logical mouse action the user has taken by
@@ -356,34 +353,32 @@ func (a *Application) handleMouseEvent(
 		lastPos := a.lastMouseEvent.Position()
 		lastX, lastY = lastPos.X, lastPos.Y
 	}
+	a.lastMouseEvent = ev
 
 	buttonWasDown := a.mouseDownEvent != nil
 	buttonNowDown := button.Pressable()
 
 	if x != lastX || y != lastY {
-		// The mouse has moved. If a mouse button had previously been down and
-		// is now *not* down, we fire off a MouseDragStop event. If the mouse
-		// button had previously *not* been down and is now down, we save the
-		// current mouse event as the "mouse down" event to use in later
-		// constructing a MouseDragStopEvent.
-		if buttonWasDown {
-			if !buttonNowDown {
-				if target != nil {
-					de := mevent.NewDragStopEvent(ev, a.lastMouseEvent)
-					target.MouseDragStop(ctx, de)
-				}
-				a.lastMouseEvent = ev
-				a.mouseDownEvent = nil
-				return true
-			} else {
-				if target != nil {
-					de := mevent.NewDragMoveEvent(ev, a.lastMouseEvent)
-					target.MouseDragMove(ctx, de)
-				}
-				a.lastMouseEvent = ev
-				a.mouseDownEvent = ev
-				return true
+		// The mouse has moved. If the mouse button had previously *not* been
+		// down and is now down, we save the current mouse event as the "mouse
+		// down" event to use in later firing a MouseDragStop.
+		if buttonWasDown && buttonNowDown {
+			if target != nil {
+				de := mevent.NewDragEvent(ev, a.mouseDownEvent)
+				target.MouseDragMove(ctx, de)
 			}
+			return true
+		}
+	} else {
+		// The mouse has moved. If a mouse button had previously been down and
+		// is now *not* down, we fire off a MouseDragStop event.
+		if buttonWasDown && !buttonNowDown {
+			if target != nil {
+				de := mevent.NewDragEvent(ev, a.mouseDownEvent)
+				target.MouseDragStop(ctx, de)
+			}
+			a.mouseDownEvent = nil
+			return true
 		}
 	}
 
@@ -398,7 +393,14 @@ func (a *Application) handleMouseEvent(
 	if !buttonWasDown {
 		if buttonNowDown {
 			a.mouseDownEvent = ev
+			if target == nil {
+				// Mouse was clicked on a part of the screen represented by no
+				// element, so we remove the focus from whatever element had
+				// the focus.
+				return a.setFocus(ctx, nil)
+			}
 			if !clickMoved {
+				changedFocus = a.setFocus(ctx, target.(types.Focusable))
 				if a.lastMouseClickTime.Add(types.DefaultMouseDoubleClickInterval).Before(time.Now()) {
 					if target != nil {
 						ce := mevent.NewClickEvent(ev, false)
@@ -413,10 +415,13 @@ func (a *Application) handleMouseEvent(
 					}
 				}
 			}
+		} else {
+			if target != nil && !target.(types.Focusable).HasFocus() {
+				target.MouseHover(ctx, ev)
+			}
 		}
 	}
 
-	a.lastMouseEvent = ev
 	return changedFocus
 }
 
