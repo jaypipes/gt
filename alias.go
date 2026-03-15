@@ -37,6 +37,7 @@ var (
 )
 
 type Event = types.Event
+type ScrollEvent = types.ScrollEvent
 type MouseEvent = types.MouseEvent
 type MouseClickEvent = types.MouseClickEvent
 type MouseDragEvent = types.MouseDragEvent

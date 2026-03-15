@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	textFormat           = "perform mouse actions on this box and see what happens\n\nhas focus? %t\n\nlast mouse event:\n\n%s"
+	textFormat           = "perform mouse actions on this box and see what happens\n\nhas focus? %t\n\nlast event:\n\n%s"
 	onHoverTextFormat    = "hovering (pos: %s)"
+	onScrollTextFormat   = "scroll (direction: %s)"
 	onClickTextFormat    = "click (pos: %s double-click? %t button: %s)"
 	onDragMoveTextFormat = "drag move (start pos: %s current pos: %s)"
 	onDragStopTextFormat = "drag stop (start pos: %s end pos: %s)"
@@ -98,7 +99,7 @@ func main() {
 		func(ctx context.Context, ev gt.MouseClickEvent) {
 			lastEventText = fmt.Sprintf(
 				onClickTextFormat,
-				ev.Position(), ev.DoubleClicked(), ev.Button().String(),
+				ev.Position(), ev.DoubleClicked(), ev.Button(),
 			)
 			d.SetTextContent(content(d))
 		},
@@ -130,6 +131,19 @@ func main() {
 				// The MouseDragEvent.Position() returns the position of the
 				// mouse when the user released the mouse button.
 				onDragStopTextFormat, ev.Start().Position(), ev.Position(),
+			)
+			d.SetTextContent(content(d))
+		},
+	)
+
+	// You can take some action when the mouse wheel is engaged. When the mouse
+	// wheel is engaged, a ScrollEvent is sent to the element over which the
+	// mouse is currently pointing.
+	d.OnScroll(
+		func(ctx context.Context, ev gt.ScrollEvent) {
+			lastEventText = fmt.Sprintf(
+				onScrollTextFormat,
+				ev.Direction(),
 			)
 			d.SetTextContent(content(d))
 		},

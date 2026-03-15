@@ -15,6 +15,7 @@ import (
 	"github.com/jaypipes/gt/core/box"
 	kpevent "github.com/jaypipes/gt/core/event/keypress"
 	mevent "github.com/jaypipes/gt/core/event/mouse"
+	sevent "github.com/jaypipes/gt/core/event/scroll"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/view"
 	"github.com/jaypipes/gt/types"
@@ -323,10 +324,16 @@ loop:
 				c.SetKeyPressMap(keyMap)
 			}
 		case *tcell.EventMouse:
-			mev := mevent.New(mevent.WithTCell(ev)) //, a.lastMouseEvent, a.mouseDownEvent)
-			redraw := a.handleMouseEvent(ctx, mev)
-			if redraw {
+			sev := sevent.New(sevent.WithTCell(ev))
+			if sev.Direction() != types.ScrollDirectionNone {
+				a.handleScrollEvent(ctx, sev)
 				a.draw(ctx)
+			} else {
+				mev := mevent.New(mevent.WithTCell(ev)) //, a.lastMouseEvent, a.mouseDownEvent)
+				redraw := a.handleMouseEvent(ctx, mev)
+				if redraw {
+					a.draw(ctx)
+				}
 			}
 		case *tcell.EventError:
 			return ev
@@ -334,6 +341,30 @@ loop:
 	}
 
 	return nil
+}
+
+// handleScrollEvent fires a OnScroll event
+// and executes the appropriate mouse event handler for the target element.
+// The method returns a bool indicating whether the screen should be redrawn.
+func (a *Application) handleScrollEvent(
+	ctx context.Context,
+	ev types.ScrollEvent,
+) {
+	// We determine if the mouse is over a thing that can handle scroll events.
+	// If the mouse is over something that can handle mouse events and is not
+	// disabled, we will fire the OnScroll event.
+	pos := ev.Position()
+	v := a.CurrentView()
+	node := v.AtPoint(pos)
+	if node != nil {
+		el, ok := node.(types.Element)
+		if ok && !el.Disabled() {
+			handler, ok := el.(types.ScrollEventHandler)
+			if ok {
+				handler.Scroll(ctx, ev)
+			}
+		}
+	}
 }
 
 // handleMouseEvent determines what logical action the user took with the mouse

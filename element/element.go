@@ -59,6 +59,9 @@ type Element struct {
 	// onLoseFocus contains the stack of callbacks that execute when the
 	// Element loses focus.
 	onLoseFocus []types.FocusCallback
+	// onScroll contains the stack of callbacks that execute when a scroll
+	// event occurs.
+	onScroll []types.ScrollEventCallback
 	// onMouseHover contains the stack of callbacks that execute when the
 	// Element is hovered over by the mouse but the Element does *not* have the
 	// focus.

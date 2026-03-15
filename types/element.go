@@ -20,6 +20,7 @@ type Element interface {
 	Node
 	Plottable
 	Renderable
+	ScrollEventHandler
 	Style
 
 	// WithID sets the Element's unique identifier and returns the Element.
