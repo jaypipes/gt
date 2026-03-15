@@ -83,9 +83,11 @@ type Application struct {
 	focusEnabled bool
 	// focused contains the thing that currently has the focus.
 	focused types.Focusable
+	// hovered contains the thing that the mouse is currently over.
+	hovered types.MouseEventHandler
 
-	// lastMouseEvent stores the event from the last mouse action.
-	lastMouseEvent types.MouseEvent
+	// mouseDragged is true if a mouse button was pressed and the mouse moved.
+	mouseDragged bool
 	// lastMouseClickTime stores the time when the last mouse click happened.
 	lastMouseClickTime time.Time
 	// mouseDownEvent stores the event when the user pressed a mouse button.
@@ -209,6 +211,22 @@ func (a *Application) setFocus(ctx context.Context, f types.Focusable) bool {
 	return true
 }
 
+// setHover sets the currently-hovered thing and calls MouseLoseHover() on the
+// previously-hovered thing if the hovered thing has changed.
+func (a *Application) setHover(
+	ctx context.Context,
+	m types.MouseEventHandler,
+	ev types.MouseEvent,
+) {
+	if a.hovered != nil && a.hovered != m {
+		a.hovered.MouseLoseHover(ctx)
+	}
+	if m != nil {
+		m.MouseHover(ctx, ev)
+	}
+	a.hovered = m
+}
+
 // KeyPressMap returns the Application's *global* map of key press
 // combination strings to callbacks that will execute when that key press
 // combination is entered.
@@ -318,9 +336,6 @@ loop:
 	return nil
 }
 
-// NOTE(jaypipes): Some of this code adapted from:
-// https://github.com/rivo/tview/blob/f39b95c73dbb30877f4b5145b835333002afb2a8/application.go
-
 // handleMouseEvent determines what logical action the user took with the mouse
 // and executes the appropriate mouse event handler for the target element.
 // The method returns a bool indicating whether the screen should be redrawn.
@@ -328,15 +343,16 @@ func (a *Application) handleMouseEvent(
 	ctx context.Context,
 	ev types.MouseEvent,
 ) bool {
-	// First, we determine if the mouse is over a thing that can handle to
-	// mouse events. If the mouse is over something that can handle mouse
-	// events and is not disabled, we set the focus on that thing.
+	// We determine if the mouse is over a thing that can handle to mouse
+	// events. If the mouse is over something that can handle mouse events and
+	// is not disabled, we will fire the OnMouseHover event if the thing does
+	// not have the focus.
 	var target types.MouseEventHandler
 
 	pos := ev.Position()
 	v := a.CurrentView()
 	node := v.AtPoint(pos)
-	changedFocus := false
+	redraw := false
 	if node != nil {
 		el, ok := node.(types.Element)
 		if ok && !el.Disabled() {
@@ -344,43 +360,12 @@ func (a *Application) handleMouseEvent(
 		}
 	}
 
-	// Next, we determine what logical mouse action the user has taken by
+	// We determine what logical mouse action the user has taken by
 	// examining our stored state of previous mouse events.
 	x, y := pos.X, pos.Y
 	button := ev.Button()
-	lastX, lastY := x, y
-	if a.lastMouseEvent != nil {
-		lastPos := a.lastMouseEvent.Position()
-		lastX, lastY = lastPos.X, lastPos.Y
-	}
-	a.lastMouseEvent = ev
-
 	buttonWasDown := a.mouseDownEvent != nil
 	buttonNowDown := button.Pressable()
-
-	if x != lastX || y != lastY {
-		// The mouse has moved. If the mouse button had previously *not* been
-		// down and is now down, we save the current mouse event as the "mouse
-		// down" event to use in later firing a MouseDragStop.
-		if buttonWasDown && buttonNowDown {
-			if target != nil {
-				de := mevent.NewDragEvent(ev, a.mouseDownEvent)
-				target.MouseDragMove(ctx, de)
-			}
-			return true
-		}
-	} else {
-		// The mouse has moved. If a mouse button had previously been down and
-		// is now *not* down, we fire off a MouseDragStop event.
-		if buttonWasDown && !buttonNowDown {
-			if target != nil {
-				de := mevent.NewDragEvent(ev, a.mouseDownEvent)
-				target.MouseDragStop(ctx, de)
-			}
-			a.mouseDownEvent = nil
-			return true
-		}
-	}
 
 	downX, downY := x, y
 	if buttonWasDown {
@@ -388,41 +373,69 @@ func (a *Application) handleMouseEvent(
 		downX, downY = downPos.X, downPos.Y
 	}
 
-	clickMoved := x != downX || y != downY
+	downMoved := x != downX || y != downY
 
-	if !buttonWasDown {
-		if buttonNowDown {
-			a.mouseDownEvent = ev
-			if target == nil {
-				// Mouse was clicked on a part of the screen represented by no
+	switch {
+	case buttonWasDown && buttonNowDown && downMoved:
+		// mouse has moved while a button was pressed -- i.e. a drag operation.
+		if target != nil {
+			de := mevent.NewDragEvent(ev, a.mouseDownEvent)
+			target.MouseDragMove(ctx, de)
+			redraw = true
+		}
+		a.mouseDragged = true
+	case !buttonWasDown && buttonNowDown && !downMoved && !a.mouseDragged:
+		// mouse was clicked or double-clicked.
+		a.mouseDownEvent = ev
+		if a.lastMouseClickTime.Add(types.DefaultMouseDoubleClickInterval).Before(time.Now()) {
+			a.lastMouseClickTime = time.Now()
+			if target != nil {
+				ce := mevent.NewClickEvent(ev, false)
+				target.MouseClick(ctx, ce)
+				a.setFocus(ctx, target.(types.Focusable))
+				redraw = true
+			} else {
+				// mouse was clicked on a part of the screen represented by no
 				// element, so we remove the focus from whatever element had
 				// the focus.
-				return a.setFocus(ctx, nil)
-			}
-			if !clickMoved {
-				changedFocus = a.setFocus(ctx, target.(types.Focusable))
-				if a.lastMouseClickTime.Add(types.DefaultMouseDoubleClickInterval).Before(time.Now()) {
-					if target != nil {
-						ce := mevent.NewClickEvent(ev, false)
-						target.MouseClick(ctx, ce)
-					}
-					a.lastMouseClickTime = time.Now()
-				} else {
-					if target != nil {
-						ce := mevent.NewClickEvent(ev, true)
-						target.MouseClick(ctx, ce)
-						a.lastMouseClickTime = time.Time{}
-					}
-				}
+				redraw = a.setFocus(ctx, nil)
 			}
 		} else {
-			if target != nil && !target.(types.Focusable).HasFocus() {
-				target.MouseHover(ctx, ev)
+			a.lastMouseClickTime = time.Time{}
+			if target != nil {
+				ce := mevent.NewClickEvent(ev, true)
+				target.MouseClick(ctx, ce)
+				a.setFocus(ctx, target.(types.Focusable))
+				redraw = true
+			} else {
+				// mouse was clicked on a part of the screen represented by no
+				// element, so we remove the focus from whatever element had
+				// the focus.
+				redraw = a.setFocus(ctx, nil)
 			}
 		}
+	case buttonWasDown && !buttonNowDown:
+		if !downMoved && a.mouseDragged && target != nil {
+			// mouse drag operation has stopped.
+			de := mevent.NewDragEvent(ev, a.mouseDownEvent)
+			target.MouseDragStop(ctx, de)
+			redraw = true
+		}
+		a.mouseDownEvent = nil
+		a.mouseDragged = false
+	case !buttonWasDown && !buttonNowDown:
+		// mouse move.
+		if target != nil {
+			if !target.(types.Focusable).HasFocus() {
+				a.setHover(ctx, target, ev)
+			}
+		} else {
+			a.setHover(ctx, nil, nil)
+		}
+		redraw = true
 	}
 
-	return changedFocus
+	return redraw
 }
 
 // buildKeyPressMap builds the Application's outermost map of key press

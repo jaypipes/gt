@@ -20,6 +20,20 @@ func (e *Element) OnMouseHover(cb types.MouseEventCallback) {
 	e.onMouseHover = append(e.onMouseHover, cb)
 }
 
+// MouseLoseHover executes any OnMouseLoseHover callbacks that were registered
+// for the Element.
+func (e *Element) MouseLoseHover(ctx context.Context) {
+	for _, cb := range e.onMouseLoseHover {
+		cb(ctx)
+	}
+}
+
+// OnMouseLoseHover registers a callback that will be executed when the mouse
+// is no longer over an Element (but was previously).
+func (e *Element) OnMouseLoseHover(cb types.EventCallback) {
+	e.onMouseLoseHover = append(e.onMouseLoseHover, cb)
+}
+
 // MouseClick executes any OnMouseClick callbacks that were registered for the
 // Element.
 func (e *Element) MouseClick(ctx context.Context, ev types.MouseClickEvent) {

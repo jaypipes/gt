@@ -49,17 +49,23 @@ type Element struct {
 	disabled bool
 	// focused is true if the Element has the current focus.
 	focused bool
+	// hovered is true if the mouse is currently over the Element but the
+	// Element does *not* have the current focus.
+	hovered bool
+
 	// onFocus contains the stack of callbacks that execute when the Element
 	// receives focus.
 	onFocus []types.FocusCallback
 	// onLoseFocus contains the stack of callbacks that execute when the
 	// Element loses focus.
 	onLoseFocus []types.FocusCallback
-
 	// onMouseHover contains the stack of callbacks that execute when the
 	// Element is hovered over by the mouse but the Element does *not* have the
 	// focus.
 	onMouseHover []types.MouseEventCallback
+	// onMouseLoseHover contains the stack of callbacks that execute when the
+	// mouse is no longer hovering over the Element (but was previously).
+	onMouseLoseHover []types.EventCallback
 	// onMouseClick contains the stack of callbacks that execute when the
 	// Element is clicked on by the mouse.
 	onMouseClick []types.MouseClickEventCallback

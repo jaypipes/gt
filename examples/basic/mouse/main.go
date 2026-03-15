@@ -15,9 +15,9 @@ import (
 const (
 	textFormat           = "perform mouse actions on this box and see what happens\n\nhas focus? %t\n\n%s"
 	onHoverTextFormat    = "hovering (pos: %s)"
-	onClickTextFormat    = "got clicked (pos: %s double-clicked? %t)"
-	onDragMoveTextFormat = "drag moved (start pos: %s current pos: %s)"
-	onDragStopTextFormat = "drag stopped (start pos: %s end pos: %s)"
+	onClickTextFormat    = "click (pos: %s double-click? %t button: %s)"
+	onDragMoveTextFormat = "drag move (start pos: %s current pos: %s)"
+	onDragStopTextFormat = "drag stop (start pos: %s end pos: %s)"
 )
 
 var (
@@ -97,7 +97,8 @@ func main() {
 	d.OnMouseClick(
 		func(ctx context.Context, ev gt.MouseClickEvent) {
 			lastEventText = fmt.Sprintf(
-				onClickTextFormat, ev.Position(), ev.DoubleClicked(),
+				onClickTextFormat,
+				ev.Position(), ev.DoubleClicked(), ev.Button().String(),
 			)
 			d.SetTextContent(content(d))
 		},

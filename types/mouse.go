@@ -116,6 +116,12 @@ type MouseEventHandler interface {
 	// OnMouseHover registers a callback that will be executed when the mouse
 	// is over top of an element but the element does *not* have the focus.
 	OnMouseHover(MouseEventCallback)
+	// MouseLoseHover executes any OnMouseLoseHover callbacks that were
+	// registered for the MouseEventHandler.
+	MouseLoseHover(context.Context)
+	// OnMouseLoseHover registers a callback that will be executed when the
+	// mouse is no longer over top of an element (but was previously).
+	OnMouseLoseHover(EventCallback)
 	// MouseClick executes any OnMouseClick callbacks that were registered for
 	// the MouseEventHandler.
 	MouseClick(context.Context, MouseClickEvent)
