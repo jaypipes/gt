@@ -3,8 +3,6 @@ package types
 import (
 	"context"
 	"time"
-
-	"github.com/gdamore/tcell/v3"
 )
 
 // NOTE(jaypipes): Some of this code adapted from:
@@ -18,34 +16,24 @@ var DefaultMouseDoubleClickInterval = 500 * time.Millisecond
 type MouseButton int16
 
 const (
-	MouseButtonNone      = MouseButton(tcell.ButtonNone)
-	MouseButtonLeft      = MouseButton(tcell.ButtonPrimary)
-	MouseButtonPrimary   = MouseButton(tcell.ButtonPrimary)
-	MouseButtonMiddle    = MouseButton(tcell.ButtonMiddle)
-	MouseButtonSecondary = MouseButton(tcell.ButtonSecondary)
-	MouseButtonRight     = MouseButton(tcell.ButtonSecondary)
-	MouseWheelUp         = MouseButton(tcell.WheelUp)
-	MouseWheelDown       = MouseButton(tcell.WheelDown)
-	MouseWheelLeft       = MouseButton(tcell.WheelLeft)
-	MouseWheelRight      = MouseButton(tcell.WheelRight)
-	MouseButtonBackward  = MouseButton(tcell.Button4)
-	MouseButtonForward   = MouseButton(tcell.Button5)
+	MouseButtonNone MouseButton = iota
+	MouseButtonPrimary
+	MouseButtonSecondary
+	MouseButtonMiddle
+	MouseButtonForward
+	MouseButtonBackward
+	MouseButtonLeft  = MouseButtonPrimary
+	MouseButtonRight = MouseButtonSecondary
 )
 
 var (
 	mouseButtonNames = []string{
 		"none",
 		"primary",
-		"primary",
+		"secondary",
 		"middle",
-		"secondary",
-		"secondary",
-		"wheel-up",
-		"wheel-down",
-		"wheel-left",
-		"wheel-right",
-		"backward",
 		"forward",
+		"backward",
 	}
 )
 
@@ -55,9 +43,7 @@ func (b MouseButton) String() string {
 
 // Pressable returns true if the button is pressable (i.e. clickable)
 func (b MouseButton) Pressable() bool {
-	return b == MouseButtonPrimary ||
-		b == MouseButtonMiddle ||
-		b == MouseButtonSecondary
+	return b != MouseButtonNone
 }
 
 // MouseEvent describes events received when a mouse moved, clicked or

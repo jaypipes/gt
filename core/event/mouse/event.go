@@ -61,10 +61,10 @@ func mouseButtonFromTCell(bm tcell.ButtonMask) types.MouseButton {
 		return types.MouseButtonSecondary
 	case bm&tcell.ButtonMiddle != 0:
 		return types.MouseButtonMiddle
-	case bm&tcell.WheelUp != 0:
-		return types.MouseWheelUp
-	case bm&tcell.WheelDown != 0:
-		return types.MouseWheelDown
+	case bm&tcell.Button4 != 0:
+		return types.MouseButtonForward
+	case bm&tcell.Button5 != 0:
+		return types.MouseButtonBackward
 	}
 	return types.MouseButtonNone
 }

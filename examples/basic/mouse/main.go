@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	textFormat           = "perform mouse actions on this box and see what happens\n\nhas focus? %t\n\n%s"
+	textFormat           = "perform mouse actions on this box and see what happens\n\nhas focus? %t\n\nlast mouse event:\n\n%s"
 	onHoverTextFormat    = "hovering (pos: %s)"
 	onClickTextFormat    = "click (pos: %s double-click? %t button: %s)"
 	onDragMoveTextFormat = "drag move (start pos: %s current pos: %s)"
@@ -109,9 +109,9 @@ func main() {
 	d.OnMouseDragMove(
 		func(ctx context.Context, ev gt.MouseDragEvent) {
 			lastEventText = fmt.Sprintf(
-				// The MouseDragEvent.Start() returns the MouseEvent associated
-				// with when the user originally pressed a mouse button and
-				// began to drag the mouse.
+				// The MouseDragEvent.Start() returns the MouseEvent when the
+				// user originally pressed a mouse button and began to drag the
+				// mouse.
 				//
 				// The MouseDragEvent.Position() returns the current position
 				// of the mouse.
@@ -123,9 +123,9 @@ func main() {
 	d.OnMouseDragStop(
 		func(ctx context.Context, ev gt.MouseDragEvent) {
 			lastEventText = fmt.Sprintf(
-				// The MouseDragEvent.Start() returns the MouseEvent associated
-				// with when the user originally pressed a mouse button and
-				// began to drag the mouse.
+				// The MouseDragEvent.Start() returns the MouseEvent when the
+				// user originally pressed a mouse button and began to drag the
+				// mouse.
 				//
 				// The MouseDragEvent.Position() returns the position of the
 				// mouse when the user released the mouse button.

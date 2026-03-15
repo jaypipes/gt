@@ -415,7 +415,7 @@ func (a *Application) handleMouseEvent(
 			}
 		}
 	case buttonWasDown && !buttonNowDown:
-		if !downMoved && a.mouseDragged && target != nil {
+		if a.mouseDragged && target != nil {
 			// mouse drag operation has stopped.
 			de := mevent.NewDragEvent(ev, a.mouseDownEvent)
 			target.MouseDragStop(ctx, de)
