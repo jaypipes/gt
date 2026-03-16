@@ -3,6 +3,7 @@ package tabgroup
 import (
 	"context"
 
+	"github.com/jaypipes/gt/core/keypress"
 	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/element/vdiv"
 	"github.com/jaypipes/gt/types"
@@ -30,7 +31,7 @@ type Tab struct {
 	title string
 	// currentTabKeyPress is the key combination that should trigger setting
 	// this Tab as the current Tab in the TabGroup.
-	currentTabKeyPress string
+	currentTabKeyPress types.KeyPress
 	// keyPressMap contains key press combination callbacks registered for the
 	// Tab.
 	keyPressMap types.KeyPressMap
@@ -75,20 +76,23 @@ func (t *Tab) AppendContent(content types.Node) *Tab {
 
 // SetCurrentTabKeyPress sets the key combination that should trigger setting
 // this Tab as the current Tab in the TabGroup.
-func (t *Tab) SetCurrentTabKeyPress(key string) {
-	t.currentTabKeyPress = key
+//
+// The keypress combination can be a string -- e.g. "Ctrl+C", "Esc" -- or a
+// [tcell.Key] code -- e.g. tcell.KeyCtrlC, KeyEscape.
+func (t *Tab) SetCurrentTabKeyPress(subject any) {
+	t.currentTabKeyPress = keypress.New(subject)
 }
 
 // SetCurrentTabKeyPress sets the key combination that should trigger setting
 // this Tab as the current Tab in the TabGroup and returns the Tab.
-func (t *Tab) WithCurrentTabKeyPress(key string) *Tab {
-	t.SetCurrentTabKeyPress(key)
+func (t *Tab) WithCurrentTabKeyPress(subject string) *Tab {
+	t.SetCurrentTabKeyPress(subject)
 	return t
 }
 
 // CurrentTabKeyPress returns the key combination that triggers setting this
 // Tab as the current Tab in the TabGroup
-func (t *Tab) CurrentTabKeyPress() string {
+func (t *Tab) CurrentTabKeyPress() types.KeyPress {
 	return t.currentTabKeyPress
 }
 

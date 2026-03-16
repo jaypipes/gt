@@ -5,6 +5,7 @@ import (
 	"io"
 	"sync"
 
+	"github.com/jaypipes/gt/core/key"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -18,15 +19,14 @@ type Controller struct {
 	sync.RWMutex
 	screen types.Screen
 
-	// keyPressMap contains the key press combination callbacks managed by the
-	// Controller.
-	keyPressMap types.KeyPressMap
-	// keyIntercept points to an io.Writer that receives all keyboard input
+	// keyMap contains the key combination callbacks managed by the Controller.
+	keyMap types.KeyMap
+	// inputIntercept points to an io.Writer that receives all keyboard input
 	// after TrapKeyPressWithEscape has been called.
-	keyIntercept io.Writer
-	// keyEscape is the key press combination that will trigger the interceptor
+	inputIntercept io.Writer
+	// keyEscape is the key combination that will trigger the interceptor
 	// to be removed.
-	keyEscape string
+	keyEscape types.Key
 }
 
 // Screen returns the [types.Screen] controlled by the Controller.
@@ -43,19 +43,20 @@ func (c *Controller) HandleKeyPress(
 	c.Lock()
 	defer c.Unlock()
 
-	if c.keyEscape != "" && ev.MatchAny(c.keyEscape) {
-		c.keyEscape = ""
-		c.keyIntercept = nil
+	if c.keyEscape != nil && ev.Matches(c.keyEscape) {
+		c.keyEscape = nil
+		c.inputIntercept = nil
 		return true
 	}
 
-	if c.keyIntercept != nil {
-		c.keyIntercept.Write([]byte(ev.Printable()))
+	if c.inputIntercept != nil {
+		s := string(ev.Key().Code())
+		c.inputIntercept.Write([]byte(s))
 		return true
 	}
 
-	for kp, cb := range c.keyPressMap {
-		if ev.MatchAny(kp) {
+	for kp, cb := range c.keyMap {
+		if ev.Matches(kp) {
 			cb(ctx)
 			return true
 		}
@@ -63,33 +64,35 @@ func (c *Controller) HandleKeyPress(
 	return false
 }
 
-// SetKeyPressMap sets the Controller's map of key press combinations to
+// SetKeyMap sets the Controller's map of key press combinations to
 // callbacks that execute when that key press combination is typed.
-func (c *Controller) SetKeyPressMap(kp types.KeyPressMap) {
+func (c *Controller) SetKeyMap(kp types.KeyMap) {
 	c.Lock()
 	defer c.Unlock()
-	c.keyPressMap = kp
+	c.keyMap = kp
 }
 
-// InterceptKeyPress signals the Controller to trap all key press events and
+// InterceptKey signals the Controller to trap all key press events and
 // write all graphemes in key press events to the supplied io.Writer. This
 // method allows elements to need to take input from the user when they have
 // the focus to prevent keyboard shortcuts from interfering with the input
 // stream.
-func (c *Controller) InterceptKeyPress(escape string, w io.Writer) {
+//
+// escape can be a string, tcell.Key or types.Key.
+func (c *Controller) InterceptKey(escape any, w io.Writer) {
 	c.Lock()
 	defer c.Unlock()
-	c.keyIntercept = w
-	c.keyEscape = escape
+	c.inputIntercept = w
+	c.keyEscape = key.New(escape)
 }
 
-// RestoreKeyPress signals the Controller to restore the key press map from
+// RestoreKey signals the Controller to restore the key press map from
 // before it was trapped. This allows elements that lose the focus to release
 // any hold they had on the key press events.
-func (c *Controller) RestoreKeyPress() {
+func (c *Controller) RestoreKey() {
 	c.Lock()
 	defer c.Unlock()
 
-	c.keyEscape = ""
-	c.keyIntercept = nil
+	c.keyEscape = nil
+	c.inputIntercept = nil
 }

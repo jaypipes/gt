@@ -14,7 +14,6 @@ type (
 	Point     = image.Point
 
 	Screen         = tcell.Screen
-	Key            = tcell.Key
 	CursorStyle    = tcell.CursorStyle
 	UnderlineStyle = tcell.UnderlineStyle
 )

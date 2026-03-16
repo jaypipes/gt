@@ -25,7 +25,7 @@ type Event struct {
 func (e *Event) String() string {
 	button := e.button.String()
 	pos := e.pos.String()
-	mods := e.KeyModifiers().String()
+	mods := e.Modifiers().String()
 	return fmt.Sprintf(
 		"mouse:%s%s@%s",
 		button, mods, pos,

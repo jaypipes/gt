@@ -13,9 +13,10 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
-	kpevent "github.com/jaypipes/gt/core/event/keypress"
+	kevent "github.com/jaypipes/gt/core/event/key"
 	mevent "github.com/jaypipes/gt/core/event/mouse"
 	sevent "github.com/jaypipes/gt/core/event/scroll"
+	"github.com/jaypipes/gt/core/key"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/view"
 	"github.com/jaypipes/gt/types"
@@ -24,6 +25,10 @@ import (
 const (
 	defaultEventQueueSize  = 50
 	defaultDrawMinInterval = 50 * time.Millisecond
+)
+
+var (
+	defaultExitKey = key.New(tcell.KeyCtrlC)
 )
 
 // New returns a new Application.
@@ -40,10 +45,11 @@ func New(
 	}
 	c := newController(s)
 	return &Application{
-		screen:      s,
-		controller:  c,
-		views:       map[string]*view.View{},
-		keyPressMap: types.KeyPressMap{},
+		screen:     s,
+		controller: c,
+		exitKeys:   []types.Key{defaultExitKey},
+		views:      map[string]*view.View{},
+		keyMap:     types.KeyMap{},
 	}
 }
 
@@ -71,9 +77,16 @@ type Application struct {
 	// curView is the ID of the currently active (displayed) View.
 	curView string
 
-	// keyPressMap contains key press combination callbacks registered for the
+	// exitKeys contains the supplied exit key combinations. These
+	// key combinations are always evaluated first when a key event
+	// is received by the Application.
+	//
+	// If no exit key combinations are set for the Application, it
+	// defaults to "Ctrl+C".
+	exitKeys []types.Key
+	// keyMap contains key press combination callbacks registered for the
 	// Application itself -- i.e. global key press callbacks.
-	keyPressMap types.KeyPressMap
+	keyMap types.KeyMap
 
 	// mouseEnabled is true if we're trapping mouse events in the terminal.
 	mouseEnabled bool
@@ -186,61 +199,6 @@ func (a *Application) SetBorderBackgroundColor(c types.Color) *Application {
 	return a
 }
 
-// setFocus sets the currently-focused thing and calls Focus(false) on the
-// previously-focused thing, returning whether there was a change in focus.
-func (a *Application) setFocus(ctx context.Context, f types.Focusable) bool {
-	if a.focused != nil {
-		if f == nil {
-			a.focused.SetFocus(ctx, false)
-			a.focused = nil
-			return true
-		}
-		if f.HasFocus() {
-			// already has the focus, no need to do anything...
-			return false
-		}
-		a.focused.SetFocus(ctx, false)
-	} else {
-		if f == nil {
-			return false
-		}
-	}
-	if f != nil {
-		f.SetFocus(ctx, true)
-	}
-	a.focused = f
-	return true
-}
-
-// setHover sets the currently-hovered thing and calls MouseLoseHover() on the
-// previously-hovered thing if the hovered thing has changed.
-func (a *Application) setHover(
-	ctx context.Context,
-	m types.MouseEventHandler,
-	ev types.MouseEvent,
-) {
-	if a.hovered != nil && a.hovered != m {
-		a.hovered.MouseLoseHover(ctx)
-	}
-	if m != nil {
-		m.MouseHover(ctx, ev)
-	}
-	a.hovered = m
-}
-
-// KeyPressMap returns the Application's *global* map of key press
-// combination strings to callbacks that will execute when that key press
-// combination is entered.
-func (a *Application) KeyPressMap() types.KeyPressMap {
-	return a.keyPressMap
-}
-
-// OnKeyPress registers an Application-level (global)  callback to execute
-// upon a key press combination.
-func (a *Application) OnKeyPress(key string, cb types.EventCallback) {
-	a.keyPressMap[key] = cb
-}
-
 // Start starts up the Application and its event loop, blocking until the event
 // loop is closed.
 func (a *Application) Start(ctx context.Context) error {
@@ -259,8 +217,8 @@ func (a *Application) Start(ctx context.Context) error {
 	if a.title != "" {
 		s.SetTitle(a.title)
 	}
-	keyMap := a.buildKeyPressMap()
-	a.controller.SetKeyPressMap(keyMap)
+	keyMap := a.buildKeyMap(ctx)
+	a.controller.SetKeyMap(keyMap)
 
 	if a.mouseEnabled {
 		s.EnableMouse()
@@ -316,24 +274,22 @@ loop:
 			if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC {
 				break loop
 			}
-			kev := kpevent.New(kpevent.WithTCell(ev))
+			kev := kevent.New(kevent.WithTCell(ev))
 			if c.HandleKeyPress(ctx, kev) {
 				a.draw(ctx)
 				// rebuild the key map since we may have changed views.
-				keyMap = a.buildKeyPressMap()
-				c.SetKeyPressMap(keyMap)
+				keyMap = a.buildKeyMap(ctx)
+				c.SetKeyMap(keyMap)
+			} else {
+				a.handleKeyPressEvent(ctx, kev)
 			}
 		case *tcell.EventMouse:
 			sev := sevent.New(sevent.WithTCell(ev))
 			if sev.Direction() != types.ScrollDirectionNone {
 				a.handleScrollEvent(ctx, sev)
-				a.draw(ctx)
 			} else {
 				mev := mevent.New(mevent.WithTCell(ev)) //, a.lastMouseEvent, a.mouseDownEvent)
-				redraw := a.handleMouseEvent(ctx, mev)
-				if redraw {
-					a.draw(ctx)
-				}
+				a.handleMouseEvent(ctx, mev)
 			}
 		case *tcell.EventError:
 			return ev
@@ -341,194 +297,6 @@ loop:
 	}
 
 	return nil
-}
-
-// handleScrollEvent fires a OnScroll event
-// and executes the appropriate mouse event handler for the target element.
-// The method returns a bool indicating whether the screen should be redrawn.
-func (a *Application) handleScrollEvent(
-	ctx context.Context,
-	ev types.ScrollEvent,
-) {
-	// We determine if the mouse is over a thing that can handle scroll events.
-	// If the mouse is over something that can handle mouse events and is not
-	// disabled, we will fire the OnScroll event.
-	pos := ev.Position()
-	v := a.CurrentView()
-	node := v.AtPoint(pos)
-	if node != nil {
-		el, ok := node.(types.Element)
-		if ok && !el.Disabled() {
-			handler, ok := el.(types.ScrollEventHandler)
-			if ok {
-				handler.Scroll(ctx, ev)
-			}
-		}
-	}
-}
-
-// handleMouseEvent determines what logical action the user took with the mouse
-// and executes the appropriate mouse event handler for the target element.
-// The method returns a bool indicating whether the screen should be redrawn.
-func (a *Application) handleMouseEvent(
-	ctx context.Context,
-	ev types.MouseEvent,
-) bool {
-	// We determine if the mouse is over a thing that can handle to mouse
-	// events. If the mouse is over something that can handle mouse events and
-	// is not disabled, we will fire the OnMouseHover event if the thing does
-	// not have the focus.
-	var target types.MouseEventHandler
-
-	pos := ev.Position()
-	v := a.CurrentView()
-	node := v.AtPoint(pos)
-	redraw := false
-	if node != nil {
-		el, ok := node.(types.Element)
-		if ok && !el.Disabled() {
-			target = el.(types.MouseEventHandler)
-		}
-	}
-
-	// We determine what logical mouse action the user has taken by
-	// examining our stored state of previous mouse events.
-	x, y := pos.X, pos.Y
-	button := ev.Button()
-	buttonWasDown := a.mouseDownEvent != nil
-	buttonNowDown := button.Pressable()
-
-	downX, downY := x, y
-	if buttonWasDown {
-		downPos := a.mouseDownEvent.Position()
-		downX, downY = downPos.X, downPos.Y
-	}
-
-	downMoved := x != downX || y != downY
-
-	switch {
-	case buttonWasDown && buttonNowDown && downMoved:
-		// mouse has moved while a button was pressed -- i.e. a drag operation.
-		if target != nil {
-			de := mevent.NewDragEvent(ev, a.mouseDownEvent)
-			target.MouseDragMove(ctx, de)
-			redraw = true
-		}
-		a.mouseDragged = true
-	case !buttonWasDown && buttonNowDown && !downMoved && !a.mouseDragged:
-		// mouse was clicked or double-clicked.
-		a.mouseDownEvent = ev
-		if a.lastMouseClickTime.Add(types.DefaultMouseDoubleClickInterval).Before(time.Now()) {
-			a.lastMouseClickTime = time.Now()
-			if target != nil {
-				ce := mevent.NewClickEvent(ev, false)
-				target.MouseClick(ctx, ce)
-				a.setFocus(ctx, target.(types.Focusable))
-				redraw = true
-			} else {
-				// mouse was clicked on a part of the screen represented by no
-				// element, so we remove the focus from whatever element had
-				// the focus.
-				redraw = a.setFocus(ctx, nil)
-			}
-		} else {
-			a.lastMouseClickTime = time.Time{}
-			if target != nil {
-				ce := mevent.NewClickEvent(ev, true)
-				target.MouseClick(ctx, ce)
-				a.setFocus(ctx, target.(types.Focusable))
-				redraw = true
-			} else {
-				// mouse was clicked on a part of the screen represented by no
-				// element, so we remove the focus from whatever element had
-				// the focus.
-				redraw = a.setFocus(ctx, nil)
-			}
-		}
-	case buttonWasDown && !buttonNowDown:
-		if a.mouseDragged && target != nil {
-			// mouse drag operation has stopped.
-			de := mevent.NewDragEvent(ev, a.mouseDownEvent)
-			target.MouseDragStop(ctx, de)
-			redraw = true
-		}
-		a.mouseDownEvent = nil
-		a.mouseDragged = false
-	case !buttonWasDown && !buttonNowDown:
-		// mouse move.
-		if target != nil {
-			if !target.(types.Focusable).HasFocus() {
-				a.setHover(ctx, target, ev)
-			}
-		} else {
-			a.setHover(ctx, nil, nil)
-		}
-		redraw = true
-	}
-
-	return redraw
-}
-
-// buildKeyPressMap builds the Application's outermost map of key press
-// combinations to callback functions to execute when those key press
-// combinations are entered.
-//
-// The outermost map will always be the "current view" key press combinations
-// that the Application's registered Views have along with any key press
-// combinations registered with the Application itself and any key press
-// combinations that the *current* View contains.
-func (a *Application) buildKeyPressMap() types.KeyPressMap {
-	ctx := context.TODO()
-	res := types.KeyPressMap{}
-
-	// copy in our global key press callbacks
-	for k, cb := range a.keyPressMap {
-		res[k] = cb
-	}
-	globalKPs := lo.Keys(a.keyPressMap)
-
-	// now add our "current view" key press callbacks
-	for viewID, view := range a.views {
-		currentViewKP := view.CurrentViewKeyPress()
-		if currentViewKP != "" {
-			if lo.Contains(globalKPs, currentViewKP) {
-				gtlog.Warn(
-					ctx,
-					"current view key press combination %q for view %q "+
-						"shadows global key press combination",
-					currentViewKP, viewID,
-				)
-			}
-			res[currentViewKP] = func(_ context.Context) {
-				a.SetCurrentView(viewID)
-			}
-		}
-	}
-
-	// finally, add all the current View's key press callbacks
-	curView := a.views[a.curView]
-	curViewKPMap := curView.KeyPressMap()
-	if len(curViewKPMap) > 0 {
-		appKPs := lo.Keys(res)
-		for k, cb := range curViewKPMap {
-			if lo.Contains(appKPs, k) {
-				gtlog.Warn(
-					ctx,
-					"view key press combination %q for view %q "+
-						"shadows application key press combination",
-					k, curView.ID(),
-				)
-			}
-			res[k] = cb
-		}
-	}
-
-	gtlog.Debug(
-		ctx,
-		"Application.buildKeyPressMap: built map for combinations %v",
-		lo.Keys(res),
-	)
-	return res
 }
 
 // draw renders the Application's active View to the Terminal screen.

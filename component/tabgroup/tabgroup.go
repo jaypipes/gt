@@ -90,7 +90,7 @@ func (g *TabGroup) KeyPressMap() types.KeyPressMap {
 	// add our "current tab" key press callbacks
 	for _, tab := range g.tabs {
 		currentTabKP := tab.CurrentTabKeyPress()
-		if currentTabKP != "" {
+		if currentTabKP != nil {
 			res[currentTabKP] = func(_ context.Context) {
 				g.SetCurrentTab(tab.ID())
 			}

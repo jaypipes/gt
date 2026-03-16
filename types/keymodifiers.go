@@ -2,29 +2,33 @@ package types
 
 import (
 	"strings"
-
-	"github.com/gdamore/tcell/v3"
 )
 
 // KeyModifiers is a bitmask for modifier keys
-type KeyModifiers tcell.ModMask
+type KeyModifiers uint8
 
-func (mods KeyModifiers) String() string {
-	m := tcell.ModMask(mods)
-	if m == tcell.ModNone {
+const (
+	KeyModifierNone  KeyModifiers = 0
+	KeyModifierShift              = 1 << iota
+	KeyModifierCtrl
+	KeyModifierAlt
+)
+
+func (m KeyModifiers) String() string {
+	if m == KeyModifierNone {
 		return ""
 	}
-	res := []string{}
-	if m&tcell.ModCtrl != 0 {
-		res = append(res, "ctrl")
+	mods := []string{}
+	if m&KeyModifierShift != 0 {
+		mods = append(mods, "shift")
 	}
-	if m&tcell.ModShift != 0 {
-		res = append(res, "shift")
+	if m&KeyModifierCtrl != 0 {
+		mods = append(mods, "ctrl")
 	}
-	if m&tcell.ModAlt != 0 {
-		res = append(res, "alt")
+	if m&KeyModifierAlt != 0 {
+		mods = append(mods, "alt")
 	}
-	return ":" + strings.Join(res, "+")
+	return ":" + strings.Join(mods, "+")
 }
 
 var (

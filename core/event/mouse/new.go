@@ -34,7 +34,7 @@ func WithTCell(
 			X: x, Y: y,
 		}
 		mods := te.Modifiers()
-		e.SetKeyModifiers(types.KeyModifiers(mods))
+		e.SetModifiers(types.KeyModifiers(mods))
 		e.SetWhen(te.When())
 		e.SetPosition(pos)
 		e.SetButton(mouseButtonFromTCell(te.Buttons()))

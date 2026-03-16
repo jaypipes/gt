@@ -1,9 +1,10 @@
-package keypress
+package key
 
 import (
 	"github.com/gdamore/tcell/v3"
 
 	"github.com/jaypipes/gt/core/event"
+	"github.com/jaypipes/gt/core/key"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -29,10 +30,8 @@ func WithTCell(
 	te *tcell.EventKey,
 ) types.KeyPressEventWithOption {
 	return func(e types.KeyPressEvent) {
-		mods := te.Modifiers()
-		e.SetKeyModifiers(types.KeyModifiers(mods))
-		e.SetKey(te.Key())
-		e.SetStr(te.Str())
+		k := key.New(te)
+		e.SetKey(k)
 		e.SetWhen(te.When())
 	}
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/samber/lo"
 
+	"github.com/jaypipes/gt/core/key"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/render"
 	"github.com/jaypipes/gt/element"
@@ -31,12 +32,11 @@ func New(
 // rendered to a Screen.
 type View struct {
 	vdiv.VDiv
-	// currentViewKeyPress is the key combination that should trigger setting
+	// currentViewKey is the key combination that should trigger setting
 	// this View as the current View in the Application.
-	currentViewKeyPress string
-	// keyPressMap stores the View's map of key press combinations to
-	// callbacks.
-	keyPressMap types.KeyPressMap
+	currentViewKey types.Key
+	// keyMap stores the View's map of key press combinations to callbacks.
+	keyMap types.KeyMap
 	// controller is the controller for this View
 	controller types.Controller
 }
@@ -52,43 +52,49 @@ func (v *View) WithBounds(bounds types.Rectangle) *View {
 	return v
 }
 
-// SetCurrentViewKeyPress sets the key combination that should trigger setting this
+// SetCurrentViewKey sets the key combination that should trigger setting this
 // View as the current View in the Application.
-func (v *View) SetCurrentViewKeyPress(key string) {
-	v.currentViewKeyPress = key
+//
+// The keypress combination can be a string -- e.g. "Ctrl+C", "Esc" -- or a
+// [tcell.Key] code -- e.g. tcell.KeyCtrlC, tcell.KeyEscape.
+func (v *View) SetCurrentViewKey(subject any) {
+	v.currentViewKey = key.New(subject)
 }
 
-// SetCurrentViewKeyPress sets the key combination that should trigger setting this
+// WithCurrentViewKey sets the key combination that should trigger setting this
 // View as the current View in the Application and returns the View.
-func (v *View) WithCurrentViewKeyPress(key string) *View {
-	v.SetCurrentViewKeyPress(key)
+//
+// The keypress combination can be a string -- e.g. "Ctrl+C", "Esc" -- or a
+// [tcell.Key] code -- e.g. tcell.KeyCtrlC, KeyEscape.
+func (v *View) WithCurrentViewKey(kp string) *View {
+	v.SetCurrentViewKey(kp)
 	return v
 }
 
-// CurrentViewKeyPress returns the key combination that triggers setting this
-// View as the current View in the Application
-func (v *View) CurrentViewKeyPress() string {
-	return v.currentViewKeyPress
+// CurrentViewKey returns the key combination that triggers setting this View
+// as the current View in the Application
+func (v *View) CurrentViewKey() types.Key {
+	return v.currentViewKey
 }
 
-// KeyPressMap returns the View's map of key press combination strings to
+// KeyMap returns the View's map of key press combination strings to
 // callbacks that will execute when that key press combination is entered.
-func (v *View) KeyPressMap() types.KeyPressMap {
+func (v *View) KeyMap() types.KeyMap {
 	ctx := context.TODO()
-	res := types.KeyPressMap{}
+	res := types.KeyMap{}
 
 	// copy in our view-scoped key press callbacks
-	for k, cb := range v.keyPressMap {
+	for k, cb := range v.keyMap {
 		res[k] = cb
 	}
-	viewKPs := lo.Keys(v.keyPressMap)
+	viewKPs := lo.Keys(v.keyMap)
 
-	// now add all child key press maps
+	// now add all child key maps
 	children := v.Children()
 	for _, child := range children {
-		kp, ok := child.(types.HasKeyPressMap)
+		kp, ok := child.(types.HasKeyMap)
 		if ok {
-			kpMap := kp.KeyPressMap()
+			kpMap := kp.KeyMap()
 			for k, cb := range kpMap {
 				if lo.Contains(viewKPs, k) {
 					gtlog.Warn(
@@ -116,8 +122,12 @@ func (v *View) KeyPressMap() types.KeyPressMap {
 
 // OnKeyPress registers an View-level callback to execute upon a key press
 // combination.
-func (v *View) OnKeyPress(key string, cb types.EventCallback) {
-	v.keyPressMap[key] = cb
+//
+// The keypress combinations can be strings -- e.g. "Ctrl+C", "Esc" -- or
+// [tcell.Key] codes -- e.g. tcell.KeyCtrlC, KeyEscape.
+func (v *View) OnKeyPress(subject any, cb types.EventCallback) {
+	k := key.New(subject)
+	v.keyMap[k] = cb
 }
 
 // SetContent sets the thing that will be rendered in the View.

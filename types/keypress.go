@@ -1,40 +1,34 @@
 package types
 
-// KeyPressMap maps key press combination strings to callbacks that will
-// execute upon that key press.
-type KeyPressMap map[string]EventCallback
-
-// HasKeyPressMap describes something that has a map of key press combinations
-// and callbacks associated with it.
-type HasKeyPressMap interface {
-	// KeyPressMap returns the KeyPressable's map of key press combination
-	// strings to callbacks that will execute when that key press combination
-	// is entered.
-	KeyPressMap() KeyPressMap
-}
+import "context"
 
 // KeyPressEvent describes events received when a key press occurs.
 type KeyPressEvent interface {
 	Event
-	KeyModifiable
-	// Key returns the virtual key code
+	// Key returns the key combination that was pressed
 	Key() Key
-	// SetKey sets the virtual key code
+	// SetKey sets the key combination that was pressed.
 	SetKey(Key)
-	// SetStr sets the string representation of the key that was pressed. Only
-	// applicable when Key() == tcell.KeyRune.
-	SetStr(string)
-	// Str returns the string representation of the key that was pressed. Only
-	// applicable when Key() == tcell.KeyRune.
-	Str() string
-	// Printable returns the printable character(s) associated with the key
-	// press event.
-	Printable() string
-	// MatchAny returns true if the KeyPressEvent matches for any of the
-	// keypress strings or key codes supplied.
-	MatchAny(...any) bool
+	// Matches returns true if the KeyPressEvent matches for any of the
+	// supplied Keys.
+	Matches(...Key) bool
 }
 
-// KeyPressEventWithOption describes an optional varg parameter to
-// [core.event.keypress.New] that modifies the returned KeyPressEvent.
+// KeyEventWithOption describes an optional varg parameter to
+// [core.event.key.New] that modifies the returned KeyEvent.
 type KeyPressEventWithOption func(KeyPressEvent)
+
+// KeyEventCallback is the function signature for callbacks executed on key
+// combination actuation. The callback returns whether the event was
+// consumed/handled.
+type KeyPressEventCallback func(context.Context, KeyPressEvent) bool
+
+// KeyPressHandler describes something that can have key press combinations and
+// callbacks associated with it.
+type KeyPressEventHandler interface {
+	// KeyPress handles key press events. It returns true if the handler
+	// consumed/handled the event, false if not.
+	KeyPress(context.Context, KeyPressEvent) bool
+	// OnKeyPress registers a callback to execute upon a key press combination.
+	OnKeyPress(KeyPressEventCallback)
+}

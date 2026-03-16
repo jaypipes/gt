@@ -16,6 +16,7 @@ type Element interface {
 	Controllable
 	Focusable
 	Identifiable
+	KeyPressEventHandler
 	MouseEventHandler
 	Node
 	Plottable
