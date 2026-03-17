@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/gdamore/tcell/v3"
 
@@ -23,13 +24,18 @@ type Key struct {
 func (k *Key) String() string {
 	mods := k.Modifiers().String()
 	if len(mods) > 0 {
-		mods = strings.TrimPrefix(mods, ":") + "+"
+		mods += "+"
 	}
-	if k.code < types.KeyCode(tcell.KeyRune) {
+	switch {
+	case k.code < types.KeyCode(tcell.KeyRune):
 		named, ok := tcell.KeyNames[tcell.Key(k.code)]
 		if ok {
 			return mods + strings.ToLower(named)
 		}
+	case k.code > types.KeyCodeNonPrintableStart &&
+		k.code < types.KeyCodeNonPrintableEnd:
+		return nonPrintableKeyCodeToString[k.code]
+	default:
 	}
 	return mods + strconv.QuoteRune(rune(k.code))
 }
@@ -37,6 +43,11 @@ func (k *Key) String() string {
 // Code returns the types.KeyCode for the Key.
 func (k *Key) Code() types.KeyCode {
 	return k.code
+}
+
+// Printable returns whether the Key can be directly printed to the Screen.
+func (k *Key) Printable() bool {
+	return unicode.IsPrint(rune(k.code))
 }
 
 // Equal returns true if the Key matches the other Key.

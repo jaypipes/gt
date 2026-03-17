@@ -7,6 +7,7 @@ import (
 	"github.com/jaypipes/gt/core/application"
 	"github.com/jaypipes/gt/core/border"
 	gtcontext "github.com/jaypipes/gt/core/context"
+	"github.com/jaypipes/gt/core/key"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/view"
 	"github.com/jaypipes/gt/element"
@@ -34,6 +35,20 @@ type View = view.View
 
 var (
 	NewView = view.New
+)
+
+type Key = types.Key
+type KeyModifiers = types.KeyModifiers
+
+var (
+	NewKey = key.New
+)
+
+const (
+	KeyModifierNone  = types.KeyModifierNone
+	KeyModifierShift = types.KeyModifierShift
+	KeyModifierCtrl  = types.KeyModifierCtrl
+	KeyModifierAlt   = types.KeyModifierAlt
 )
 
 type Event = types.Event

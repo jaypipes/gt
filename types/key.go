@@ -10,8 +10,10 @@ import (
 // Note that KeyCode is *NOT* equivalent to tcell.Key. tcell.Key values are a
 // custom int16 code for common non-printable characters, with tcell.KeyRune
 // (int16 value of 256) representing all printable ASCII characters. KeyCode,
-// on the other hand, has individual values for all printable ASCII
-// characters.
+// on the other hand, has individual values for all printable ASCII characters
+// and non-printable keys (e.g. "F1" or "PrintScreen") are assigned a Unicode
+// code point in the Basic Multilingual Plane's Private Use Area (U+E000
+// through U+F8FF).
 //
 // The `gt.core.key.New()` function can translate a tcell.Key, a string or a
 // *tcell.EventKey object into a properly-formed gt.Key object with a
@@ -22,8 +24,10 @@ type KeyCode int32
 type Key interface {
 	fmt.Stringer
 	KeyModifiable
-	// Code returns the Unicode code point for the key.
+	// Code returns the Unicode code point for the Key.
 	Code() KeyCode
+	// Printable returns true if the Key can be directly printed to the Screen.
+	Printable() bool
 	// Equal returns true if the Key matches the supplied other Key.
 	Equal(Key) bool
 }
@@ -40,3 +44,103 @@ type HasKeyMap interface {
 	// is entered.
 	KeyMap() KeyMap
 }
+
+// Non-printable keys (e.g. "F1" or "Print") are assigned a Unicode code point
+// in the Basic Multilingual Plane's Private Use Area (U+E000 through U+F8FF).
+// That way, we can do simple int32 comparisons and use the String() method to
+// return a printable representation of the pressed key combination.
+const (
+	KeyCodeNonPrintableStart KeyCode = iota + 57344 // 57344 == U+E000
+	KeyCodeUp
+	KeyCodeDown
+	KeyCodeRight
+	KeyCodeLeft
+	KeyCodeUpLeft
+	KeyCodeUpRight
+	KeyCodeDownLeft
+	KeyCodeDownRight
+	KeyCodeCenter
+	KeyCodePgUp
+	KeyCodePgDn
+	KeyCodeHome
+	KeyCodeEnd
+	KeyCodeInsert
+	KeyCodeDelete
+	KeyCodeHelp
+	KeyCodeExit
+	KeyCodeClear
+	KeyCodeCancel
+	KeyCodePrint
+	KeyCodePause
+	KeyCodeBacktab
+	KeyCodeF1
+	KeyCodeF2
+	KeyCodeF3
+	KeyCodeF4
+	KeyCodeF5
+	KeyCodeF6
+	KeyCodeF7
+	KeyCodeF8
+	KeyCodeF9
+	KeyCodeF10
+	KeyCodeF11
+	KeyCodeF12
+	KeyCodeF13
+	KeyCodeF14
+	KeyCodeF15
+	KeyCodeF16
+	KeyCodeF17
+	KeyCodeF18
+	KeyCodeF19
+	KeyCodeF20
+	KeyCodeF21
+	KeyCodeF22
+	KeyCodeF23
+	KeyCodeF24
+	KeyCodeF25
+	KeyCodeF26
+	KeyCodeF27
+	KeyCodeF28
+	KeyCodeF29
+	KeyCodeF30
+	KeyCodeF31
+	KeyCodeF32
+	KeyCodeF33
+	KeyCodeF34
+	KeyCodeF35
+	KeyCodeF36
+	KeyCodeF37
+	KeyCodeF38
+	KeyCodeF39
+	KeyCodeF40
+	KeyCodeF41
+	KeyCodeF42
+	KeyCodeF43
+	KeyCodeF44
+	KeyCodeF45
+	KeyCodeF46
+	KeyCodeF47
+	KeyCodeF48
+	KeyCodeF49
+	KeyCodeF50
+	KeyCodeF51
+	KeyCodeF52
+	KeyCodeF53
+	KeyCodeF54
+	KeyCodeF55
+	KeyCodeF56
+	KeyCodeF57
+	KeyCodeF58
+	KeyCodeF59
+	KeyCodeF60
+	KeyCodeF61
+	KeyCodeF62
+	KeyCodeF63
+	KeyCodeF64
+	KeyCodeMenu
+	KeyCodeCapsLock
+	KeyCodeScrollLock
+	KeyCodeNumLock
+
+	KeyCodeNonPrintableEnd KeyCode = 63743 // 56374 == U+F8FF
+)

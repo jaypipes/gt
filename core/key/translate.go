@@ -36,26 +36,26 @@ func FromString(subject string) *Key {
 	}
 	parts := strings.Split(subject, "+")
 	numParts := len(parts)
-	mods := types.KeyModifiers(0)
 	switch {
 	case numParts > 1:
 		// modifiers were passed, e.g. "ctrl+alt+p"
 		finalKey := parts[numParts-1]
-		if lo.Contains(types.KeyModifierStrings, finalKey) {
+		if lo.Contains(keyModifierStrings, finalKey) {
 			// finalKey cannot be a modifier... ignore and return NUL.
 			return &Key{}
-		}
-		for _, modKey := range parts[0 : numParts-2] {
-			modIndex := lo.IndexOf(types.KeyModifierStrings, modKey)
-			if modIndex == -1 {
-				// modKey must be a modifier... ignore and return NUL.
-				return &Key{}
-			}
-			mods |= types.KeyModifiers(modIndex + 1)
 		}
 		if len(finalKey) != 1 {
 			// we only support a single character as the final key.
 			return &Key{}
+		}
+		mods := types.KeyModifiers(0)
+		for _, modKey := range parts[0 : numParts-2] {
+			mod, ok := stringToKeyModifier[modKey]
+			if !ok {
+				// modKey must be a modifier... ignore and return NUL.
+				return &Key{}
+			}
+			mods |= mod
 		}
 		k := &Key{
 			code: types.KeyCode([]rune(finalKey)[0]),
@@ -64,7 +64,7 @@ func FromString(subject string) *Key {
 		return k
 	case numParts == 1:
 		finalKey := parts[0]
-		if lo.Contains(types.KeyModifierStrings, finalKey) {
+		if lo.Contains(keyModifierStrings, finalKey) {
 			// finalKey cannot be a modifier... ignore and return NUL.
 			return &Key{}
 		}
@@ -81,6 +81,17 @@ func FromString(subject string) *Key {
 	}
 }
 
+var (
+	keyModifierStrings = []string{
+		"shift", "ctrl", "alt",
+	}
+	stringToKeyModifier = map[string]types.KeyModifiers{
+		"shift": types.KeyModifierShift,
+		"ctrl":  types.KeyModifierCtrl,
+		"alt":   types.KeyModifierAlt,
+	}
+)
+
 // tcellCodeFromString returns the [tcell.Key] representing a single keystroke.
 func tcellCodeFromString(subject string) tcell.Key {
 	named, ok := tcellKeyNameToCode[subject]
@@ -94,8 +105,11 @@ func tcellCodeFromString(subject string) tcell.Key {
 // that this only works for non-printable or control-key combination
 // [tcell.Key] values since tcell.KeyRune is used for all printable characters.
 func keyCodeFromTCellKey(subject tcell.Key) types.KeyCode {
-	if subject < tcell.KeyRune {
+	switch {
+	case subject < tcell.KeyRune:
 		return types.KeyCode(subject)
+	case subject > tcell.KeyRune && subject <= tcell.KeyNumLock:
+		return tcellKeyToNonPrintableKeyCode[subject]
 	}
 	return types.KeyCode(0)
 }

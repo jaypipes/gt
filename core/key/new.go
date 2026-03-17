@@ -1,8 +1,11 @@
 package key
 
 import (
+	"context"
+
 	"github.com/gdamore/tcell/v3"
 
+	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -19,13 +22,15 @@ func New(subject any) *Key {
 	case *tcell.EventKey:
 		var code types.KeyCode
 		tk := subject.Key()
-		if tk < tcell.KeyRune {
-			code = types.KeyCode(tk)
-		} else {
+		if tk == tcell.KeyRune {
 			s := subject.Str()
 			if len(s) == 1 {
 				code = types.KeyCode([]rune(s)[0])
 			}
+		} else {
+			ctx := context.TODO()
+			code = keyCodeFromTCellKey(tk)
+			gtlog.Warn(ctx, "!= tcell.KeyRune: key: %+v keycode: %+v", tk, code)
 		}
 		k := &Key{
 			code: code,

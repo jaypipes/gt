@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/lucasb-eyer/go-colorful"
 
@@ -13,12 +14,30 @@ import (
 )
 
 const (
-	textFormat           = "press some keys and see what happens\n\nlast event:\n\n%s"
-	onKeyPressTextFormat = "key pressed (modifiers: %s rune: %c)"
+	textFormat = `
+press some keys and see what happens
+
+== key pressed ==
+ %s
+
+== input ==
+
+ %q
+
+=========================================
+Ctrl-C: exit the app
+Alt-R:  clear the collected input string
+`
+	onKeyPressTextFormat = `
+modifiers: %s
+code: %0x
+string: %s
+`
 )
 
 var (
 	lastEventText = ""
+	input         strings.Builder
 )
 
 type myApp struct {
@@ -29,6 +48,7 @@ func content(e gt.Element) string {
 	return fmt.Sprintf(
 		textFormat,
 		lastEventText,
+		input.String(),
 	)
 }
 
@@ -55,6 +75,10 @@ func main() {
 	)
 	d.SetTextContent(content(d))
 
+	// Use the gt.NewKey function to return a gt.Key object that you can use to
+	// compare to the Key you receive from the gt.KeyPressEvent
+	altR := gt.NewKey("alt+r")
+
 	// You can take some action when a key is pressed. Use the OnKeyPress
 	// method to add a callback that will execute when any key is pressed. This
 	// callback receives a gt.KeyPressEvent object that you can use to examine
@@ -63,11 +87,30 @@ func main() {
 	d.OnKeyPress(
 		func(ctx context.Context, ev gt.KeyPressEvent) bool {
 			k := ev.Key()
+			// gt.Key.Code() returns the gt.KeyCode, which is the Unicode code
+			// point for the trapped key. This is the same as Go's rune type
+			// and so can be directly typecast to a rune() below.
+			code := k.Code()
+			// gt.Key.String() returns a string representation of the gt.Key,
+			// e.g. "ctrl+a" or "backspace" or "alt+pgup"
+			str := k.String()
+			// gt.Key.Modifiers() returns the gt.KeyModifiers for the Key.
+			// gt.KeyModifiers has a String() method returning a string
+			// representation of all enabled bits on the KeyModifiers bitmask.
+			mods := k.Modifiers()
 			lastEventText = fmt.Sprintf(
 				onKeyPressTextFormat,
-				k.Modifiers(),
-				k.Code(),
+				mods.String(),
+				code,
+				str,
 			)
+			if k.Equal(altR) {
+				input.Reset()
+			} else {
+				if mods.None() && k.Printable() {
+					input.WriteRune(rune(code))
+				}
+			}
 			d.SetTextContent(content(d))
 			return true
 		},
