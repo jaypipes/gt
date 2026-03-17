@@ -1,11 +1,8 @@
 package key
 
 import (
-	"context"
-
 	"github.com/gdamore/tcell/v3"
 
-	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
 )
 
@@ -28,9 +25,7 @@ func New(subject any) *Key {
 				code = types.KeyCode([]rune(s)[0])
 			}
 		} else {
-			ctx := context.TODO()
 			code = keyCodeFromTCellKey(tk)
-			gtlog.Warn(ctx, "!= tcell.KeyRune: key: %+v keycode: %+v", tk, code)
 		}
 		k := &Key{
 			code: code,

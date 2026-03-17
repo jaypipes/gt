@@ -3,7 +3,6 @@ package key
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"unicode"
 
 	"github.com/gdamore/tcell/v3"
@@ -30,7 +29,7 @@ func (k *Key) String() string {
 	case k.code < types.KeyCode(tcell.KeyRune):
 		named, ok := tcell.KeyNames[tcell.Key(k.code)]
 		if ok {
-			return mods + strings.ToLower(named)
+			return mods + named
 		}
 	case k.code > types.KeyCodeNonPrintableStart &&
 		k.code < types.KeyCodeNonPrintableEnd:

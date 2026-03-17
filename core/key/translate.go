@@ -49,7 +49,7 @@ func FromString(subject string) *Key {
 			return &Key{}
 		}
 		mods := types.KeyModifiers(0)
-		for _, modKey := range parts[0 : numParts-2] {
+		for _, modKey := range parts[0 : numParts-1] {
 			mod, ok := stringToKeyModifier[modKey]
 			if !ok {
 				// modKey must be a modifier... ignore and return NUL.

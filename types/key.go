@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+
+	"github.com/gdamore/tcell/v3"
 )
 
 // KeyCode represents the Unicode code point of the pressed key (rune is an
@@ -44,6 +46,13 @@ type HasKeyMap interface {
 	// is entered.
 	KeyMap() KeyMap
 }
+
+const (
+	KeyCodeBackspace KeyCode = KeyCode(tcell.KeyBackspace)
+	KeyCodeTab       KeyCode = KeyCode(tcell.KeyTab)
+	KeyCodeEscape    KeyCode = KeyCode(tcell.KeyEscape)
+	KeyCodeEnter     KeyCode = KeyCode(tcell.KeyEnter)
+)
 
 // Non-printable keys (e.g. "F1" or "Print") are assigned a Unicode code point
 // in the Basic Multilingual Plane's Private Use Area (U+E000 through U+F8FF).

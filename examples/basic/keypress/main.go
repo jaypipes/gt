@@ -52,6 +52,17 @@ func content(e gt.Element) string {
 	)
 }
 
+func removeLastRune() {
+	if input.Len() == 0 {
+		return
+	}
+	runes := []rune(input.String())
+	lastIndex := len(runes) - 1
+	runes = append(runes[:lastIndex], runes[lastIndex+1:]...)
+	input.Reset()
+	input.WriteString(string(runes))
+}
+
 func main() {
 	white, _ := colorful.Hex("#ffffff")
 	// create a new context.Context from environs variables
@@ -107,6 +118,9 @@ func main() {
 			if k.Equal(altR) {
 				input.Reset()
 			} else {
+				if mods.None() && code == gt.KeyCodeBackspace {
+					removeLastRune()
+				}
 				if mods.None() && k.Printable() {
 					input.WriteRune(rune(code))
 				}

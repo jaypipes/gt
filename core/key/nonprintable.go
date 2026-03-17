@@ -113,7 +113,7 @@ var nonPrintableKeyCodeToString = map[types.KeyCode]string{
 	types.KeyCodeDownRight:  "DownRight",
 	types.KeyCodeCenter:     "Center",
 	types.KeyCodePgUp:       "PgUp",
-	types.KeyCodePgDn:       "PgDown",
+	types.KeyCodePgDn:       "PgDn",
 	types.KeyCodeHome:       "Home",
 	types.KeyCodeEnd:        "End",
 	types.KeyCodeInsert:     "Insert",
