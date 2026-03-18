@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	tabSize    = 4
 	textFormat = `
 press some keys and see what happens
 
@@ -22,7 +23,7 @@ press some keys and see what happens
 
 == input ==
 
- %q
+ %s
 
 =========================================
 Ctrl-C: exit the app
@@ -30,7 +31,7 @@ Alt-R:  clear the collected input string
 `
 	onKeyPressTextFormat = `
 modifiers: %s
-code: %0x
+code: %#02x (%d)
 string: %s
 `
 )
@@ -112,17 +113,24 @@ func main() {
 			lastEventText = fmt.Sprintf(
 				onKeyPressTextFormat,
 				mods.String(),
-				code,
+				code, code,
 				str,
 			)
 			if k.Equal(altR) {
 				input.Reset()
 			} else {
-				if mods.None() && code == gt.KeyCodeBackspace {
-					removeLastRune()
-				}
-				if mods.None() && k.Printable() {
-					input.WriteRune(rune(code))
+				// Handle some special keys.
+				if mods.None() {
+					switch {
+					case code == gt.KeyCodeBackspace:
+						removeLastRune()
+					case code == gt.KeyCodeEnter:
+						input.WriteRune('\n')
+					case code == gt.KeyCodeTab:
+						input.WriteString(strings.Repeat(" ", tabSize))
+					case k.Printable():
+						input.WriteRune(rune(code))
+					}
 				}
 			}
 			d.SetTextContent(content(d))

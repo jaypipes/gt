@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	defaultExitKey = key.New(tcell.KeyCtrlC)
+	defaultExitKey = key.New("ctrl+c")
 )
 
 // New returns a new Application.
