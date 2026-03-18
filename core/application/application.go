@@ -271,10 +271,10 @@ loop:
 		case *tcell.EventResize:
 			s.Sync()
 		case *tcell.EventKey:
-			if ev.Key() == tcell.KeyEscape || ev.Key() == tcell.KeyCtrlC {
+			kev := kevent.New(kevent.WithTCell(ev))
+			if a.exitKeyPressed(kev) {
 				break loop
 			}
-			kev := kevent.New(kevent.WithTCell(ev))
 			if c.HandleKeyPress(ctx, kev) {
 				a.draw(ctx)
 				// rebuild the key map since we may have changed views.

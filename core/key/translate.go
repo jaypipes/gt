@@ -30,9 +30,7 @@ func FromString(subject string) *Key {
 	subject = strings.ToLower(subject)
 	// handle some special exceptions first...
 	if subject == "shift+tab" {
-		return &Key{
-			code: types.KeyCode(tcell.KeyBacktab),
-		}
+		return KeyBacktab
 	}
 	parts := strings.Split(subject, "+")
 	numParts := len(parts)
@@ -44,8 +42,13 @@ func FromString(subject string) *Key {
 			// finalKey cannot be a modifier... ignore and return NUL.
 			return &Key{}
 		}
+		npkc, ok := nonPrintableStringToKeyCode[finalKey]
+		if ok {
+			return &Key{code: npkc}
+		}
 		if len(finalKey) != 1 {
-			// we only support a single character as the final key.
+			// we only support a single character as the final key if it's a
+			// printable key.
 			return &Key{}
 		}
 		mods := types.KeyModifiers(0)
@@ -68,8 +71,13 @@ func FromString(subject string) *Key {
 			// finalKey cannot be a modifier... ignore and return NUL.
 			return &Key{}
 		}
+		npkc, ok := nonPrintableStringToKeyCode[finalKey]
+		if ok {
+			return &Key{code: npkc}
+		}
 		if len(finalKey) != 1 {
-			// we only support a single character as the final key.
+			// we only support a single character as the final key if it's a
+			// printable key.
 			return &Key{}
 		}
 		return &Key{
@@ -106,10 +114,20 @@ func tcellCodeFromString(subject string) tcell.Key {
 // [tcell.Key] values since tcell.KeyRune is used for all printable characters.
 func keyCodeFromTCellKey(subject tcell.Key) types.KeyCode {
 	switch {
-	case subject < tcell.KeyRune:
-		return types.KeyCode(subject)
-	case subject > tcell.KeyRune && subject <= tcell.KeyNumLock:
+	case subject >= tcell.KeyCtrlA && subject <= tcell.KeyCtrlZ:
+		// Unfortunately, tcell.KeyCtrlA through tcell.KeyCtrlZ's integer
+		// values map directly to uppercase 'A' through uppercase 'Z' ASCII
+		// characters. When a user calls gt.NewKey(tcell.KeyCtrlC), we set
+		// set the Ctrl modifier bit manually since we don't have the
+		// tcell.EventKey to give us the modifiers. Here, we return the key
+		// code for the *lowercased* ASCII character, so Ctrl+C becomes
+		// "ctrl+'c'".
+		return types.KeyCode(subject + 32) // + 32 converts upper to lower
+	case subject == tcell.KeyRune:
+		// Special. We handle this in gt.NewKey() only by processing the
+		// tcell.EventKey.
+		return types.KeyCode(0)
+	default:
 		return tcellKeyToNonPrintableKeyCode[subject]
 	}
-	return types.KeyCode(0)
 }

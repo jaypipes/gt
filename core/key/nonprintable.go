@@ -1,8 +1,11 @@
 package key
 
 import (
+	"strings"
+
 	"github.com/gdamore/tcell/v3"
 	"github.com/jaypipes/gt/types"
+	"github.com/samber/lo"
 )
 
 // Non-printable keys (e.g. "F1" or "Print") are assigned a Unicode code point
@@ -10,6 +13,37 @@ import (
 // That way, we can do simple int32 comparisons and use the String() method to
 // return a printable representation of the pressed key combination.
 var (
+	KeySOH        = &Key{code: types.KeyCodeSOH}
+	KeySTX        = &Key{code: types.KeyCodeSTX}
+	KeyETX        = &Key{code: types.KeyCodeETX}
+	KeyEOT        = &Key{code: types.KeyCodeEOT}
+	KeyENQ        = &Key{code: types.KeyCodeENQ}
+	KeyACK        = &Key{code: types.KeyCodeACK}
+	KeyBEL        = &Key{code: types.KeyCodeBEL}
+	KeyVT         = &Key{code: types.KeyCodeVT}
+	KeyFF         = &Key{code: types.KeyCodeFF}
+	KeySO         = &Key{code: types.KeyCodeSO}
+	KeySI         = &Key{code: types.KeyCodeSI}
+	KeyDLE        = &Key{code: types.KeyCodeDLE}
+	KeyDC1        = &Key{code: types.KeyCodeDC1}
+	KeyDC2        = &Key{code: types.KeyCodeDC2}
+	KeyDC3        = &Key{code: types.KeyCodeDC3}
+	KeyDC4        = &Key{code: types.KeyCodeDC4}
+	KeyNAK        = &Key{code: types.KeyCodeNAK}
+	KeySYN        = &Key{code: types.KeyCodeSYN}
+	KeyETB        = &Key{code: types.KeyCodeETB}
+	KeyCAN        = &Key{code: types.KeyCodeCAN}
+	KeyEM         = &Key{code: types.KeyCodeEM}
+	KeySUB        = &Key{code: types.KeyCodeSUB}
+	KeyFS         = &Key{code: types.KeyCodeFS}
+	KeyGS         = &Key{code: types.KeyCodeGS}
+	KeyRS         = &Key{code: types.KeyCodeRS}
+	KeyUS         = &Key{code: types.KeyCodeUS}
+	KeyBackspace  = &Key{code: types.KeyCodeBackspace} // Backward delete
+	KeyDelete     = &Key{code: types.KeyCodeDelete}    // Forward delete
+	KeyTab        = &Key{code: types.KeyCodeTab}
+	KeyEscape     = &Key{code: types.KeyCodeEscape}
+	KeyEnter      = &Key{code: types.KeyCodeEnter}
 	KeyUp         = &Key{code: types.KeyCodeUp}
 	KeyDown       = &Key{code: types.KeyCodeDown}
 	KeyRight      = &Key{code: types.KeyCodeRight}
@@ -24,14 +58,17 @@ var (
 	KeyHome       = &Key{code: types.KeyCodeHome}
 	KeyEnd        = &Key{code: types.KeyCodeEnd}
 	KeyInsert     = &Key{code: types.KeyCodeInsert}
-	KeyDelete     = &Key{code: types.KeyCodeDelete}
 	KeyHelp       = &Key{code: types.KeyCodeHelp}
 	KeyExit       = &Key{code: types.KeyCodeExit}
 	KeyClear      = &Key{code: types.KeyCodeClear}
 	KeyCancel     = &Key{code: types.KeyCodeCancel}
 	KeyPrint      = &Key{code: types.KeyCodePrint}
 	KeyPause      = &Key{code: types.KeyCodePause}
-	KeyBacktab    = &Key{code: types.KeyCodeBacktab}
+	KeyBacktab    = &Key{code: types.KeyCodeBacktab} // shift+tab
+	KeyMenu       = &Key{code: types.KeyCodeMenu}
+	KeyCapsLock   = &Key{code: types.KeyCodeCapsLock}
+	KeyScrollLock = &Key{code: types.KeyCodeScrollLock}
+	KeyNumLock    = &Key{code: types.KeyCodeNumLock}
 	KeyF1         = &Key{code: types.KeyCodeF1}
 	KeyF2         = &Key{code: types.KeyCodeF2}
 	KeyF3         = &Key{code: types.KeyCodeF3}
@@ -96,13 +133,40 @@ var (
 	KeyF62        = &Key{code: types.KeyCodeF62}
 	KeyF63        = &Key{code: types.KeyCodeF63}
 	KeyF64        = &Key{code: types.KeyCodeF64}
-	KeyMenu       = &Key{code: types.KeyCodeMenu}
-	KeyCapsLock   = &Key{code: types.KeyCodeCapsLock}
-	KeyScrollLock = &Key{code: types.KeyCodeScrollLock}
-	KeyNumLock    = &Key{code: types.KeyCodeNumLock}
 )
 
 var nonPrintableKeyCodeToString = map[types.KeyCode]string{
+	types.KeyCodeSOH:        "SOH",
+	types.KeyCodeSTX:        "STX",
+	types.KeyCodeETX:        "ETX",
+	types.KeyCodeEOT:        "EOT",
+	types.KeyCodeENQ:        "ENQ",
+	types.KeyCodeACK:        "ACK",
+	types.KeyCodeBEL:        "BEL",
+	types.KeyCodeVT:         "VT",
+	types.KeyCodeFF:         "FF",
+	types.KeyCodeSO:         "SO",
+	types.KeyCodeSI:         "SI",
+	types.KeyCodeDLE:        "DLE",
+	types.KeyCodeDC1:        "DC1",
+	types.KeyCodeDC2:        "DC2",
+	types.KeyCodeDC3:        "DC3",
+	types.KeyCodeDC4:        "DC4",
+	types.KeyCodeNAK:        "NAK",
+	types.KeyCodeSYN:        "SYN",
+	types.KeyCodeETB:        "ETB",
+	types.KeyCodeCAN:        "CAN",
+	types.KeyCodeEM:         "EM",
+	types.KeyCodeSUB:        "SUB",
+	types.KeyCodeFS:         "FS",
+	types.KeyCodeGS:         "GS",
+	types.KeyCodeRS:         "RS",
+	types.KeyCodeUS:         "US",
+	types.KeyCodeBackspace:  "Backspace", // Backward delete
+	types.KeyCodeDelete:     "Delete",    // Forward delete
+	types.KeyCodeTab:        "Tab",
+	types.KeyCodeEscape:     "Escape",
+	types.KeyCodeEnter:      "Enter",
 	types.KeyCodeUp:         "Up",
 	types.KeyCodeDown:       "Down",
 	types.KeyCodeRight:      "Right",
@@ -117,7 +181,6 @@ var nonPrintableKeyCodeToString = map[types.KeyCode]string{
 	types.KeyCodeHome:       "Home",
 	types.KeyCodeEnd:        "End",
 	types.KeyCodeInsert:     "Insert",
-	types.KeyCodeDelete:     "Delete",
 	types.KeyCodeHelp:       "Help",
 	types.KeyCodeExit:       "Exit",
 	types.KeyCodeClear:      "Clear",
@@ -196,6 +259,37 @@ var nonPrintableKeyCodeToString = map[types.KeyCode]string{
 }
 
 var tcellKeyToNonPrintableKeyCode = map[tcell.Key]types.KeyCode{
+	tcell.KeySOH:        types.KeyCodeSOH,
+	tcell.KeySTX:        types.KeyCodeSTX,
+	tcell.KeyETX:        types.KeyCodeETX,
+	tcell.KeyEOT:        types.KeyCodeEOT,
+	tcell.KeyENQ:        types.KeyCodeENQ,
+	tcell.KeyACK:        types.KeyCodeACK,
+	tcell.KeyBEL:        types.KeyCodeBEL,
+	tcell.KeyVT:         types.KeyCodeVT,
+	tcell.KeyFF:         types.KeyCodeFF,
+	tcell.KeySO:         types.KeyCodeSO,
+	tcell.KeySI:         types.KeyCodeSI,
+	tcell.KeyDLE:        types.KeyCodeDLE,
+	tcell.KeyDC1:        types.KeyCodeDC1,
+	tcell.KeyDC2:        types.KeyCodeDC2,
+	tcell.KeyDC3:        types.KeyCodeDC3,
+	tcell.KeyDC4:        types.KeyCodeDC4,
+	tcell.KeyNAK:        types.KeyCodeNAK,
+	tcell.KeySYN:        types.KeyCodeSYN,
+	tcell.KeyETB:        types.KeyCodeETB,
+	tcell.KeyCAN:        types.KeyCodeCAN,
+	tcell.KeyEM:         types.KeyCodeEM,
+	tcell.KeySUB:        types.KeyCodeSUB,
+	tcell.KeyFS:         types.KeyCodeFS,
+	tcell.KeyGS:         types.KeyCodeGS,
+	tcell.KeyRS:         types.KeyCodeRS,
+	tcell.KeyUS:         types.KeyCodeUS,
+	tcell.KeyBackspace:  types.KeyCodeBackspace, // Backward delete
+	tcell.KeyDelete:     types.KeyCodeDelete,    // Forward delete
+	tcell.KeyTab:        types.KeyCodeTab,
+	tcell.KeyEscape:     types.KeyCodeEscape,
+	tcell.KeyEnter:      types.KeyCodeEnter,
 	tcell.KeyUp:         types.KeyCodeUp,
 	tcell.KeyDown:       types.KeyCodeDown,
 	tcell.KeyRight:      types.KeyCodeRight,
@@ -210,7 +304,6 @@ var tcellKeyToNonPrintableKeyCode = map[tcell.Key]types.KeyCode{
 	tcell.KeyHome:       types.KeyCodeHome,
 	tcell.KeyEnd:        types.KeyCodeEnd,
 	tcell.KeyInsert:     types.KeyCodeInsert,
-	tcell.KeyDelete:     types.KeyCodeDelete,
 	tcell.KeyHelp:       types.KeyCodeHelp,
 	tcell.KeyExit:       types.KeyCodeExit,
 	tcell.KeyClear:      types.KeyCodeClear,
@@ -218,6 +311,10 @@ var tcellKeyToNonPrintableKeyCode = map[tcell.Key]types.KeyCode{
 	tcell.KeyPrint:      types.KeyCodePrint,
 	tcell.KeyPause:      types.KeyCodePause,
 	tcell.KeyBacktab:    types.KeyCodeBacktab,
+	tcell.KeyMenu:       types.KeyCodeMenu,
+	tcell.KeyCapsLock:   types.KeyCodeCapsLock,
+	tcell.KeyScrollLock: types.KeyCodeScrollLock,
+	tcell.KeyNumLock:    types.KeyCodeNumLock,
 	tcell.KeyF1:         types.KeyCodeF1,
 	tcell.KeyF2:         types.KeyCodeF2,
 	tcell.KeyF3:         types.KeyCodeF3,
@@ -282,8 +379,21 @@ var tcellKeyToNonPrintableKeyCode = map[tcell.Key]types.KeyCode{
 	tcell.KeyF62:        types.KeyCodeF62,
 	tcell.KeyF63:        types.KeyCodeF63,
 	tcell.KeyF64:        types.KeyCodeF64,
-	tcell.KeyMenu:       types.KeyCodeMenu,
-	tcell.KeyCapsLock:   types.KeyCodeCapsLock,
-	tcell.KeyScrollLock: types.KeyCodeScrollLock,
-	tcell.KeyNumLock:    types.KeyCodeNumLock,
+}
+
+var (
+	nonPrintableStringToKeyCode map[string]types.KeyCode
+)
+
+func init() {
+	// populate a reverse lookup of lowercased non-printable key string to key
+	// code
+	nonPrintableStringToKeyCode = lo.Invert(
+		lo.MapValues(
+			nonPrintableKeyCodeToString,
+			func(v string, _ types.KeyCode) string {
+				return strings.ToLower(v)
+			},
+		),
+	)
 }

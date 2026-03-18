@@ -2,8 +2,6 @@ package types
 
 import (
 	"fmt"
-
-	"github.com/gdamore/tcell/v3"
 )
 
 // KeyCode represents the Unicode code point of the pressed key (rune is an
@@ -21,6 +19,11 @@ import (
 // *tcell.EventKey object into a properly-formed gt.Key object with a
 // gt.KeyCode exposed via the gt.Key.Code() method.
 type KeyCode int32
+
+// Printable returns whether the KeyCode is a printable key.
+func (c KeyCode) Printable() bool {
+	return c < KeyCodeNonPrintableStart
+}
 
 // Key describes a key press combination.
 type Key interface {
@@ -48,10 +51,7 @@ type HasKeyMap interface {
 }
 
 const (
-	KeyCodeBackspace KeyCode = KeyCode(tcell.KeyBackspace)
-	KeyCodeTab       KeyCode = KeyCode(tcell.KeyTab)
-	KeyCodeEscape    KeyCode = KeyCode(tcell.KeyEscape)
-	KeyCodeEnter     KeyCode = KeyCode(tcell.KeyEnter)
+	KeyCodeNUL KeyCode = 0
 )
 
 // Non-printable keys (e.g. "F1" or "Print") are assigned a Unicode code point
@@ -60,6 +60,37 @@ const (
 // return a printable representation of the pressed key combination.
 const (
 	KeyCodeNonPrintableStart KeyCode = iota + 57344 // 57344 == U+E000
+	KeyCodeSOH
+	KeyCodeSTX
+	KeyCodeETX
+	KeyCodeEOT
+	KeyCodeENQ
+	KeyCodeACK
+	KeyCodeBEL
+	KeyCodeVT
+	KeyCodeFF
+	KeyCodeSO
+	KeyCodeSI
+	KeyCodeDLE
+	KeyCodeDC1
+	KeyCodeDC2
+	KeyCodeDC3
+	KeyCodeDC4
+	KeyCodeNAK
+	KeyCodeSYN
+	KeyCodeETB
+	KeyCodeCAN
+	KeyCodeEM
+	KeyCodeSUB
+	KeyCodeFS
+	KeyCodeGS
+	KeyCodeRS
+	KeyCodeUS
+	KeyCodeBackspace // Backward delete
+	KeyCodeDelete    // Forward delete
+	KeyCodeTab
+	KeyCodeEscape
+	KeyCodeEnter
 	KeyCodeUp
 	KeyCodeDown
 	KeyCodeRight
@@ -74,14 +105,17 @@ const (
 	KeyCodeHome
 	KeyCodeEnd
 	KeyCodeInsert
-	KeyCodeDelete
 	KeyCodeHelp
 	KeyCodeExit
 	KeyCodeClear
 	KeyCodeCancel
 	KeyCodePrint
 	KeyCodePause
-	KeyCodeBacktab
+	KeyCodeBacktab // shift+tab
+	KeyCodeMenu
+	KeyCodeCapsLock
+	KeyCodeScrollLock
+	KeyCodeNumLock
 	KeyCodeF1
 	KeyCodeF2
 	KeyCodeF3
@@ -146,10 +180,6 @@ const (
 	KeyCodeF62
 	KeyCodeF63
 	KeyCodeF64
-	KeyCodeMenu
-	KeyCodeCapsLock
-	KeyCodeScrollLock
-	KeyCodeNumLock
 
 	KeyCodeNonPrintableEnd KeyCode = 63743 // 56374 == U+F8FF
 )

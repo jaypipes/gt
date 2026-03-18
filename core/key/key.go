@@ -3,9 +3,6 @@ package key
 import (
 	"fmt"
 	"strconv"
-	"unicode"
-
-	"github.com/gdamore/tcell/v3"
 
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/types"
@@ -25,16 +22,8 @@ func (k *Key) String() string {
 	if len(mods) > 0 {
 		mods += "+"
 	}
-	switch {
-	case k.code < types.KeyCode(tcell.KeyRune):
-		named, ok := tcell.KeyNames[tcell.Key(k.code)]
-		if ok {
-			return mods + named
-		}
-	case k.code > types.KeyCodeNonPrintableStart &&
-		k.code < types.KeyCodeNonPrintableEnd:
+	if !k.code.Printable() {
 		return nonPrintableKeyCodeToString[k.code]
-	default:
 	}
 	return mods + strconv.QuoteRune(rune(k.code))
 }
@@ -46,7 +35,7 @@ func (k *Key) Code() types.KeyCode {
 
 // Printable returns whether the Key can be directly printed to the Screen.
 func (k *Key) Printable() bool {
-	return unicode.IsPrint(rune(k.code))
+	return k.code.Printable()
 }
 
 // Equal returns true if the Key matches the other Key.

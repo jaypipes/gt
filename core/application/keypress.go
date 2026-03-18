@@ -28,6 +28,17 @@ func (a *Application) SetExitKey(subject ...any) {
 	}
 }
 
+// exitKeyPressed returns true if the supplied KeyPressEvent matches any of the
+// exit keys registered for the Application.
+func (a *Application) exitKeyPressed(ev types.KeyPressEvent) bool {
+	for _, ek := range a.exitKeys {
+		if ek.Equal(ev.Key()) {
+			return true
+		}
+	}
+	return false
+}
+
 // handleKeyPressEvent passes a KeyPressEvent to any handlers that are
 // listening for KeyPressEvents.
 func (a *Application) handleKeyPressEvent(
