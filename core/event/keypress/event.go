@@ -1,4 +1,4 @@
-package key
+package keypress
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"github.com/jaypipes/gt/types"
 )
 
-// Event exposes an easy-to-use interface for handling keyPress events.
+// Event exposes an easy-to-use interface for handling KeyPress events.
 // Implements [types.KeyPressEvent].
 type Event struct {
 	event.Event

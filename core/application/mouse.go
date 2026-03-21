@@ -14,14 +14,22 @@ func (a *Application) setHover(
 	ctx context.Context,
 	m types.MouseEventHandler,
 	ev types.MouseEvent,
-) {
-	if a.hovered != nil && a.hovered != m {
-		a.hovered.MouseLoseHover(ctx)
-	}
-	if m != nil {
-		m.MouseHover(ctx, ev)
+) bool {
+	changed := false
+	if a.hovered != nil {
+		if a.hovered != m {
+			a.hovered.MouseLoseHover(ctx)
+			changed = true
+		}
+	} else {
+		// nothing previously being hovered.
+		if m != nil {
+			m.MouseHover(ctx, ev)
+			changed = true
+		}
 	}
 	a.hovered = m
+	return changed
 }
 
 // handleMouseEvent determines what logical action the user took with the mouse
@@ -79,7 +87,10 @@ func (a *Application) handleMouseEvent(
 			if target != nil {
 				ce := mevent.NewClickEvent(ev, false)
 				target.MouseClick(ctx, ce)
-				a.setFocus(ctx, target.(types.Focusable))
+				f, ok := target.(types.FocusEventHandler)
+				if ok {
+					a.setFocus(ctx, f)
+				}
 				redraw = true
 			} else {
 				// mouse was clicked on a part of the screen represented by no
@@ -92,7 +103,10 @@ func (a *Application) handleMouseEvent(
 			if target != nil {
 				ce := mevent.NewClickEvent(ev, true)
 				target.MouseClick(ctx, ce)
-				a.setFocus(ctx, target.(types.Focusable))
+				f, ok := target.(types.FocusEventHandler)
+				if ok {
+					a.setFocus(ctx, f)
+				}
 				redraw = true
 			} else {
 				// mouse was clicked on a part of the screen represented by no
@@ -113,13 +127,15 @@ func (a *Application) handleMouseEvent(
 	case !buttonWasDown && !buttonNowDown:
 		// mouse move.
 		if target != nil {
-			if !target.(types.Focusable).HasFocus() {
-				a.setHover(ctx, target, ev)
+			f, ok := target.(types.FocusEventHandler)
+			if ok {
+				if !f.HasFocus() {
+					redraw = a.setHover(ctx, target, ev)
+				}
 			}
 		} else {
-			a.setHover(ctx, nil, nil)
+			redraw = a.setHover(ctx, nil, nil)
 		}
-		redraw = true
 	}
 
 	if redraw {

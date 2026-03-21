@@ -5,6 +5,7 @@ import (
 
 	"github.com/samber/lo"
 
+	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/key"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/types"
@@ -28,6 +29,46 @@ func (a *Application) SetExitKey(subject ...any) {
 	}
 }
 
+// InterceptKeyPressEvents signals the Application to trap all key press events
+// and route all key press events to the supplied KeyPressEventHandler. This
+// method allows elements to need to take input from the user when they have
+// the focus to prevent keyboard shortcuts from interfering with the input
+// stream.
+func (a *Application) InterceptKeyPressEvents(
+	ctx context.Context,
+	escapeKey types.Key,
+	handler types.KeyPressEventHandler,
+) {
+	a.Lock()
+	defer a.Unlock()
+	if handler == nil || escapeKey == nil {
+		return
+	}
+	gtlog.Debug(
+		ctx,
+		"Application.InterceptKeyPressEvents: to=%s escape=%q",
+		core.ID(handler), escapeKey,
+	)
+	a.keyInterceptor = handler
+	a.keyInterceptEscape = escapeKey
+}
+
+// StopInterceptKey signals the Application to restore the key map from
+// before it was trapped. This allows elements that lose the focus to
+// release any hold they had on the key press events.
+func (a *Application) StopInterceptKeyPressEvents(
+	ctx context.Context,
+) {
+	a.Lock()
+	defer a.Unlock()
+	if a.keyInterceptor == nil {
+		return
+	}
+	gtlog.Debug(ctx, "Application.StopInterceptKeyPressEvents")
+	a.keyInterceptEscape = nil
+	a.keyInterceptor = nil
+}
+
 // exitKeyPressed returns true if the supplied KeyPressEvent matches any of the
 // exit keys registered for the Application.
 func (a *Application) exitKeyPressed(ev types.KeyPressEvent) bool {
@@ -45,14 +86,43 @@ func (a *Application) handleKeyPressEvent(
 	ctx context.Context,
 	ev types.KeyPressEvent,
 ) {
+	a.RLock()
+	focused := a.focused
+	interceptor := a.keyInterceptor
+	escapeKey := a.keyInterceptEscape
+	a.RUnlock()
+
+	k := ev.Key()
+
+	// If we have an intercepting handler, just route all KeyPressEvents to
+	// that handler until the escape key is seen, at which point we stop the
+	// intercepting.
+	if interceptor != nil {
+		if escapeKey.Equal(k) {
+			if focused != nil {
+				if core.ID(focused) == core.ID(interceptor) {
+					// release the focus on an element that has stopped
+					// intercepting key press events.
+					a.removeFocus(ctx)
+				}
+			}
+			a.StopInterceptKeyPressEvents(ctx)
+			a.draw(ctx)
+			return
+		}
+		interceptor.KeyPress(ctx, ev)
+		a.draw(ctx)
+		return
+	}
+
 	// If there is an element that has the focus, we send the key press event
 	// to that element. That element can return false, meaning it did not
 	// consume/handle the event. If that is the case, or there was no element
-	// with the focus, we send the key press event to all elements, stopping
-	// when any element returns a true value.
+	// with the focus, we send the key press event to all elements in the
+	// current view, stopping when any element returns a true value.
 	handled := false
-	if a.focused != nil {
-		handler, ok := a.focused.(types.KeyPressEventHandler)
+	if focused != nil {
+		handler, ok := focused.(types.KeyPressEventHandler)
 		if ok {
 			handled = handler.KeyPress(ctx, ev)
 		}

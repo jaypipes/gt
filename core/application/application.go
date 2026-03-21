@@ -13,7 +13,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
-	kevent "github.com/jaypipes/gt/core/event/key"
+	kpevent "github.com/jaypipes/gt/core/event/keypress"
 	mevent "github.com/jaypipes/gt/core/event/mouse"
 	sevent "github.com/jaypipes/gt/core/event/scroll"
 	"github.com/jaypipes/gt/core/key"
@@ -43,13 +43,11 @@ func New(
 	if err != nil {
 		log.Fatalf("%+v", err)
 	}
-	c := newController(s)
 	return &Application{
-		screen:     s,
-		controller: c,
-		exitKeys:   []types.Key{defaultExitKey},
-		views:      map[string]*view.View{},
-		keyMap:     types.KeyMap{},
+		screen:   s,
+		exitKeys: []types.Key{defaultExitKey},
+		views:    map[string]*view.View{},
+		keyMap:   types.KeyMap{},
 	}
 }
 
@@ -64,8 +62,7 @@ func New(
 type Application struct {
 	sync.RWMutex
 	box.Box
-	screen     tcell.Screen
-	controller types.Controller
+	screen tcell.Screen
 
 	// title is an optional title for the application, used as a title for the
 	// terminal when set.
@@ -87,6 +84,12 @@ type Application struct {
 	// keyMap contains key press combination callbacks registered for the
 	// Application itself -- i.e. global key press callbacks.
 	keyMap types.KeyMap
+	// keyInterceptor points to a types.KeyPressEventHandler that receives all
+	// keyboard input after InterceptKey has been called.
+	keyInterceptor types.KeyPressEventHandler
+	// keyInterceptEscape is the key combination that will trigger the
+	// interceptor to be removed.
+	keyInterceptEscape types.Key
 
 	// mouseEnabled is true if we're trapping mouse events in the terminal.
 	mouseEnabled bool
@@ -96,7 +99,7 @@ type Application struct {
 	// focusEnabled is true if we support focus events in the terminal.
 	focusEnabled bool
 	// focused contains the thing that currently has the focus.
-	focused types.Focusable
+	focused types.FocusEventHandler
 	// hovered contains the thing that the mouse is currently over.
 	hovered types.MouseEventHandler
 
@@ -139,7 +142,7 @@ func (a *Application) EnableFocus() {
 func (a *Application) View(ctx context.Context, id string) *view.View {
 	v, ok := a.views[id]
 	if !ok {
-		v = view.New(ctx, a.controller, id)
+		v = view.New(ctx, id)
 		a.views[id] = v
 		a.curView = id
 	}
@@ -209,16 +212,10 @@ func (a *Application) Start(ctx context.Context) error {
 	if s == nil {
 		return fmt.Errorf("cannot start Application will nil Screen.")
 	}
-	c := a.controller
-	if s == nil {
-		return fmt.Errorf("cannot start Application will nil Controller.")
-	}
 
 	if a.title != "" {
 		s.SetTitle(a.title)
 	}
-	keyMap := a.buildKeyMap(ctx)
-	a.controller.SetKeyMap(keyMap)
 
 	if a.mouseEnabled {
 		s.EnableMouse()
@@ -229,6 +226,7 @@ func (a *Application) Start(ctx context.Context) error {
 	if a.pasteEnabled {
 		s.EnablePaste()
 	}
+
 	// If the user has not overridden the bounds for the Application, we
 	// default to the Screen area.
 	appBounds := a.Box.Bounds()
@@ -271,18 +269,11 @@ loop:
 		case *tcell.EventResize:
 			s.Sync()
 		case *tcell.EventKey:
-			kev := kevent.New(kevent.WithTCell(ev))
+			kev := kpevent.New(kpevent.WithTCell(ev))
 			if a.exitKeyPressed(kev) {
 				break loop
 			}
-			if c.HandleKeyPress(ctx, kev) {
-				a.draw(ctx)
-				// rebuild the key map since we may have changed views.
-				keyMap = a.buildKeyMap(ctx)
-				c.SetKeyMap(keyMap)
-			} else {
-				a.handleKeyPressEvent(ctx, kev)
-			}
+			a.handleKeyPressEvent(ctx, kev)
 		case *tcell.EventMouse:
 			sev := sevent.New(sevent.WithTCell(ev))
 			if sev.Direction() != types.ScrollDirectionNone {
@@ -307,7 +298,7 @@ func (a *Application) draw(ctx context.Context) {
 	}
 	v := a.CurrentView()
 	if v == nil {
-		v = view.New(ctx, a.controller, "main")
+		v = view.New(ctx, "main")
 		a.views["main"] = v
 		a.curView = "main"
 	}

@@ -10,6 +10,8 @@ import (
 // [tcell.Key] or [tcell.EventKey]
 func New(subject any) *Key {
 	switch subject := subject.(type) {
+	case *Key:
+		return subject
 	case types.KeyCode:
 		return &Key{
 			code: subject,

@@ -1,4 +1,4 @@
-package key
+package keypress
 
 import (
 	"github.com/gdamore/tcell/v3"
@@ -10,7 +10,7 @@ import (
 
 // New returns a new instance of an Event.
 //
-// You can pass zero or more EventWithOptions to optionally set certain
+// You can pass zero or more KeyPressEventWithOptions to optionally set certain
 // attributes on the returned Event.
 func New(
 	opts ...types.KeyPressEventWithOption,

@@ -2,11 +2,12 @@ package textarea
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
+	"github.com/jaypipes/gt"
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/border"
+	"github.com/jaypipes/gt/core/key"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/style"
 	"github.com/jaypipes/gt/element"
@@ -19,12 +20,39 @@ const (
 	DefaultHeight = 2
 )
 
-// WithPlaceholder modifies the Element with Placeholder text.
+var (
+	DefaultEscapeKey = key.New("escape")
+	DefaultClearKey  = key.New("alt+r")
+)
+
+// WithPlaceholder sets the TextArea's placeholder text.
 func WithPlaceholder(placeholder string) types.ElementWithOption {
 	return func(e types.Element) {
 		ta, ok := e.(*TextArea)
 		if ok {
 			ta.SetPlaceholder(placeholder)
+		}
+	}
+}
+
+// WithEscapeKey sets the TextArea's escape key. The supplied argument can be a
+// string, a [types.Key], a [types.KeyCode] or a [tcell.Key].
+func WithEscapeKey(subject any) types.ElementWithOption {
+	return func(e types.Element) {
+		ta, ok := e.(*TextArea)
+		if ok {
+			ta.SetEscapeKey(subject)
+		}
+	}
+}
+
+// WithClearKey sets the TextArea's clear key. The supplied argument can be a
+// string, a [types.Key], a [types.KeyCode] or a [tcell.Key].
+func WithClearKey(subject any) types.ElementWithOption {
+	return func(e types.Element) {
+		ta, ok := e.(*TextArea)
+		if ok {
+			ta.SetClearKey(subject)
 		}
 	}
 }
@@ -49,41 +77,67 @@ func New(
 	// same as the HTML element of the same name.
 	t.SetWidth(core.Fixed(DefaultWidth))
 	t.SetHeight(core.Fixed(DefaultHeight))
+	t.SetEscapeKey(DefaultEscapeKey)
+	t.SetClearKey(DefaultClearKey)
 	for _, opt := range opts {
 		opt(t)
 	}
 	t.OnFocus(
-		func(ctx context.Context) {
-			c := t.Controller()
-			if c != nil {
-				c.InterceptKeyPress("tab", t.input)
+		func(ctx context.Context, ev types.FocusEvent) {
+			focused := ev.Enabled()
+			p := ev.Producer()
+			if focused {
+				if p != nil {
+					kpi, ok := p.(types.KeyPressEventInterceptor)
+					if ok {
+						kpi.InterceptKeyPressEvents(ctx, t.escapeKey, t)
+					}
+				}
+			} else {
+				if p != nil {
+					kpi, ok := p.(types.KeyPressEventInterceptor)
+					if ok {
+						kpi.StopInterceptKeyPressEvents(ctx)
+					}
+				}
 			}
-			gtlog.Debug(ctx, "%s received focus", t.ID())
 		},
 	)
-	t.OnLoseFocus(
-		func(ctx context.Context) {
-			c := t.Controller()
-			if c != nil {
-				c.RestoreKeyPress()
-				c.Screen().HideCursor()
+	t.OnKeyPress(
+		func(ctx context.Context, ev gt.KeyPressEvent) bool {
+
+			k := ev.Key()
+			if k.Equal(t.escapeKey) {
+				// This should never be true, since the Application's main
+				// event loop should have been intercepting this key press
+				// combination...
+				gtlog.Warn(ctx, "TextArea[%s] escape key received!", t.ID())
+				return false
 			}
-			gtlog.Debug(ctx, "%s lost focus", t.ID())
-		},
-	)
-	t.OnMouseDragMove(
-		func(ctx context.Context, ev types.MouseDragMoveEvent) {
-			gtlog.Debug(ctx, "mouse drag move on %s @%s start-pos@%s", t.ID(), ev.Position(), ev.Start().Position())
-		},
-	)
-	t.OnMouseDragStop(
-		func(ctx context.Context, ev types.MouseDragStopEvent) {
-			gtlog.Debug(ctx, "mouse drag stop on %s @%s start-pos@%s", t.ID(), ev.Position(), ev.Start().Position())
-		},
-	)
-	t.OnMouseClick(
-		func(ctx context.Context, ev types.MouseClickEvent) {
-			gtlog.Debug(ctx, "mouse click on %s @%s double-clicked? %t", t.ID(), ev.Position(), ev.DoubleClicked())
+
+			input := t.input
+			code := k.Code()
+			mods := k.Modifiers()
+			if k.Equal(t.clearKey) {
+				gtlog.Warn(ctx, "TextArea[%s]: clear key received", t.ID())
+				input.Reset()
+			} else {
+				// Handle some special keys.
+				if mods.None() {
+					switch {
+					case code == gt.KeyCodeBackspace:
+						removeLastRune(input)
+					case code == gt.KeyCodeEnter:
+						input.WriteRune('\n')
+					case code == gt.KeyCodeTab:
+						input.WriteString(strings.Repeat(" ", t.tabSize))
+					case k.Printable():
+						input.WriteRune(rune(code))
+					}
+				}
+			}
+			t.SetTextContent(input.String())
+			return true
 		},
 	)
 	return t
@@ -99,6 +153,15 @@ type TextArea struct {
 	// placeholder contains the text content that will be displayed in the
 	// absence of user-provided text content.
 	placeholder string
+	// escapeKey is the key press combination that causes the focus on the
+	// TextArea to be lost, resulting in the stoppage of the TextArea
+	// processing key strokes.
+	escapeKey types.Key
+	// clearKey is the key press combination that clears the TextArea's text.
+	clearKey types.Key
+	// tabSize is the number of spaces a TAB character should consume in the
+	// TextArea's text content.
+	tabSize int
 	// input allows us to receive key press content
 	input *strings.Builder
 }
@@ -122,6 +185,56 @@ func (t *TextArea) Placeholder() string {
 	return t.placeholder
 }
 
+// SetTabSize sets the number of spaces to replace a TAB character in TextArea.
+func (t *TextArea) SetTabSize(tabSize int) {
+	t.tabSize = tabSize
+}
+
+// SetTabSize sets the number of spaces to replace a TAB character in TextArea
+// and returns the TextArea.
+func (t *TextArea) WithTabSize(tabSize int) *TextArea {
+	t.SetTabSize(tabSize)
+	return t
+}
+
+// TabSize returns the number of spaces to replace TAB character for the
+// TextArea.
+func (t *TextArea) TabSize() int {
+	return t.tabSize
+}
+
+// SetEscapeKey sets the TextArea's escape key.
+func (t *TextArea) SetEscapeKey(subject any) {
+	t.escapeKey = key.New(subject)
+}
+
+// WithEscapeKey sets the TextArea's escape key and returns the TextArea.
+func (t *TextArea) WithEscapeKey(subject any) *TextArea {
+	t.SetEscapeKey(subject)
+	return t
+}
+
+// EscapeKey returns the escape key for the TextArea.
+func (t *TextArea) EscapeKey() types.Key {
+	return t.escapeKey
+}
+
+// SetClearKey sets the TextArea's clear key.
+func (t *TextArea) SetClearKey(subject any) {
+	t.clearKey = key.New(subject)
+}
+
+// WithClearKey sets the TextArea's clear key and returns the TextArea.
+func (t *TextArea) WithClearKey(subject any) *TextArea {
+	t.SetClearKey(subject)
+	return t
+}
+
+// ClearKey returns the clear key for the TextArea.
+func (t *TextArea) ClearKey() types.Key {
+	return t.clearKey
+}
+
 // Render implements the types.Renderable interface
 func (t *TextArea) Render(ctx context.Context, screen types.Screen) {
 	bounds := t.Bounds()
@@ -129,15 +242,6 @@ func (t *TextArea) Render(ctx context.Context, screen types.Screen) {
 	t.Box.Render(ctx, screen)
 	content := t.TextContent()
 	focused := t.HasFocus()
-	if focused {
-		input := t.input
-		// If we've got some input text, update the stored text content
-		if input.Len() > 0 {
-			content = fmt.Sprintf("%s%s", content, input.String())
-			t.SetTextContent(content)
-			input.Reset()
-		}
-	}
 	if len(content) == 0 {
 		if !focused {
 			content = t.placeholder
@@ -154,12 +258,22 @@ func (t *TextArea) Render(ctx context.Context, screen types.Screen) {
 	// If we have the focus, show the cursor at the end of the user-input text
 	// to indicate this is an editable thing.
 	if focused {
-		c := t.Controller()
-		if c != nil {
-			x := inner.Max.X
-			y := inner.Max.Y
-			screen.ShowCursor(x, y)
-			screen.SetCursorStyle(types.CursorStyleBar)
-		}
+		x := inner.Max.X
+		y := inner.Max.Y
+		screen.ShowCursor(x, y)
+		screen.SetCursorStyle(types.CursorStyleBar)
+	} else {
+		screen.HideCursor()
 	}
+}
+
+func removeLastRune(input *strings.Builder) {
+	if input.Len() == 0 {
+		return
+	}
+	runes := []rune(input.String())
+	lastIndex := len(runes) - 1
+	runes = append(runes[:lastIndex], runes[lastIndex+1:]...)
+	input.Reset()
+	input.WriteString(string(runes))
 }

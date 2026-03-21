@@ -23,10 +23,6 @@ type Element struct {
 	core.Identifiable
 	box.Box
 
-	// controller can be used by the element can use to control the
-	// screen's cursor.
-	controller types.Controller
-
 	// childIndex is the index of this Box in the parent's children.
 	childIndex int
 	// parent is the this Node's parent, if any.
@@ -54,11 +50,8 @@ type Element struct {
 	hovered bool
 
 	// onFocus contains the stack of callbacks that execute when the Element
-	// receives focus.
-	onFocus []types.FocusCallback
-	// onLoseFocus contains the stack of callbacks that execute when the
-	// Element loses focus.
-	onLoseFocus []types.FocusCallback
+	// receives or loses focus.
+	onFocus []types.FocusEventCallback
 	// onKeyPress contains the stack of callbacks that execute when a keypress
 	// event occurs.
 	onKeyPress []types.KeyPressEventCallback
@@ -130,22 +123,6 @@ func (e *Element) WithClass(class string) types.Element {
 // Class returns the Element's type/class, e.g. "gt.span" or "gt.div"
 func (e *Element) Class() string {
 	return e.class
-}
-
-// Controller returns the controller.
-func (e *Element) Controller() types.Controller {
-	return e.controller
-}
-
-// SetController sets the controller.
-func (e *Element) SetController(c types.Controller) {
-	e.controller = c
-}
-
-// WithController sets the controller and returns the Element.
-func (e *Element) WithController(c types.Controller) types.Element {
-	e.SetController(c)
-	return e
 }
 
 // SetDisabled sets whether the Element is disabled. Disabled Elements cannot

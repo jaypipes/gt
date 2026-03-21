@@ -13,8 +13,7 @@ package types
 // Element implements [types.Plottable] and [types.Renderable] which means that
 // every Element can draw itself onto a [types.Screen].
 type Element interface {
-	Controllable
-	Focusable
+	FocusEventHandler
 	Identifiable
 	KeyPressEventHandler
 	MouseEventHandler

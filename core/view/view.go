@@ -17,13 +17,11 @@ import (
 // New returns a new View instance with the given ID.
 func New(
 	ctx context.Context,
-	sc types.Controller,
 	id string,
 ) *View {
 	d := vdiv.New(ctx, element.WithID(id))
 	v := &View{
-		VDiv:       *d,
-		controller: sc,
+		VDiv: *d,
 	}
 	return v
 }
@@ -37,8 +35,6 @@ type View struct {
 	currentViewKey types.Key
 	// keyMap stores the View's map of key press combinations to callbacks.
 	keyMap types.KeyMap
-	// controller is the controller for this View
-	controller types.Controller
 }
 
 // String returns a short string representation of the View.
@@ -132,9 +128,6 @@ func (v *View) OnKeyPress(subject any, cb types.EventCallback) {
 
 // SetContent sets the thing that will be rendered in the View.
 func (v *View) SetContent(content types.Node) {
-	if c, ok := content.(types.Controllable); ok {
-		c.SetController(v.controller)
-	}
 	v.RemoveAllChildren()
 	v.AppendChild(content)
 }
@@ -149,9 +142,6 @@ func (v *View) WithContent(content types.Node) *View {
 // AppendContent adds a child Element to the View's content and returns the
 // View.
 func (v *View) AppendContent(content types.Node) *View {
-	if c, ok := content.(types.Controllable); ok {
-		c.SetController(v.controller)
-	}
 	v.AppendChild(content)
 	return v
 }
