@@ -29,10 +29,10 @@ func WithEnabled(enabled bool) types.FocusEventWithOption {
 	}
 }
 
-// WithProducer modifies the returned Event, setting its producer to the
+// WithSource modifies the returned Event, setting its source to the
 // supplied value.
-func WithProducer(producer any) types.FocusEventWithOption {
+func WithSource(source any) types.FocusEventWithOption {
 	return func(e types.FocusEvent) {
-		e.SetProducer(producer)
+		e.SetSource(source)
 	}
 }

@@ -12,7 +12,7 @@ import (
 // Event exposes an easy-to-use interface for handling scroll-related events.
 // Implements [types.ScrollEvent].
 type Event struct {
-	event.Event
+	*event.Event
 	// pos contains the coordinates of the scroll when the event fired.
 	pos types.Point
 	// direction is the scroll direction.

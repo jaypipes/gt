@@ -40,3 +40,11 @@ func WithTCell(
 		e.SetButton(mouseButtonFromTCell(te.Buttons()))
 	}
 }
+
+// WithSource modifies the returned Event, setting its source to the supplied
+// value.
+func WithSource(source any) types.MouseEventWithOption {
+	return func(e types.MouseEvent) {
+		e.SetSource(source)
+	}
+}

@@ -85,17 +85,17 @@ func New(
 	t.OnFocus(
 		func(ctx context.Context, ev types.FocusEvent) {
 			focused := ev.Enabled()
-			p := ev.Producer()
+			s := ev.Source()
 			if focused {
-				if p != nil {
-					kpi, ok := p.(types.KeyPressEventInterceptor)
+				if s != nil {
+					kpi, ok := s.(types.KeyPressEventInterceptor)
 					if ok {
 						kpi.InterceptKeyPressEvents(ctx, t.escapeKey, t)
 					}
 				}
 			} else {
-				if p != nil {
-					kpi, ok := p.(types.KeyPressEventInterceptor)
+				if s != nil {
+					kpi, ok := s.(types.KeyPressEventInterceptor)
 					if ok {
 						kpi.StopInterceptKeyPressEvents(ctx)
 					}
@@ -105,7 +105,6 @@ func New(
 	)
 	t.OnKeyPress(
 		func(ctx context.Context, ev gt.KeyPressEvent) bool {
-
 			k := ev.Key()
 			if k.Equal(t.escapeKey) {
 				// This should never be true, since the Application's main
@@ -119,7 +118,6 @@ func New(
 			code := k.Code()
 			mods := k.Modifiers()
 			if k.Equal(t.clearKey) {
-				gtlog.Warn(ctx, "TextArea[%s]: clear key received", t.ID())
 				input.Reset()
 			} else {
 				// Handle some special keys.

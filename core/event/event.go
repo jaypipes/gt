@@ -14,6 +14,8 @@ import (
 type Event struct {
 	// when is the time that the event was generated
 	when time.Time
+	// source contains the thing that triggered the event.
+	source any
 }
 
 // String returns a simple string representation of the event.
@@ -31,6 +33,16 @@ func (e *Event) When() time.Time {
 // SetWhen sets the time the Event was generated.
 func (e *Event) SetWhen(when time.Time) {
 	e.when = when
+}
+
+// Source returns the thing that triggered/created the event.
+func (e *Event) Source() any {
+	return e.source
+}
+
+// SetSource sets the thing that triggered/created the event.
+func (e *Event) SetSource(source any) {
+	e.source = source
 }
 
 var _ tcell.Event = (*Event)(nil)

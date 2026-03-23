@@ -11,10 +11,6 @@ type FocusEvent interface {
 	// SetEnabled sets whether the receiver of the event should receive the
 	// focus.
 	SetEnabled(bool)
-	// Producer returns the thing that fired the FocusEvent
-	Producer() any
-	// SetProducer sets the thing that fired the FocusEvent.
-	SetProducer(any)
 }
 
 // FocusEventWithOption describes an optional varg parameter to

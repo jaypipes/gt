@@ -38,3 +38,11 @@ func WithTCell(
 		e.SetDirection(scrollDirectionFromTCell(te.Buttons()))
 	}
 }
+
+// WithSource modifies the returned Event, setting its source to the
+// supplied value.
+func WithSource(source any) types.ScrollEventWithOption {
+	return func(e types.ScrollEvent) {
+		e.SetSource(source)
+	}
+}

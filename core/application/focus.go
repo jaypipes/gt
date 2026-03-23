@@ -31,7 +31,7 @@ func (a *Application) setFocus(
 	}
 	gtlog.Debug(ctx, "Application.setFocus on %s", core.ID(target))
 	ev := fevent.New(
-		fevent.WithEnabled(true), fevent.WithProducer(a),
+		fevent.WithEnabled(true), fevent.WithSource(a),
 	)
 	target.Focus(ctx, ev)
 	a.focused = target
@@ -46,7 +46,7 @@ func (a *Application) removeFocus(ctx context.Context) {
 	}
 	gtlog.Debug(ctx, "Application.removeFocus on %s", core.ID(a.focused))
 	ev := fevent.New(
-		fevent.WithEnabled(false), fevent.WithProducer(a),
+		fevent.WithEnabled(false), fevent.WithSource(a),
 	)
 	a.focused.Focus(ctx, ev)
 	a.focused = nil

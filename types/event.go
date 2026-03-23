@@ -17,7 +17,15 @@ type Event interface {
 	tcell.Event
 	// SetWhen sets the timestamp of the Event.
 	SetWhen(time.Time)
+	// Source returns the thing that fired the Event.
+	Source() any
+	// SetSource sets the thing that fired the Event.
+	SetSource(any)
 }
+
+// EventWithOption describes an optional varg parameter to [core.event.New]
+// that modifies the returned Event.
+type EventWithOption func(Event)
 
 // ApplicationEvent is used as the message payload for communicating
 // Application, Element and Component state changes.

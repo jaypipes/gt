@@ -35,3 +35,11 @@ func WithTCell(
 		e.SetWhen(te.When())
 	}
 }
+
+// WithSource modifies the returned Event, setting its source to the supplied
+// value.
+func WithSource(source any) types.KeyPressEventWithOption {
+	return func(e types.KeyPressEvent) {
+		e.SetSource(source)
+	}
+}

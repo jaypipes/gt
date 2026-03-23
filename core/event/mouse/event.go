@@ -13,7 +13,7 @@ import (
 // Event exposes an easy-to-use interface for handling mouse-related events.
 // Implements [types.MouseEvent].
 type Event struct {
-	event.Event
+	*event.Event
 	core.KeyModifiable
 	// pos contains the coordinates of the mouse when the event fired.
 	pos types.Point
