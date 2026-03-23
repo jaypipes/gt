@@ -54,13 +54,15 @@ func (b *Box) BorderBackgroundColor() types.Color {
 // renderBorder draws the border around the outer bounding box's cells.
 func (b *Box) renderBorder(
 	ctx context.Context,
-	screen types.Screen,
+	h types.ScreenHandler,
 ) {
 	// If we have a border, draw it around the outer bounding box.
 	border := b.border
 	if border == nil {
 		return
 	}
+
+	screen := h.Screen()
 
 	bounds := b.bounds
 

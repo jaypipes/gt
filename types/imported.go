@@ -13,18 +13,11 @@ type (
 	Rectangle = image.Rectangle
 	Point     = image.Point
 
-	Screen         = tcell.Screen
-	CursorStyle    = tcell.CursorStyle
 	UnderlineStyle = tcell.UnderlineStyle
 )
 
 var (
 	Rect = image.Rect
-)
-
-const (
-	CursorStyleBar       = tcell.CursorStyleSteadyBar
-	CursorStyleSteadyBar = tcell.CursorStyleSteadyBar
 )
 
 const (

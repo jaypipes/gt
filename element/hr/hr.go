@@ -45,7 +45,7 @@ type HR struct {
 }
 
 // Render implements the types.Renderable interface
-func (h *HR) Render(ctx context.Context, screen types.Screen) {
+func (h *HR) Render(ctx context.Context, handler types.ScreenHandler) {
 	bounds := h.Bounds()
 	gtlog.Debug(ctx, "HR.Render[%s]: bounds=%s", h.Tag(), bounds)
 	numCellsWide := h.Width()
@@ -60,5 +60,7 @@ func (h *HR) Render(ctx context.Context, screen types.Screen) {
 	s := h.Style()
 	startX := inner.Min.X
 	startY := inner.Min.Y
+
+	screen := handler.Screen()
 	screen.PutStrStyled(startX, startY, line, style.TCell(s))
 }

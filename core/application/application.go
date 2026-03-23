@@ -13,6 +13,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
+	"github.com/jaypipes/gt/core/cursor"
 	kpevent "github.com/jaypipes/gt/core/event/keypress"
 	mevent "github.com/jaypipes/gt/core/event/mouse"
 	sevent "github.com/jaypipes/gt/core/event/scroll"
@@ -45,6 +46,7 @@ func New(
 	}
 	return &Application{
 		screen:   s,
+		cursor:   cursor.New(cursor.WithScreen(s)), // default is hidden cursor
 		exitKeys: []types.Key{defaultExitKey},
 		views:    map[string]*view.View{},
 		keyMap:   types.KeyMap{},
@@ -62,7 +64,12 @@ func New(
 type Application struct {
 	sync.RWMutex
 	box.Box
+
+	// screen is the low-level communication with the terminal screen.
 	screen tcell.Screen
+	// cursor tracks the position and style of the cursor on the terminal
+	// screen.
+	cursor types.Cursor
 
 	// title is an optional title for the application, used as a title for the
 	// terminal when set.
@@ -202,6 +209,23 @@ func (a *Application) SetBorderBackgroundColor(c types.Color) *Application {
 	return a
 }
 
+// Screen returns the Screen the Application sends output to.
+func (a *Application) Screen() types.Screen {
+	return a.screen
+}
+
+// Cursor returns the Cursor the Application is managing for the terminal
+// screen.
+func (a *Application) Cursor() types.Cursor {
+	return a.cursor
+}
+
+// SetCursor sets the Cursor the Application is managing for the terminal
+// screen.
+func (a *Application) SetCursor(c types.Cursor) {
+	a.cursor = c
+}
+
 // Start starts up the Application and its event loop, blocking until the event
 // loop is closed.
 func (a *Application) Start(ctx context.Context) error {
@@ -305,8 +329,8 @@ func (a *Application) draw(ctx context.Context) {
 
 	s.Clear()
 
-	a.Box.Render(ctx, s)
+	a.Box.Render(ctx, a)
 	v.SetBounds(a.InnerBounds())
-	v.Draw(ctx, s)
+	v.Draw(ctx, a)
 	s.Show()
 }

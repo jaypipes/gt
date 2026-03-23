@@ -1,19 +1,26 @@
 package types
 
-import "image/color"
+import (
+	"image/color"
+)
 
 type CursorShape int
 
 const (
-	CursorShapeBlock CursorShape = iota
+	CursorShapeDefault CursorShape = iota
+	CursorShapeBlock
 	CursorShapeUnderline
 	CursorShapeBar
 )
 
 // Cursor represents the style, shape and position of a cursor on the [Screen].
 type Cursor interface {
-	// Position returns the coordinates of the Cursor on the Screen. This will be (-1,
-	// -1) when the Cursor is hidden.
+	// Screen returns the Screen object the Cursor will display on.
+	Screen() Screen
+	// SetScreen sets the Screen object the Cursor will display on.
+	SetScreen(Screen)
+	// Position returns the coordinates of the Cursor on the Screen. Will be
+	// (-1, -1) when the Cursor is hidden.
 	Position() Point
 	// SetPosition sets the coordinates of the Cursor.
 	SetPosition(Point)
@@ -34,3 +41,7 @@ type Cursor interface {
 	// SetColor sets the color of the Cursor's cell.
 	SetColor(color.Color)
 }
+
+// CursorWithOption describes an optional varg parameter to [core.cursor.New]
+// that modifies the returned Cursor.
+type CursorWithOption func(Cursor)

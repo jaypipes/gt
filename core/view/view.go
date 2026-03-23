@@ -151,7 +151,7 @@ func (v *View) AppendContent(content types.Node) *View {
 // Screen.
 func (v *View) Draw(
 	ctx context.Context,
-	screen types.Screen,
+	h types.ScreenHandler,
 ) {
 	bounds := v.Bounds()
 	inner := v.InnerBounds()
@@ -167,5 +167,5 @@ func (v *View) Draw(
 	render.Plot(ctx, v, inner)
 
 	// And finally draw all the content to the Screen.
-	render.Render(ctx, v, screen)
+	render.Render(ctx, v, h)
 }

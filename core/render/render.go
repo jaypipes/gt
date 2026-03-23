@@ -10,14 +10,14 @@ import (
 func Render(
 	ctx context.Context,
 	n types.Node,
-	screen types.Screen,
+	h types.ScreenHandler,
 ) {
 	r, ok := n.(types.Renderable)
 	if !ok {
 		return
 	}
-	r.Render(ctx, screen)
+	r.Render(ctx, h)
 	for _, child := range n.Children() {
-		Render(ctx, child, screen)
+		Render(ctx, child, h)
 	}
 }

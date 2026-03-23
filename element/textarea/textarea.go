@@ -234,10 +234,14 @@ func (t *TextArea) ClearKey() types.Key {
 }
 
 // Render implements the types.Renderable interface
-func (t *TextArea) Render(ctx context.Context, screen types.Screen) {
+func (t *TextArea) Render(ctx context.Context, h types.ScreenHandler) {
 	bounds := t.Bounds()
 	gtlog.Debug(ctx, "TextArea.Render[%s]: bounds=%s", t.Tag(), bounds)
-	t.Box.Render(ctx, screen)
+	t.Box.Render(ctx, h)
+
+	screen := h.Screen()
+	cursor := h.Cursor()
+
 	content := t.TextContent()
 	focused := t.HasFocus()
 	if len(content) == 0 {
@@ -253,15 +257,16 @@ func (t *TextArea) Render(ctx context.Context, screen types.Screen) {
 	for y, line := range lines {
 		screen.PutStrStyled(startX, startY+y, line, style.TCell(s))
 	}
-	// If we have the focus, show the cursor at the end of the user-input text
-	// to indicate this is an editable thing.
+	// If we have the focus, show the cursor at the end of the TextArea's text
+	// content.
 	if focused {
-		x := inner.Max.X
-		y := inner.Max.Y
-		screen.ShowCursor(x, y)
-		screen.SetCursorStyle(types.CursorStyleBar)
+		x := inner.Min.X
+		y := inner.Min.Y
+		y += len(lines) - 1
+		x += len(lines[len(lines)-1])
+		cursor.SetPosition(types.Point{X: x, Y: y})
 	} else {
-		screen.HideCursor()
+		cursor.Hide()
 	}
 }
 

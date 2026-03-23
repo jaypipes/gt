@@ -59,8 +59,8 @@ func (b *Box) String() string {
 }
 
 // Render implements the types.Renderable interface
-func (b *Box) Render(ctx context.Context, screen types.Screen) {
-	b.renderBorder(ctx, screen)
+func (b *Box) Render(ctx context.Context, h types.ScreenHandler) {
+	b.renderBorder(ctx, h)
 }
 
 var _ types.Plottable = (*Box)(nil)

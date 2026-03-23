@@ -143,7 +143,7 @@ func (e *Element) WithDisabled(on bool) types.Element {
 }
 
 // Render implements the types.Renderable interface
-func (e *Element) Render(ctx context.Context, screen types.Screen) {
+func (e *Element) Render(ctx context.Context, h types.ScreenHandler) {
 	s := e.Style()
 	styleStr := "none"
 	if s != nil {
@@ -154,7 +154,10 @@ func (e *Element) Render(ctx context.Context, screen types.Screen) {
 		ctx, "Element.Render[%s]: bounds=%s style=%s",
 		e.Tag(), bounds, styleStr,
 	)
-	e.Box.Render(ctx, screen)
+
+	screen := h.Screen()
+
+	e.Box.Render(ctx, h)
 	content := e.TextContent()
 	if len(content) == 0 {
 		return
