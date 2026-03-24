@@ -21,11 +21,11 @@ func New(
 	return e
 }
 
-// WithEnabled sets whether the target of the event should receive or lose the
+// WithFocused sets whether the target of the event should receive or lose the
 // focus.
-func WithEnabled(enabled bool) types.FocusEventWithOption {
+func WithFocused(on bool) types.FocusEventWithOption {
 	return func(e types.FocusEvent) {
-		e.SetEnabled(enabled)
+		e.SetFocused(on)
 	}
 }
 

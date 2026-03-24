@@ -1,5 +1,7 @@
 package types
 
+import "context"
+
 // Element represents a single node in gt's Document Object Model (DOM).
 //
 // The DOM is a single-rooted tree structure, and as such each Element in the
@@ -40,6 +42,10 @@ type Element interface {
 	// WithDisabled sets whether the Element is disabled and returns the
 	// Element.
 	WithDisabled(bool) Element
+	// NextFocusable returns the next focusable thing, or nil if there is no
+	// next focusable thing. The Element's children will first be inspected and
+	// then the next sibling Element.
+	NextFocusable(context.Context) FocusEventHandler
 
 	// WithParent sets the Element's parent and index of the Element within the
 	// parent's children and returns the Element.

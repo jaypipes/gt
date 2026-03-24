@@ -9,6 +9,25 @@ import (
 	"github.com/jaypipes/gt/types"
 )
 
+// FocusNext moves the focus to the next focusable element in the current view,
+// returning whether the focus has changed.
+func (a *Application) FocusNext(ctx context.Context) bool {
+	var next types.FocusEventHandler
+	if a.focused != nil {
+		el, ok := a.focused.(types.Element)
+		if ok {
+			next = el.NextFocusable(ctx)
+		}
+	} else {
+		v := a.CurrentView()
+		next = v.NextFocusable(ctx)
+	}
+	if next != nil {
+		return a.setFocus(ctx, next)
+	}
+	return false
+}
+
 // setFocus sets the currently-focused thing and removes the focus from the
 // previously-focused thing, returning whether there was a change in focus.
 func (a *Application) setFocus(
@@ -31,7 +50,7 @@ func (a *Application) setFocus(
 	}
 	gtlog.Debug(ctx, "Application.setFocus on %s", core.ID(target))
 	ev := fevent.New(
-		fevent.WithEnabled(true), fevent.WithSource(a),
+		fevent.WithFocused(true), fevent.WithSource(a),
 	)
 	target.Focus(ctx, ev)
 	a.focused = target
@@ -46,7 +65,7 @@ func (a *Application) removeFocus(ctx context.Context) {
 	}
 	gtlog.Debug(ctx, "Application.removeFocus on %s", core.ID(a.focused))
 	ev := fevent.New(
-		fevent.WithEnabled(false), fevent.WithSource(a),
+		fevent.WithFocused(false), fevent.WithSource(a),
 	)
 	a.focused.Focus(ctx, ev)
 	a.focused = nil

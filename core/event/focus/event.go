@@ -13,27 +13,27 @@ import (
 // Implements [types.FocusEvent].
 type Event struct {
 	*event.Event
-	// enabled indicates whether the focus should be gained or lost.
-	enabled bool
+	// on indicates whether the focus should be gained or lost.
+	on bool
 }
 
 // String returns a simple string representation of the event.
 func (e *Event) String() string {
 	return fmt.Sprintf(
-		"focus:%t", e.enabled,
+		"focus:%t", e.on,
 	)
 }
 
-// Enabled returns whether the focus should be gained or lost by the target of
+// Focused returns whether the focus should be gained or lost by the target of
 // the event.
-func (e *Event) Enabled() bool {
-	return e.enabled
+func (e *Event) Focused() bool {
+	return e.on
 }
 
-// SetEnabled sets whether the focus should be gained or lost by the target of
+// SetFocused sets whether the focus should be gained or lost by the target of
 // the event.
-func (e *Event) SetEnabled(on bool) {
-	e.enabled = on
+func (e *Event) SetFocused(on bool) {
+	e.on = on
 }
 
 var _ tcell.Event = (*Event)(nil)

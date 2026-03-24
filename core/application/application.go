@@ -29,7 +29,8 @@ const (
 )
 
 var (
-	defaultExitKey = key.New("ctrl+c")
+	defaultExitKey      = key.New("ctrl+c")
+	defaultFocusNextKey = key.New("tab")
 )
 
 // New returns a new Application.
@@ -45,11 +46,12 @@ func New(
 		log.Fatalf("%+v", err)
 	}
 	return &Application{
-		screen:   s,
-		cursor:   cursor.New(cursor.WithScreen(s)), // default is hidden cursor
-		exitKeys: []types.Key{defaultExitKey},
-		views:    map[string]*view.View{},
-		keyMap:   types.KeyMap{},
+		screen:        s,
+		cursor:        cursor.New(cursor.WithScreen(s)), // default is hidden cursor
+		exitKeys:      []types.Key{defaultExitKey},
+		focusNextKeys: []types.Key{defaultFocusNextKey},
+		views:         map[string]*view.View{},
+		keyMap:        types.KeyMap{},
 	}
 }
 
@@ -88,6 +90,9 @@ type Application struct {
 	// If no exit key combinations are set for the Application, it
 	// defaults to "Ctrl+C".
 	exitKeys []types.Key
+	// focusNextKeys contains the keypress combinations that tell the
+	// Application to move the focus to the next focusable element.
+	focusNextKeys []types.Key
 	// keyMap contains key press combination callbacks registered for the
 	// Application itself -- i.e. global key press callbacks.
 	keyMap types.KeyMap

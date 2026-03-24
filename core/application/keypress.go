@@ -29,6 +29,24 @@ func (a *Application) SetExitKey(subject ...any) {
 	}
 }
 
+// SetFocusNextKey configures the keypress combinations that tell the
+// Application to move the focus to the next focusable element.
+//
+// The keypress combinations can be strings ("Tab"), [tcell.Key] codes
+// (tcell.KeyTab), [types.KeyCode] values (types.KeyCodeTab) or [types.Key]
+// objects (core.key.KeyTab)
+//
+// If no move focus keypress combinations are set for the Application, it defaults to
+// "Tab".
+func (a *Application) SetFocusNextKey(subject ...any) {
+	k := key.New(subject)
+	for _, ek := range a.focusNextKeys {
+		if !k.Equal(ek) {
+			a.focusNextKeys = append(a.focusNextKeys, k)
+		}
+	}
+}
+
 // InterceptKeyPressEvents signals the Application to trap all key press events
 // and route all key press events to the supplied KeyPressEventHandler. This
 // method allows elements to need to take input from the user when they have
@@ -80,6 +98,17 @@ func (a *Application) exitKeyPressed(ev types.KeyPressEvent) bool {
 	return false
 }
 
+// focusNextKeyPressed returns true if the supplied KeyPressEvent matches any
+// of the focusNext keys registered for the Application.
+func (a *Application) focusNextKeyPressed(ev types.KeyPressEvent) bool {
+	for _, fnk := range a.focusNextKeys {
+		if fnk.Equal(ev.Key()) {
+			return true
+		}
+	}
+	return false
+}
+
 // handleKeyPressEvent passes a KeyPressEvent to any handlers that are
 // listening for KeyPressEvents.
 func (a *Application) handleKeyPressEvent(
@@ -115,12 +144,23 @@ func (a *Application) handleKeyPressEvent(
 		return
 	}
 
+	handled := false
+
+	// If our "move focus to next focusable" key press combination was pressed,
+	// let's move our focus...
+	if a.focusNextKeyPressed(ev) {
+		handled = a.FocusNext(ctx)
+		if handled {
+			a.draw(ctx)
+			return
+		}
+	}
+
 	// If there is an element that has the focus, we send the key press event
 	// to that element. That element can return false, meaning it did not
 	// consume/handle the event. If that is the case, or there was no element
 	// with the focus, we send the key press event to all elements in the
 	// current view, stopping when any element returns a true value.
-	handled := false
 	if focused != nil {
 		handler, ok := focused.(types.KeyPressEventHandler)
 		if ok {

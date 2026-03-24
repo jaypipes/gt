@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	ElementClass  = "gt.textarea"
-	DefaultWidth  = 20
-	DefaultHeight = 2
+	ElementClass   = "gt.textarea"
+	DefaultWidth   = 20
+	DefaultHeight  = 2
+	DefaultTabSize = 4
 )
 
 var (
@@ -57,6 +58,17 @@ func WithClearKey(subject any) types.ElementWithOption {
 	}
 }
 
+// WithTabSize sets the TextArea's tab size (number of spaces to replace TAB
+// characters).
+func WithTabSize(size int) types.ElementWithOption {
+	return func(e types.Element) {
+		ta, ok := e.(*TextArea)
+		if ok {
+			ta.SetTabSize(size)
+		}
+	}
+}
+
 // New returns a new TextArea instance with the given options.
 func New(
 	ctx context.Context,
@@ -79,12 +91,13 @@ func New(
 	t.SetHeight(core.Fixed(DefaultHeight))
 	t.SetEscapeKey(DefaultEscapeKey)
 	t.SetClearKey(DefaultClearKey)
+	t.SetTabSize(DefaultTabSize)
 	for _, opt := range opts {
 		opt(t)
 	}
 	t.OnFocus(
 		func(ctx context.Context, ev types.FocusEvent) {
-			focused := ev.Enabled()
+			focused := ev.Focused()
 			s := ev.Source()
 			if focused {
 				if s != nil {
@@ -105,6 +118,9 @@ func New(
 	)
 	t.OnKeyPress(
 		func(ctx context.Context, ev gt.KeyPressEvent) bool {
+			if !t.HasFocus() {
+				return false
+			}
 			k := ev.Key()
 			if k.Equal(t.escapeKey) {
 				// This should never be true, since the Application's main
