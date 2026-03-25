@@ -37,39 +37,43 @@ func main() {
 
 	// Add a keyboard shortcut that will set the Application's active
 	// (displayed) View.
-	v1.SetCurrentViewKeyPress("1")
+	v1.SetActiveKey("1")
 
 	// Views can have borders and padding, too!
 	v1.SetBorder(gt.RoundedBorder())
 	v1.SetPadding(gt.Pad(1))
 
-	div1 := gtdiv.New(ctx)
-	div1.SetID("div-1")
-	div1.SetTextContent("content 1")
-	div1.SetHeight(gt.Percent(100))
-	div1.SetAlignment(gt.AlignmentMiddleCenter)
-	div1.SetForegroundColor(black)
-	div1.SetBackgroundColor(yellow)
+	div1 := gtdiv.New(
+		ctx,
+		gt.WithID("div-1"),
+		gt.WithTextContent("content 1"),
+		gt.WithHeight(gt.Percent(100)),
+		gt.WithAlignment(gt.AlignmentMiddleCenter),
+		gt.WithForegroundColor(black),
+		gt.WithBackgroundColor(yellow),
+	)
 	v1.SetContent(div1)
 
 	v2 := app.View(ctx, "2")
-	v2.SetCurrentViewKeyPress("2")
+	v2.SetActiveKey("2")
 
 	v2.SetBorder(gt.RoundedBorder())
 	v2.SetPadding(gt.Pad(1))
 
-	div2 := gtdiv.New(ctx)
-	div2.SetID("div-2")
-	div2.SetTextContent("content 2")
-	div2.SetHeight(gt.Percent(100))
-	div2.SetAlignment(gt.AlignmentMiddleCenter)
-	div2.SetForegroundColor(black)
-	div2.SetBackgroundColor(pink)
+	div2 := gtdiv.New(
+		ctx,
+		gt.WithID("div-2"),
+		gt.WithTextContent("content 2"),
+		gt.WithHeight(gt.Percent(100)),
+		gt.WithAlignment(gt.AlignmentMiddleCenter),
+		gt.WithForegroundColor(black),
+		gt.WithBackgroundColor(pink),
+	)
 	v2.SetContent(div2)
 
-	// gt.Application.SetCurrentView can be used to programmatically switch the
+	// gt.Application.SetActiveView can be used to programmatically switch the
 	// active (displayed) View for an Application.
-	app.SetCurrentView(v1.ID())
+	app.SetActiveView(v1.ID())
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)

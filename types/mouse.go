@@ -2,15 +2,7 @@ package types
 
 import (
 	"context"
-	"time"
 )
-
-// NOTE(jaypipes): Some of this code adapted from:
-// https://github.com/rivo/tview/blob/f39b95c73dbb30877f4b5145b835333002afb2a8/application.go
-
-// DefaultMouseDoubleClickInterval specifies the default maximum time between
-// clicks to register a double click rather than click.
-var DefaultMouseDoubleClickInterval = 500 * time.Millisecond
 
 // MouseButton indicates the mouse button that was activated.
 type MouseButton int16

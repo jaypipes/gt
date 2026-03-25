@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v3"
-	"github.com/samber/lo"
 
 	"github.com/jaypipes/gt/core/box"
 	"github.com/jaypipes/gt/core/cursor"
@@ -50,8 +49,7 @@ func New(
 		cursor:        cursor.New(cursor.WithScreen(s)), // default is hidden cursor
 		exitKeys:      []types.Key{defaultExitKey},
 		focusNextKeys: []types.Key{defaultFocusNextKey},
-		views:         map[string]*view.View{},
-		keyMap:        types.KeyMap{},
+		views:         map[string]types.View{},
 	}
 }
 
@@ -79,9 +77,9 @@ type Application struct {
 
 	// views is a map, keyed by the View ID, of Views that the Application is
 	// managing.
-	views map[string]*view.View
-	// curView is the ID of the currently active (displayed) View.
-	curView string
+	views map[string]types.View
+	// activeView is the ID of the currently active (displayed) View.
+	activeView string
 
 	// exitKeys contains the supplied exit key combinations. These
 	// key combinations are always evaluated first when a key event
@@ -93,9 +91,9 @@ type Application struct {
 	// focusNextKeys contains the keypress combinations that tell the
 	// Application to move the focus to the next focusable element.
 	focusNextKeys []types.Key
-	// keyMap contains key press combination callbacks registered for the
+	// keyShortcuts contains key press combination callbacks registered for the
 	// Application itself -- i.e. global key press callbacks.
-	keyMap types.KeyMap
+	keyShortcuts []types.KeyShortcut
 	// keyInterceptor points to a types.KeyPressEventHandler that receives all
 	// keyboard input after InterceptKey has been called.
 	keyInterceptor types.KeyPressEventHandler
@@ -147,34 +145,6 @@ func (a *Application) EnablePaste() {
 // EnableFocus enables focus events for the Application.
 func (a *Application) EnableFocus() {
 	a.focusEnabled = true
-}
-
-// View returns the View with the supplied ID. If no such View exists, a new
-// empty View with that ID is returned.
-func (a *Application) View(ctx context.Context, id string) *view.View {
-	v, ok := a.views[id]
-	if !ok {
-		v = view.New(ctx, id)
-		a.views[id] = v
-		a.curView = id
-	}
-	return v
-}
-
-// Views returns the collection of the Application's Views.
-func (a *Application) Views() []*view.View {
-	return lo.Values(a.views)
-}
-
-// CurrentView returns the currently active (displaying) View.
-func (a *Application) CurrentView() *view.View {
-	return a.views[a.curView]
-}
-
-// SetCurrentView sets the currently active (displaying) View.
-func (a *Application) SetCurrentView(id string) *Application {
-	a.curView = id
-	return a
 }
 
 // SetBounds sets the View's outer bounding box.
@@ -273,9 +243,6 @@ func (a *Application) Start(ctx context.Context) error {
 	s.Clear()
 
 	quit := func() {
-		// You have to catch panics in a defer, clean up, and
-		// re-raise them - otherwise your application can
-		// die without leaving any diagnostic trace.
 		maybePanic := recover()
 		if s != nil {
 			s.Fini()
@@ -308,7 +275,7 @@ loop:
 			if sev.Direction() != types.ScrollDirectionNone {
 				a.handleScrollEvent(ctx, sev)
 			} else {
-				mev := mevent.New(mevent.WithTCell(ev)) //, a.lastMouseEvent, a.mouseDownEvent)
+				mev := mevent.New(mevent.WithTCell(ev))
 				a.handleMouseEvent(ctx, mev)
 			}
 		case *tcell.EventError:
@@ -325,12 +292,15 @@ func (a *Application) draw(ctx context.Context) {
 	if s == nil {
 		panic("called Application.draw() with nil screen.")
 	}
-	v := a.CurrentView()
+
+	a.Lock()
+	v := a.ActiveView()
 	if v == nil {
-		v = view.New(ctx, "main")
+		v = view.New(ctx, view.WithID("main"))
 		a.views["main"] = v
-		a.curView = "main"
+		a.activeView = "main"
 	}
+	a.Unlock()
 
 	s.Clear()
 

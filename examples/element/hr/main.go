@@ -37,27 +37,32 @@ func main() {
 	v := app.View(ctx, "main")
 
 	// gt.HR is a horizontal rule similar to an HTML <hr> element.
-	hrA := gthr.New(ctx)
-	hrA.SetID("A")
-	// The default width is the width of the parent container, which in this
-	// case is the View which defaults to the available width and height of
-	// the terminal screen.
-	//
-	// To override the width of the HR, use the `gt.Element.SetWidth` method.
-	hrA.SetWidth(gt.Fixed(20))
-	// Note that the default behaviour of an HR is to draw its line centered in
-	// the parent container. To change this behaviour, use the
-	// `gt.Element.SetAlignment` method.
-	hrA.SetAlignment(gt.AlignmentLeft)
-	hrA.SetForegroundColor(yellow)
+	hrA := gthr.New(
+		ctx,
+		gt.WithID("A"),
+		// The default width is the width of the parent container, which in this
+		// case is the View which defaults to the available width and height of
+		// the terminal screen.
+		//
+		// To override the width of the HR, use the `gt.Element.SetWidth` method or
+		// the `gt.WithWidth` modifier.
+		gt.WithWidth(gt.Fixed(20)),
+		// Note that the default behaviour of an HR is to draw its line centered in
+		// the parent container. To change this behaviour, use the
+		// `gt.Element.SetAlignment` method or the `gt.WithAlignment` modifier.
+		gt.WithAlignment(gt.AlignmentLeft),
+		gt.WithForegroundColor(yellow),
+	)
 	v.AppendContent(hrA)
 
 	// We'll add another HR without a fixed width or alignment mode to
 	// demonstrate the default behaviour of a width equal to the parent
 	// container.
-	hrB := gthr.New(ctx)
-	hrB.SetID("B")
-	hrB.SetForegroundColor(blue)
+	hrB := gthr.New(
+		ctx,
+		gt.WithID("B"),
+		gt.WithForegroundColor(blue),
+	)
 	v.AppendContent(hrB)
 
 	if err := app.Start(ctx); err != nil {

@@ -16,7 +16,7 @@ func (a *Application) handleScrollEvent(
 	// If the mouse is over something that can handle mouse events and is not
 	// disabled, we will fire the OnScroll event.
 	pos := ev.Position()
-	v := a.CurrentView()
+	v := a.ActiveView()
 	node := v.AtPoint(pos)
 	if node != nil {
 		el, ok := node.(types.Element)

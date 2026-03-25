@@ -3,8 +3,6 @@ package application
 import (
 	"context"
 
-	"github.com/samber/lo"
-
 	"github.com/jaypipes/gt/core"
 	"github.com/jaypipes/gt/core/key"
 	gtlog "github.com/jaypipes/gt/core/log"
@@ -87,6 +85,24 @@ func (a *Application) StopInterceptKeyPressEvents(
 	a.keyInterceptor = nil
 }
 
+// SetKeyShortcut registers an Application-level KeyShortcut that will execute
+// upon a key press combination.
+func (a *Application) SetKeyShortcut(shortcut types.KeyShortcut) {
+	k := shortcut.Key()
+	for _, ks := range a.keyShortcuts {
+		ksk := ks.Key()
+		if ksk.Equal(k) {
+			gtlog.Warn(
+				context.TODO(),
+				"key shortcut %q shadows previously-registered "+
+					"application-level key shortcut",
+				k,
+			)
+		}
+	}
+	a.keyShortcuts = append(a.keyShortcuts, shortcut)
+}
+
 // exitKeyPressed returns true if the supplied KeyPressEvent matches any of the
 // exit keys registered for the Application.
 func (a *Application) exitKeyPressed(ev types.KeyPressEvent) bool {
@@ -119,6 +135,9 @@ func (a *Application) handleKeyPressEvent(
 	focused := a.focused
 	interceptor := a.keyInterceptor
 	escapeKey := a.keyInterceptEscape
+	keyShortcuts := a.keyShortcuts
+	views := a.views
+	activeView := a.ActiveView()
 	a.RUnlock()
 
 	k := ev.Key()
@@ -147,10 +166,35 @@ func (a *Application) handleKeyPressEvent(
 	handled := false
 
 	// If our "move focus to next focusable" key press combination was pressed,
-	// let's move our focus...
+	// let's move our focus.
 	if a.focusNextKeyPressed(ev) {
 		handled = a.FocusNext(ctx)
 		if handled {
+			a.draw(ctx)
+			return
+		}
+	}
+
+	// Next, we handle our Application-level global key shortcuts.
+	for _, ks := range keyShortcuts {
+		ksk := ks.Key()
+		if ksk.Equal(k) {
+			cb := ks.Callback()
+			cb(ctx)
+			return
+		}
+	}
+
+	// Then we check if the key press combination is a "switch active view"
+	// key, and if so, set the active view.
+	activeViewID := activeView.ID()
+	for viewID, v := range views {
+		if viewID == activeViewID {
+			continue
+		}
+		vk := v.ActiveKey()
+		if vk != nil && vk.Equal(k) {
+			a.SetActiveView(viewID)
 			a.draw(ctx)
 			return
 		}
@@ -160,7 +204,7 @@ func (a *Application) handleKeyPressEvent(
 	// to that element. That element can return false, meaning it did not
 	// consume/handle the event. If that is the case, or there was no element
 	// with the focus, we send the key press event to all elements in the
-	// current view, stopping when any element returns a true value.
+	// active view, stopping when any element returns a true value.
 	if focused != nil {
 		handler, ok := focused.(types.KeyPressEventHandler)
 		if ok {
@@ -171,88 +215,10 @@ func (a *Application) handleKeyPressEvent(
 			return
 		}
 	}
-	v := a.CurrentView()
-	if v.KeyPress(ctx, ev) {
+
+	// Finally, if nothing has handled the KeyPressEvent, we ask the active
+	// view to handle it.
+	if activeView.KeyPress(ctx, ev) {
 		a.draw(ctx)
 	}
-}
-
-// KeyMap returns the Application's *global* map of key press
-// combination strings to callbacks that will execute when that key press
-// combination is entered.
-func (a *Application) KeyMap() types.KeyMap {
-	return a.keyMap
-}
-
-// OnKeyPress registers an Application-level (global)  callback to execute
-// upon a key press combination.
-//
-// The keypress combination can be a string -- e.g. "Ctrl+C", "Esc" -- or a
-// [tcell.Key] code -- e.g. tcell.KeyCtrlC, KeyEscape.
-func (a *Application) OnKeyPress(subject any, cb types.EventCallback) {
-	kp := key.New(subject)
-	a.keyMap[kp] = cb
-}
-
-// buildKeyMap builds the Application's outermost map of key press combinations
-// to callback functions to execute when those key press combinations are
-// entered.
-//
-// The outermost map will always be the "current view" key press combinations
-// that the Application's registered Views have along with any key press
-// combinations registered with the Application itself and any key press
-// combinations that the *current* View contains.
-func (a *Application) buildKeyMap(
-	ctx context.Context,
-) types.KeyMap {
-	res := types.KeyMap{}
-
-	// copy in our global key press callbacks
-	for k, cb := range a.keyMap {
-		res[k] = cb
-	}
-	globalKPs := lo.Keys(a.keyMap)
-
-	// now add our "current view" key press callbacks
-	for viewID, view := range a.views {
-		currentViewKP := view.CurrentViewKey()
-		if currentViewKP != nil {
-			if lo.Contains(globalKPs, currentViewKP) {
-				gtlog.Warn(
-					ctx,
-					"current view key press combination %q for view %q "+
-						"shadows global key press combination",
-					currentViewKP, viewID,
-				)
-			}
-			res[currentViewKP] = func(_ context.Context) {
-				a.SetCurrentView(viewID)
-			}
-		}
-	}
-
-	// finally, add all the current View's key press callbacks
-	curView := a.views[a.curView]
-	curViewKPMap := curView.KeyMap()
-	if len(curViewKPMap) > 0 {
-		appKPs := lo.Keys(res)
-		for kp, cb := range curViewKPMap {
-			if lo.Contains(appKPs, kp) {
-				gtlog.Warn(
-					ctx,
-					"view key press combination %q for view %q "+
-						"shadows application key press combination",
-					kp, curView.ID(),
-				)
-			}
-			res[kp] = cb
-		}
-	}
-
-	gtlog.Debug(
-		ctx,
-		"Application.buildKeyMap: built map for combinations %v",
-		lo.Keys(res),
-	)
-	return res
 }

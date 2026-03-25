@@ -8,6 +8,10 @@ import (
 	"github.com/jaypipes/gt/types"
 )
 
+const (
+	defaultMouseDoubleClickInterval = 500 * time.Millisecond
+)
+
 // setHover sets the currently-hovered thing and calls MouseLoseHover() on the
 // previously-hovered thing if the hovered thing has changed.
 func (a *Application) setHover(
@@ -45,7 +49,7 @@ func (a *Application) handleMouseEvent(
 	var target types.MouseEventHandler
 
 	pos := ev.Position()
-	v := a.CurrentView()
+	v := a.ActiveView()
 	node := v.AtPoint(pos)
 	redraw := false
 	if node != nil {
@@ -82,7 +86,7 @@ func (a *Application) handleMouseEvent(
 	case !buttonWasDown && buttonNowDown && !downMoved && !a.mouseDragged:
 		// mouse was clicked or double-clicked.
 		a.mouseDownEvent = ev
-		if a.lastMouseClickTime.Add(types.DefaultMouseDoubleClickInterval).Before(time.Now()) {
+		if a.lastMouseClickTime.Add(defaultMouseDoubleClickInterval).Before(time.Now()) {
 			a.lastMouseClickTime = time.Now()
 			if target != nil {
 				ce := mevent.NewClickEvent(ev, false)

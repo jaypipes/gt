@@ -37,19 +37,6 @@ type Key interface {
 	Equal(Key) bool
 }
 
-// KeyMap maps key press combination strings to callbacks that will
-// execute upon that key press.
-type KeyMap map[Key]EventCallback
-
-// HasKeyMap describes something that has a map of key press combinations
-// and callbacks associated with it.
-type HasKeyMap interface {
-	// KeyMap returns the Keyable's map of key press combination
-	// strings to callbacks that will execute when that key press combination
-	// is entered.
-	KeyMap() KeyMap
-}
-
 const (
 	KeyCodeNUL KeyCode = 0
 )

@@ -19,7 +19,7 @@ func (a *Application) FocusNext(ctx context.Context) bool {
 			next = el.NextFocusable(ctx)
 		}
 	} else {
-		v := a.CurrentView()
+		v := a.ActiveView()
 		next = v.NextFocusable(ctx)
 	}
 	if next != nil {
