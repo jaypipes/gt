@@ -40,6 +40,9 @@ type Element struct {
 	// textContent is any unstyle raw text content for the Element.
 	textContent string
 
+	// focusable indicates the Element can receive the focus (when not
+	// disabled). This is generally a static property of a class of Elements.
+	focusable bool
 	// disabled indicates the Element is not focusable and does not accept
 	// input.
 	disabled bool
@@ -123,23 +126,6 @@ func (e *Element) WithClass(class string) types.Element {
 // Class returns the Element's type/class, e.g. "gt.span" or "gt.div"
 func (e *Element) Class() string {
 	return e.class
-}
-
-// SetDisabled sets whether the Element is disabled. Disabled Elements cannot
-// receive the focus.
-func (e *Element) SetDisabled(on bool) {
-	e.disabled = on
-}
-
-// Disabled returns true if the Element cannot get the focus.
-func (e *Element) Disabled() bool {
-	return e.disabled
-}
-
-// WithDisabled sets whether the Element is disabled and returns the Element.
-func (e *Element) WithDisabled(on bool) types.Element {
-	e.SetDisabled(on)
-	return e
 }
 
 // Render implements the types.Renderable interface

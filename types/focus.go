@@ -2,6 +2,16 @@ package types
 
 import "context"
 
+// Focusable represents something that sets and reports whether it can have the
+// focus given to it.
+type Focusable interface {
+	// SetFocusable sets whether the Focusable can receive the focus.
+	SetFocusable(bool)
+	// Focusable returns true if the Focusable can receive the focus.
+	// For Elements that are disabled, this should return false.
+	Focusable() bool
+}
+
 // FocusEvent describes events received when the focus changes.
 type FocusEvent interface {
 	Event
@@ -24,9 +34,7 @@ type FocusEventCallback func(context.Context, FocusEvent)
 // FocusEventHandler represents something that can be focused on and perform
 // some callback.
 type FocusEventHandler interface {
-	// CanFocus returns true if the FocusEventHandler can receive the focus.
-	// For Elements that are disabled, this should return false.
-	CanFocus() bool
+	Focusable
 	// HasFocus returns true if the FocusEventHandler has the current focus.
 	HasFocus() bool
 	// Focus handles focus events.

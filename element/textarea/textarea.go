@@ -92,6 +92,8 @@ func New(
 	t.SetEscapeKey(DefaultEscapeKey)
 	t.SetClearKey(DefaultClearKey)
 	t.SetTabSize(DefaultTabSize)
+	// TextArea is an input element so should be able to receive the focus.
+	t.SetFocusable(true)
 	for _, opt := range opts {
 		opt(t)
 	}
