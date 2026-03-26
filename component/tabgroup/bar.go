@@ -114,12 +114,12 @@ func (b *Bar) Build(ctx context.Context) {
 			element.WithDisplay(types.DisplayInlineBlock),
 			element.WithWidth(core.Fixed(12)),
 		)
-		if x == b.group.curTab {
+		if x == b.group.activeTab {
 			tabEl.SetBorder(b.titleActiveBorder)
 		} else {
 			onClick := func(ctx context.Context, ev types.MouseClickEvent) {
 				if ev.Button() == types.MouseButtonPrimary {
-					b.group.SetCurrentTab(tab.ID())
+					b.group.SetActiveTab(tab.ID())
 				}
 			}
 			tabEl.OnMouseClick(onClick)

@@ -63,7 +63,7 @@ func main() {
 
 	// You can set a key press combination to trigger the tab to become the
 	// active tab.
-	tab1.SetCurrentTabKeyPress("1")
+	tab1.SetActiveKey("1")
 
 	// Give the Tab some content by creating a new gt.Element or gt.Component
 	// and using Tab.SetContent or Tab.AppendContent.
@@ -80,7 +80,7 @@ func main() {
 	tab2.SetAlignment(gt.AlignmentMiddleCenter)
 	tab2.SetForegroundColor(black)
 	tab2.SetBackgroundColor(pink)
-	tab2.SetCurrentTabKeyPress("2")
+	tab2.SetActiveKey("2")
 
 	div2 := gtdiv.New(
 		ctx,

@@ -3,7 +3,8 @@ package tabgroup
 import (
 	"context"
 
-	"github.com/jaypipes/gt/core/keypress"
+	"github.com/jaypipes/gt/core/key"
+	"github.com/jaypipes/gt/core/keyshortcut"
 	"github.com/jaypipes/gt/element"
 	"github.com/jaypipes/gt/element/vdiv"
 	"github.com/jaypipes/gt/types"
@@ -29,12 +30,9 @@ type Tab struct {
 	group *TabGroup
 	// title is the text that appears in the Tab's tab.
 	title string
-	// currentTabKeyPress is the key combination that should trigger setting
-	// this Tab as the current Tab in the TabGroup.
-	currentTabKeyPress types.KeyPress
-	// keyPressMap contains key press combination callbacks registered for the
-	// Tab.
-	keyPressMap types.KeyPressMap
+	// activeKey is the key combination that should trigger setting
+	// this Tab as the active Tab in the TabGroup.
+	activeKey types.Key
 }
 
 // Group returns a pointer to the TabGroup to which the Tab belongs.
@@ -74,30 +72,31 @@ func (t *Tab) AppendContent(content types.Node) *Tab {
 	return t
 }
 
-// SetCurrentTabKeyPress sets the key combination that should trigger setting
-// this Tab as the current Tab in the TabGroup.
+// SetActiveKeyPress sets the key combination that should trigger setting
+// this Tab as the active Tab in the TabGroup.
 //
 // The keypress combination can be a string -- e.g. "Ctrl+C", "Esc" -- or a
 // [tcell.Key] code -- e.g. tcell.KeyCtrlC, KeyEscape.
-func (t *Tab) SetCurrentTabKeyPress(subject any) {
-	t.currentTabKeyPress = keypress.New(subject)
+func (t *Tab) SetActiveKey(subject any) {
+	k := key.New(subject)
+	ctx := context.TODO()
+	t.activeKey = k
+	cb := func(_ context.Context) {
+		t.group.SetActiveTab(t.ID())
+	}
+	ks := keyshortcut.New(ctx, keyshortcut.WithKey(k), keyshortcut.WithCallback(cb))
+	t.group.SetKeyShortcut(ks)
 }
 
-// SetCurrentTabKeyPress sets the key combination that should trigger setting
-// this Tab as the current Tab in the TabGroup and returns the Tab.
-func (t *Tab) WithCurrentTabKeyPress(subject string) *Tab {
-	t.SetCurrentTabKeyPress(subject)
+// SetActiveKeyPress sets the key combination that should trigger setting
+// this Tab as the active Tab in the TabGroup and returns the Tab.
+func (t *Tab) WithActiveKey(subject any) *Tab {
+	t.SetActiveKey(subject)
 	return t
 }
 
-// CurrentTabKeyPress returns the key combination that triggers setting this
-// Tab as the current Tab in the TabGroup
-func (t *Tab) CurrentTabKeyPress() types.KeyPress {
-	return t.currentTabKeyPress
-}
-
-// KeyPressMap returns a map, keyed by key press string combination, of
-// callbacks to execute upon that key press.
-func (t *Tab) KeyPressMap() types.KeyPressMap {
-	return t.keyPressMap
+// ActiveKeyPress returns the key combination that triggers setting this
+// Tab as the active Tab in the TabGroup
+func (t *Tab) ActiveKey() types.Key {
+	return t.activeKey
 }

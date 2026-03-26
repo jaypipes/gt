@@ -34,8 +34,11 @@ type TabGroup struct {
 	bar *Bar
 	// tabs is the collection of Tabs managed by the TabGroup.
 	tabs []*Tab
-	// curTab is the ID of the active Tab.
-	curTab int
+	// activeTab is the ID of the active Tab.
+	activeTab int
+
+	// keyShortcuts stores the TabGroups's set of key shortcuts.
+	keyShortcuts []types.KeyShortcut
 }
 
 // Bar returns the Bar object that can be styled separately.
@@ -52,7 +55,7 @@ func (g *TabGroup) Tab(ctx context.Context, id string) *Tab {
 	if !ok {
 		t = newTab(ctx, g, id)
 		g.tabs = append(g.tabs, t)
-		g.curTab = len(g.tabs) - 1
+		g.activeTab = len(g.tabs) - 1
 	}
 	return t
 }
@@ -64,58 +67,55 @@ func (g *TabGroup) Tabs() []*Tab {
 
 // CurrentTab returns the currently active (displaying) Tab.
 func (g *TabGroup) CurrentTab() *Tab {
-	return g.tabs[g.curTab]
+	return g.tabs[g.activeTab]
 }
 
-// SetCurrentTab sets the currently active (displaying) Tab.
-func (g *TabGroup) SetCurrentTab(id string) *TabGroup {
+// SetActiveTab sets the currently active (displaying) Tab.
+func (g *TabGroup) SetActiveTab(id string) *TabGroup {
 	_, idx, ok := lo.FindIndexOf(g.tabs, func(t *Tab) bool {
 		return strings.EqualFold(t.ID(), id)
 	})
 	if ok {
-		if g.curTab != idx {
-			g.curTab = idx
+		if g.activeTab != idx {
+			g.activeTab = idx
 			g.rebuild = true
 		}
 	}
 	return g
 }
 
-// KeyPressMap returns a map, keyed by key press string combination, of
-// callbacks to execute upon that key press.
-func (g *TabGroup) KeyPressMap() types.KeyPressMap {
-	ctx := context.TODO()
-	res := types.KeyPressMap{}
-
-	// add our "current tab" key press callbacks
-	for _, tab := range g.tabs {
-		currentTabKP := tab.CurrentTabKeyPress()
-		if currentTabKP != nil {
-			res[currentTabKP] = func(_ context.Context) {
-				g.SetCurrentTab(tab.ID())
-			}
+// KeyPress checks for any KeyShortcuts that are registered with the TabGroup
+// and executes any matched callback. If no KeyShortcuts are matched, we
+// execute the View's internal vdiv Element's KeyPress method.
+func (g *TabGroup) KeyPress(ctx context.Context, ev types.KeyPressEvent) bool {
+	k := ev.Key()
+	for _, ks := range g.keyShortcuts {
+		ksk := ks.Key()
+		if ksk.Equal(k) {
+			cb := ks.Callback()
+			cb(ctx)
+			return true
 		}
 	}
+	return g.VDiv.KeyPress(ctx, ev)
+}
 
-	// finally, add all the current Tab's key press callbacks
-	curTab := g.tabs[g.curTab]
-	curTabKPMap := curTab.KeyPressMap()
-	if len(curTabKPMap) > 0 {
-		appKPs := lo.Keys(res)
-		for k, cb := range curTabKPMap {
-			if lo.Contains(appKPs, k) {
-				gtlog.Warn(
-					ctx,
-					"tab key press combination %q for tab %q "+
-						"shadows tab group key press combination",
-					k, curTab.ID(),
-				)
-			}
-			res[k] = cb
+// SetKeyShortcut registers a TabGroup-level KeyShortcut that will execute upon
+// a key press combination.
+func (g *TabGroup) SetKeyShortcut(shortcut types.KeyShortcut) {
+	k := shortcut.Key()
+	for _, ks := range g.keyShortcuts {
+		ksk := ks.Key()
+		if ksk.Equal(k) {
+			gtlog.Warn(
+				context.TODO(),
+				"key shortcut %q shadows previously-registered "+
+					"tabgroup-level key shortcut",
+				k,
+			)
 		}
 	}
-
-	return res
+	g.keyShortcuts = append(g.keyShortcuts, shortcut)
 }
 
 // Build constructs the tab bar and tab content elements.
@@ -133,9 +133,9 @@ func (g *TabGroup) Build(
 	g.bar.Build(ctx)
 	g.AppendChild(g.bar)
 
-	curTab := g.CurrentTab()
-	if curTab != nil {
-		g.AppendChild(&curTab.VDiv)
+	activeTab := g.CurrentTab()
+	if activeTab != nil {
+		g.AppendChild(&activeTab.VDiv)
 	}
 	g.rebuild = false
 }
