@@ -56,12 +56,18 @@ type Border interface {
 	ForegroundColor() Color
 	// SetForegroundColor sets the foreground color for all the Border's Cells.
 	SetForegroundColor(Color)
+	// WithForegroundColor sets the foreground color for all the Border's Cells
+	// and returns the Border.
+	WithForegroundColor(Color) Border
 	// BackgroundColor returns the background color used for all the Border's
 	// Cells. If this is empty, individual border Cells may have their own
 	// Style.
 	BackgroundColor() Color
 	// SetBackgroundColor sets the background color for all the Border's Cells.
 	SetBackgroundColor(Color)
+	// WithBackgroundColor sets the background color for all the Border's Cells
+	// and returns the Border.
+	WithBackgroundColor(Color) Border
 	// HorizontalSpace returns the number of cells the Border consumes.
 	HorizontalSpace() Dimension
 	// VerticalSpace returns the number of lines the Border consumes.

@@ -2,6 +2,7 @@ package button
 
 import (
 	"context"
+	"image/color"
 	"strings"
 
 	"github.com/lucasb-eyer/go-colorful"
@@ -21,7 +22,7 @@ const (
 var (
 	veryLightGrey, _       = colorful.Hex("#ececec")
 	black, _               = colorful.Hex("#000000")
-	DefaultBackgroundColor = black
+	DefaultBackgroundColor = color.Transparent
 	DefaultForegroundColor = veryLightGrey
 	DefaultStyle           = style.New(
 		style.WithForegroundColor(
@@ -31,19 +32,23 @@ var (
 			DefaultBackgroundColor,
 		),
 	)
-	DefaultBorder = border.Rounded()
+	DefaultBorder = border.Rounded().
+			WithBackgroundColor(DefaultBackgroundColor).
+			WithForegroundColor(DefaultForegroundColor)
 	// Default hover is inverse of normal style.
 	DefaultHoverBackgroundColor = veryLightGrey
 	DefaultHoverForegroundColor = black
 	DefaultHoverStyle           = style.New(
 		style.WithForegroundColor(
-			DefaultHoverForegroundColor,
+			black,
 		),
 		style.WithBackgroundColor(
 			DefaultHoverBackgroundColor,
 		),
 	)
-	DefaultHoverBorder = border.Hidden()
+	DefaultHoverBorder = border.InnerHalfBlock().
+				WithBackgroundColor(color.Transparent).
+				WithForegroundColor(DefaultHoverBackgroundColor)
 )
 
 // New returns a new Button instance with the given options.

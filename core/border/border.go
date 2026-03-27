@@ -171,6 +171,13 @@ func (b *Border) SetForegroundColor(color types.Color) {
 	b.fgColor = color
 }
 
+// WithForegroundColor sets the foreground color for all the Border's Cells and
+// returns the Border.
+func (b *Border) WithForegroundColor(color types.Color) types.Border {
+	b.fgColor = color
+	return b
+}
+
 // BackgroundColor returns the background color used for all the Border's
 // Cells. If this is empty, individual border Cells may have their own Style.
 func (b *Border) BackgroundColor() types.Color {
@@ -180,6 +187,13 @@ func (b *Border) BackgroundColor() types.Color {
 // SetBackgroundColor sets the background color for all the Border's Cells.
 func (b *Border) SetBackgroundColor(color types.Color) {
 	b.bgColor = color
+}
+
+// WithBackgroundColor sets the background color for all the Border's Cells and
+// returns the Border.
+func (b *Border) WithBackgroundColor(color types.Color) types.Border {
+	b.bgColor = color
+	return b
 }
 
 // HorizontalSpace returns the number of cells the supplied Border
