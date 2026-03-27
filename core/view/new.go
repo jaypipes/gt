@@ -25,9 +25,16 @@ func New(
 	return v
 }
 
-// WithID sets the types.View's ID to the supplied value.
+// WithID sets the View's ID to the supplied value.
 func WithID(id string) types.ViewWithOption {
 	return func(v types.View) {
 		v.SetID(id)
+	}
+}
+
+// WithBorder sets the View's Border to the supplied value.
+func WithBorder(border types.Border) types.ViewWithOption {
+	return func(v types.View) {
+		v.SetBorder(border)
 	}
 }

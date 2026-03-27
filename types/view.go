@@ -20,11 +20,9 @@ type View interface {
 	// ActiveKey returns the key combination that triggers setting this View as
 	// the active View in the Application
 	ActiveKey() Key
-
 	// SetActiveKey sets the key combination that should trigger setting this
 	// View as the active (displayed) View.
 	SetActiveKey(any)
-
 	// WithActiveKey sets the key combination that should trigger setting this
 	// View as the active View in the Application and returns the View.
 	//
@@ -43,20 +41,23 @@ type View interface {
 	// search of the child nodes since we do not allow overlapping boxes therefore
 	// the first matched leaf node is our match.
 	AtPoint(Point) Node
-
 	// SetBounds sets the View's outer bounding box.
 	SetBounds(Rectangle)
-
 	// WithBounds sets the View's outer bounding box and returns the View.
 	WithBounds(Rectangle) View
 
+	// Border returns the View's border.
+	Border() Border
+	// SetBorder sets the View's border.
+	SetBorder(Border)
+	// WithBorder sets the View's border and returns the View.
+	WithBorder(Border) View
+
 	// SetContent sets the thing that will be rendered in the View.
 	SetContent(Node)
-
 	// WithContent sets the thing that will be rendered in the View and returns
 	// the View.
 	WithContent(Node) View
-
 	// AppendContent adds a child Element to the View's content and returns the
 	// View.
 	AppendContent(Node) View

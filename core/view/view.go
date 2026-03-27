@@ -40,6 +40,12 @@ func (v *View) WithBounds(bounds types.Rectangle) types.View {
 	return v
 }
 
+// WithBorder sets the View's border and returns the View.
+func (v *View) WithBorder(border types.Border) types.View {
+	v.SetBorder(border)
+	return v
+}
+
 // SetContent sets the thing that will be rendered in the View.
 func (v *View) SetContent(content types.Node) {
 	v.RemoveAllChildren()

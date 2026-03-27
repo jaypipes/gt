@@ -15,6 +15,16 @@ type myApp struct {
 	*gt.Application
 }
 
+const (
+	helpContent = `
+To activate a tab, either click the mouse on the tab in the tab bar
+or type the tab's activation key.
+
+Tab One's activation key is '1'.
+Tab Two's activation key is '2'.
+`
+)
+
 func main() {
 	black, _ := colorful.Hex("#000000")
 	yellow, _ := colorful.Hex("#ffff00")
@@ -92,6 +102,16 @@ func main() {
 
 	// Add the TabGroup to our View.
 	v.AppendContent(tg)
+
+	// Add a simple help section below our tab group.
+	help := gtdiv.New(
+		ctx,
+		gt.WithID("help"),
+		gt.WithTextContent(helpContent),
+		gt.WithAlignment(gt.AlignmentMiddleCenter),
+		gt.WithHeight(gt.Fixed(7)),
+	)
+	v.AppendContent(help)
 
 	if err := app.Start(ctx); err != nil {
 		log.Fatal(err)
