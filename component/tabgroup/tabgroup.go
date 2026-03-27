@@ -24,7 +24,7 @@ func New(ctx context.Context, id string) *TabGroup {
 	return g
 }
 
-// TabGroup is a Component that groups a set of Tab Components.
+// TabGroup is a Component that has a Bar with Tabs.
 type TabGroup struct {
 	vdiv.VDiv
 	// rebuild will be true when the TabGroup's content needs to be rebuilt.
@@ -65,8 +65,8 @@ func (g *TabGroup) Tabs() []*Tab {
 	return g.tabs
 }
 
-// CurrentTab returns the currently active (displaying) Tab.
-func (g *TabGroup) CurrentTab() *Tab {
+// ActiveTab returns the currently active (displaying) Tab.
+func (g *TabGroup) ActiveTab() *Tab {
 	return g.tabs[g.activeTab]
 }
 
@@ -133,7 +133,7 @@ func (g *TabGroup) Build(
 	g.bar.Build(ctx)
 	g.AppendChild(g.bar)
 
-	activeTab := g.CurrentTab()
+	activeTab := g.ActiveTab()
 	if activeTab != nil {
 		g.AppendChild(&activeTab.VDiv)
 	}

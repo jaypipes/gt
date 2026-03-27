@@ -23,7 +23,8 @@ func newTab(
 	}
 }
 
-// Tab is a group of Elements displayed when the Tab is active in a TabGroup.
+// Tab is a group of Elements displayed when the Tab is active in a TabGroup's
+// Bar.
 type Tab struct {
 	vdiv.VDiv
 	// group is the TabGroup the Tab belongs to.

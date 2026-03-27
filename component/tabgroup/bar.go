@@ -18,10 +18,10 @@ const (
 
 var (
 	// The default bar border is just a single line on the bottom of the bar.
-	DefaultBarBorder           = border.New(border.WithB("-"))
-	DefaultTitlePadding        = types.Pad(1)
-	DefaultTitleActiveBorder   = border.New(border.WithT("━"))
-	DefaultTitleInactiveBorder = border.None()
+	DefaultBarBorder            = border.New(border.WithB("-"))
+	DefaultBarTabPadding        = types.Pad(1)
+	DefaultBarTabActiveBorder   = border.New(border.WithT("━"))
+	DefaultBarTabInactiveBorder = border.None()
 )
 
 func defaultBar(ctx context.Context, group *TabGroup) *Bar {
@@ -32,12 +32,12 @@ func defaultBar(ctx context.Context, group *TabGroup) *Bar {
 	d.SetPadding(types.PadHorizontal(2))
 	d.SetBorder(DefaultBarBorder)
 	return &Bar{
-		Div:                 *d,
-		group:               group,
-		location:            DefaultBarLocation,
-		titlePadding:        DefaultTitlePadding,
-		titleActiveBorder:   DefaultTitleActiveBorder,
-		titleInactiveBorder: DefaultTitleInactiveBorder,
+		Div:               *d,
+		group:             group,
+		location:          DefaultBarLocation,
+		tabPadding:        DefaultBarTabPadding,
+		tabActiveBorder:   DefaultBarTabActiveBorder,
+		tabInactiveBorder: DefaultBarTabInactiveBorder,
 	}
 }
 
@@ -58,12 +58,15 @@ type Bar struct {
 	group *TabGroup
 	// location is where the Bar will appear.
 	location BarLocation
-	// titlePadding is the padding around individual Tab titles in the Bar.
-	titlePadding types.Padding
-	// titleInactiveBorder is the border around inactive Tab titles in the Bar.
-	titleInactiveBorder types.Border
-	// titleActiveBorder is the border around the active Tab title in the Bar.
-	titleActiveBorder types.Border
+	// tabPadding is the padding around individual Tabs in the Bar.
+	tabPadding types.Padding
+	// tabInactiveBorder is the border around inactive Tabs in the Bar.
+	tabInactiveBorder types.Border
+	// tabActiveBorder is the border around the active Tabs in the Bar.
+	tabActiveBorder types.Border
+	// tabHoverBorder is the border around inactive Tabs in the Bar when the
+	// mouse hovers over that Tab.
+	tabHoverBorder types.Border
 }
 
 // SetLocation sets where the Bar will appear.
@@ -84,24 +87,24 @@ func (b *Bar) SetBorder(border types.Border) {
 	b.Div.SetBorder(border)
 }
 
-// SetTitlePadding sets the padding around individual titles of Tabs in the the
+// SetBarTabPadding sets the padding around individual titles of Tabs in the the
 // Bar.
-func (b *Bar) SetTitlePadding(p types.Padding) {
-	b.titlePadding = p
+func (b *Bar) SetBarTabPadding(p types.Padding) {
+	b.tabPadding = p
 }
 
-// SetActiveTitleBorder sets the border around the active Tab in the bar.
-func (b *Bar) SetActiveTitleBorder(border types.Border) {
-	b.titleActiveBorder = border
+// SetActiveBarTabBorder sets the border around the active Tab in the bar.
+func (b *Bar) SetActiveBarTabBorder(border types.Border) {
+	b.tabActiveBorder = border
 }
 
-// SetInactiveTitleBorder sets the border around the inactive Tabs in the bar.
-func (b *Bar) SetInactiveTitleBorder(border types.Border) {
-	b.titleInactiveBorder = border
+// SetInactiveBarTabBorder sets the border around the inactive Tabs in the bar.
+func (b *Bar) SetInactiveBarTabBorder(border types.Border) {
+	b.tabInactiveBorder = border
 }
 
 func (b *Bar) Build(ctx context.Context) {
-	// Clear any previously-built children from the TabGroup's container.
+	// Clear any previously-built children from the Bar's container.
 	b.RemoveAllChildren()
 	for x, tab := range b.group.tabs {
 		tabID := fmt.Sprintf("tab-group-%s-bar-tab-%s", b.group.ID(), tab.ID())
@@ -110,12 +113,12 @@ func (b *Bar) Build(ctx context.Context) {
 			element.WithID(tabID),
 			element.WithTextContent(tab.Title()),
 			element.WithAlignment(types.AlignmentCenter),
-			element.WithPadding(b.titlePadding),
+			element.WithPadding(b.tabPadding),
 			element.WithDisplay(types.DisplayInlineBlock),
 			element.WithWidth(core.Fixed(12)),
 		)
 		if x == b.group.activeTab {
-			tabEl.SetBorder(b.titleActiveBorder)
+			tabEl.SetBorder(b.tabActiveBorder)
 		} else {
 			onClick := func(ctx context.Context, ev types.MouseClickEvent) {
 				if ev.Button() == types.MouseButtonPrimary {
@@ -123,7 +126,7 @@ func (b *Bar) Build(ctx context.Context) {
 				}
 			}
 			tabEl.OnMouseClick(onClick)
-			tabEl.SetBorder(b.titleInactiveBorder)
+			tabEl.SetBorder(b.tabInactiveBorder)
 		}
 		b.AppendChild(tabEl)
 	}
