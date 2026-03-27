@@ -6,7 +6,9 @@ import (
 	"github.com/jaypipes/gt"
 	gtapp "github.com/jaypipes/gt/core/application"
 	"github.com/jaypipes/gt/core/border"
+	gtstyle "github.com/jaypipes/gt/core/style"
 	gttextarea "github.com/jaypipes/gt/element/textarea"
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 var (
@@ -18,12 +20,19 @@ type myApp struct {
 }
 
 func main() {
+	yellow, _ := colorful.Hex("#ffff00")
 	// create a new context.Context from environs variables
 	ctx := gt.ContextFromEnv()
 	// create a new myApp that wraps the gt.Application
 	app := myApp{gtapp.New(ctx)}
 	app.EnableMouse()
 	app.SetBorder(border.Normal())
+
+	normalStyle := gtstyle.New()
+	hoverStyle := gtstyle.New(gtstyle.WithForegroundColor(yellow))
+	focusBorder := gt.DoubleBorder()
+	hoverBorder := gt.NormalBorder()
+	hoverBorder.SetForegroundColor(yellow)
 
 	// gt.View is used to group displayable things that represent a
 	// logically-related view of something.
@@ -47,6 +56,11 @@ func main() {
 		ctx,
 		gt.WithID("textarea"),
 		gt.WithTextContent(userInput),
+		// You can style your gt.TextArea like any other gt.Element.
+		gt.WithStyle(normalStyle),
+		gt.WithHoverStyle(hoverStyle),
+		gt.WithFocusBorder(focusBorder),
+		gt.WithHoverBorder(hoverBorder),
 		// Placeholder text is displayed in the absence of user-provided text
 		// input and is hidden when focus is placed on the TextArea.
 		gttextarea.WithPlaceholder(placeholder),

@@ -9,6 +9,7 @@ import (
 // MouseHover executes any OnMouseHover callbacks that were registered for the
 // Element.
 func (e *Element) MouseHover(ctx context.Context, ev types.MouseHoverEvent) {
+	e.hovered = ev.Hovered()
 	for _, cb := range e.onMouseHover {
 		cb(ctx, ev)
 	}

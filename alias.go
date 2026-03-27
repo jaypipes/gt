@@ -175,9 +175,13 @@ var (
 	WithWhitespace            = element.WithWhitespace
 	WithPadding               = element.WithPadding
 	WithBorder                = element.WithBorder
+	WithFocusBorder           = element.WithFocusBorder
+	WithHoverBorder           = element.WithHoverBorder
 	WithBorderForegroundColor = element.WithBorderForegroundColor
 	WithBorderBackgroundColor = element.WithBorderBackgroundColor
 	WithStyle                 = element.WithStyle
+	WithFocusStyle            = element.WithFocusStyle
+	WithHoverStyle            = element.WithHoverStyle
 	WithForegroundColor       = element.WithForegroundColor
 	WithBackgroundColor       = element.WithBackgroundColor
 	WithTextContent           = element.WithTextContent
@@ -294,7 +298,10 @@ var (
 	Pt   = image.Pt
 
 	NormalBorder         = border.Normal
+	SquareBorder         = border.Normal
+	SharpBorder          = border.Normal
 	RoundedBorder        = border.Rounded
+	RoundBorder          = border.Rounded
 	BlockBorder          = border.Block
 	OuterHalfBlockBorder = border.OuterHalfBlock
 	InnerHalfBlockBorder = border.InnerHalfBlock

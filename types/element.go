@@ -15,6 +15,7 @@ import "context"
 // Element implements [types.Plottable] and [types.Renderable] which means that
 // every Element can draw itself onto a [types.Screen].
 type Element interface {
+	Borderable
 	FocusEventHandler
 	Identifiable
 	KeyPressEventHandler
@@ -62,12 +63,12 @@ type Element interface {
 	WithAbsolutePosition(Point) Element
 	// WithSize constrains the size of the Element and returns the Element.
 	WithSize(SizeConstraint) Element
-	// SetWidth constrains the width of the Element and returns the Element.
+	// WithWidth constrains the width of the Element and returns the Element.
 	WithWidth(DimensionConstraint) Element
 	// WithMinWidth sets the minimum width of the Element and returns the
 	// Element.
 	WithMinWidth(Dimension) Element
-	// SetHeight constrains the height of the Element and returns the Element.
+	// WithHeight constrains the height of the Element and returns the Element.
 	WithHeight(DimensionConstraint) Element
 	// WithMinHeight sets the minimum height of the Element and returns the
 	// Element.
@@ -84,26 +85,73 @@ type Element interface {
 	WithPadding(Padding) Element
 	// WithBorder sets the Element's border and returns the Element.
 	WithBorder(Border) Element
+	// FocusBorder returns the Border for the Element when the Element has
+	// the focus.
+	FocusBorder() Border
+	// SetFocusBorder sets the Border for the Element when the Element has the
+	// focus.
+	SetFocusBorder(Border)
+	// WithFocusBorder sets the Border for the Element when the Element has the
+	// focus and returns the Element.
+	WithFocusBorder(Border) Element
+	// HoverBorder returns the Border for the Element when the mouse is
+	// hovering over the Element.
+	HoverBorder() Border
+	// SetHoverBorder sets the Border for the Element when the mouse is
+	// hovering over the Element.
+	SetHoverBorder(Border)
+	// WithHoverBorder sets the Border for the Element when the mouse is
+	// hovering over the Element and returns the Element.
+	WithHoverBorder(Border) Element
+	// SetBorderForegroundColor sets the Borderable's border foreground color
+	// (i.e the color of the border's cells underlying grapheme).
+	SetBorderForegroundColor(Color)
+	// BorderForegroundColor returns the Borderable's border foreground color.
+	BorderForegroundColor() Color
+	// SetBorderBackgroundColor sets the Borderable's border background color
+	// (i.e the background color of the border's cells.
+	SetBorderBackgroundColor(Color)
+	// BorderBackgroundColor returns the Borderable's border background color.
+	BorderBackgroundColor() Color
 	// WithBorderForegroundColor sets the Element's border foreground color (i.e
-	// the color of the border's cells underlying grapheme) and returns the
+	// the color of the border cell's underlying grapheme) and returns the
 	// Element.
 	WithBorderForegroundColor(Color) Element
 	// WithBorderBackgroundColor sets the Element's border background color (i.e
-	// the background color of the border's cells and returns the Element.
+	// the background color of the border cell's and returns the Element.
 	WithBorderBackgroundColor(Color) Element
 
-	// Style returns the Element's Style
+	// Style returns the Element's Style.
 	Style() Style
 	// SetStyle sets the Element's style.
 	SetStyle(Style)
 	// WithStyle sets the Element's style and returns the Element.
 	WithStyle(Style) Element
-	// WithForegroundColor sets the thing's foreground color and  returns the
+	// WithForegroundColor sets the thing's foreground color and returns the
 	// Element.
 	WithForegroundColor(Color) Element
 	// WithBackgroundColor sets the Element's background color and returns the
 	// Element.
 	WithBackgroundColor(Color) Element
+	// FocusStyle returns the Element's Style when the Element has the focus.
+	FocusStyle() Style
+	// SetFocusStyle sets the Element's style when the Element has the focus.
+	// When the Element no longer has the focus, its style will be reset.
+	SetFocusStyle(Style)
+	// WithFocusStyle sets the Element's style when the Element has the focus
+	// and returns the Element.
+	WithFocusStyle(Style) Element
+	// HoverStyle returns the Element's Style when the Element has the hover.
+	HoverStyle() Style
+	// SetHoverStyle sets the Element's style when the mouse is currently
+	// hovering over the Element and the Element does *NOT* have the focus.
+	// When the mouse no longer hovers over the Element, its style will be
+	// reset.
+	SetHoverStyle(Style)
+	// WithHoverStyle sets the Element's style when the mouse is currently
+	// hovering over the Element and the Element does *NOT* have the focus.
+	// WithHoverStyle returns the Element.
+	WithHoverStyle(Style) Element
 
 	// SetTextContent sets the Element's raw, unstyled text contents.
 	SetTextContent(string)

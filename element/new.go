@@ -134,6 +134,22 @@ func WithBorder(border types.Border) types.ElementWithOption {
 	}
 }
 
+// WithFocusBorder sets the types.Element's border when the Element has the
+// focus to the supplied value.
+func WithFocusBorder(border types.Border) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetFocusBorder(border)
+	}
+}
+
+// WithHoverBorder sets the types.Element's border when the mouse is hovering
+// over the Element to the supplied value.
+func WithHoverBorder(border types.Border) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetHoverBorder(border)
+	}
+}
+
 // WithBorderForegroundColor sets the types.Element's border foreground color to the
 // supplied value.
 func WithBorderForegroundColor(color types.Color) types.ElementWithOption {
@@ -154,6 +170,20 @@ func WithBorderBackgroundColor(color types.Color) types.ElementWithOption {
 func WithStyle(style types.Style) types.ElementWithOption {
 	return func(e types.Element) {
 		e.SetStyle(style)
+	}
+}
+
+// WithFocusStyle sets the types.Element's focus style to the supplied value.
+func WithFocusStyle(style types.Style) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetFocusStyle(style)
+	}
+}
+
+// WithHoverStyle sets the types.Element's hover style to the supplied value.
+func WithHoverStyle(style types.Style) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetHoverStyle(style)
 	}
 }
 

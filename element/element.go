@@ -33,9 +33,25 @@ type Element struct {
 	// class is the Element's type/class, e.g. "gt.div" or "gt.span"
 	class string
 
-	// style this is the style of the Element's content (i.e. the non-border
-	// cells of the Element)
+	// style is the normal style of the Element's content (i.e. the non-border
+	// cells of the Element). The normal style is the style of the Element when
+	// the focusStyle or hoverStyle are not active for the Element.
 	style types.Style
+	// border is the normal border of the Element. The normal border is the
+	// border of the Element when the focusBorder or hoverBorder are not active
+	// for the Element.
+	border types.Border
+	// focusStyle is the style of the Element's content when the Element has
+	// the focus.
+	focusStyle types.Style
+	// focusBorder is the border of the Element when the Element has the focus.
+	focusBorder types.Border
+	// hoverStyle is the style of the Element's content when the mouse is
+	// currently hovering of the Element.
+	hoverStyle types.Style
+	// hoverBorder is the border of the Element when the mouse is hovering over
+	// the Element.
+	hoverBorder types.Border
 
 	// textContent is any unstyle raw text content for the Element.
 	textContent string
@@ -125,6 +141,9 @@ func (e *Element) Class() string {
 	return e.class
 }
 
+func (e *Element) AdjustBorder() {
+}
+
 // Render implements the types.Renderable interface
 func (e *Element) Render(ctx context.Context, h types.ScreenHandler) {
 	s := e.Style()
@@ -139,6 +158,9 @@ func (e *Element) Render(ctx context.Context, h types.ScreenHandler) {
 	)
 
 	screen := h.Screen()
+
+	border := e.Border()
+	e.Box.SetBorder(border)
 
 	e.Box.Render(ctx, h)
 	content := e.TextContent()

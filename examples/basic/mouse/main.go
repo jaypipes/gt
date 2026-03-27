@@ -46,6 +46,8 @@ func main() {
 	ctx := gt.ContextFromEnv()
 	// create a new myApp that wraps the gt.Application
 	app := myApp{gtapp.New(ctx)}
+	// By default, mouse handling is disabled. Use gt.Application.EnableMouse()
+	// to handle mouse events.
 	app.EnableMouse()
 
 	// gt.View is used to group displayable things that represent a
@@ -87,9 +89,8 @@ func main() {
 		},
 	)
 
-	// You can take some action when the mouse hovers over some element. Mouse
-	// hover fires when the mouse is over an element but the element does *not*
-	// have the focus.
+	// You can take some action when the mouse hovers over some element or when
+	// the mouse no longer is hovering over the element.
 	d.OnMouseHover(
 		func(ctx context.Context, ev gt.MouseHoverEvent) {
 			// ev.Hovered() returns whether the mouse is hovering over this

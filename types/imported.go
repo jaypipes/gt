@@ -18,6 +18,7 @@ type (
 
 var (
 	Rect = image.Rect
+	Pt   = image.Pt
 )
 
 const (

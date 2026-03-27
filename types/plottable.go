@@ -111,21 +111,6 @@ type Plottable interface {
 	// Padding returns the padding for the Padded.
 	Padding() Padding
 
-	// SetBounds sets the Plottable's bounding box.
-	SetBorder(Border)
-	// Bounds returns the bounding box for the Plottable.
-	Border() Border
-	// SetBorderForegroundColor sets the Plottable's border foreground color
-	// (i.e the color of the border's cells underlying grapheme).
-	SetBorderForegroundColor(Color)
-	// BorderForegroundColor returns the Plottable's border foreground color.
-	BorderForegroundColor() Color
-	// SetBorderBackgroundColor sets the Plottable's border background color
-	// (i.e the background color of the border's cells.
-	SetBorderBackgroundColor(Color)
-	// BorderBackgroundColor returns the Plottable's border background color.
-	BorderBackgroundColor() Color
-
 	// HorizontalSpace returns the number of cells consumed by the element's
 	// left-right padding and border.
 	HorizontalSpace() Dimension

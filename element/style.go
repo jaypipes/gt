@@ -15,19 +15,17 @@ func (e *Element) Unstyled() bool {
 	return e.style == nil || e.style.Unstyled()
 }
 
-// SetStyle sets the Element's style.
-func (e *Element) SetStyle(style types.Style) {
-	e.style = style
-}
-
-// WithStyle sets the Element's style and returns the Element.
-func (e *Element) WithStyle(style types.Style) types.Element {
-	e.style = style
-	return e
-}
-
-// Style returns the Element's Style.
+// Style returns the Element's Style. If the Element has the focus, returns the
+// Element's FocusStyle, if set. If the mouse is currently hovering over the
+// Element, returns the Element's HoverStyle, if set. Otherwise, returns the
+// Element's normal Style or if not set, the nearest parent's Style.
 func (e *Element) Style() types.Style {
+	if e.focused && e.focusStyle != nil {
+		return e.focusStyle
+	}
+	if e.hovered && e.hoverStyle != nil {
+		return e.hoverStyle
+	}
 	// If there is no style set, inherit from the nearest parent with non-empty
 	// style.
 	if !e.Unstyled() {
@@ -46,6 +44,55 @@ func (e *Element) Style() types.Style {
 		}
 	}
 	return nil
+}
+
+// SetStyle sets the Element's normal Style.  The normal Style is the style of
+// the Element when the focusStyle or hoverStyle are not active for the
+// Element.
+func (e *Element) SetStyle(style types.Style) {
+	e.style = style
+}
+
+// WithStyle sets the Element's normal Style and returns the Element.
+func (e *Element) WithStyle(style types.Style) types.Element {
+	e.style = style
+	return e
+}
+
+// FocusStyle returns the Element's Style when it has the focus.
+func (e *Element) FocusStyle() types.Style {
+	return e.focusStyle
+}
+
+// SetFocusStyle sets the Element's Style when it has the focus.
+func (e *Element) SetFocusStyle(style types.Style) {
+	e.focusStyle = style
+}
+
+// WithFocusStyle sets the Element's Style when it has the focus and returns
+// the Element.
+func (e *Element) WithFocusStyle(style types.Style) types.Element {
+	e.focusStyle = style
+	return e
+}
+
+// HoverStyle returns the Element's Style when the mouse is hovering over the
+// Element.
+func (e *Element) HoverStyle() types.Style {
+	return e.hoverStyle
+}
+
+// SetHoverStyle sets the Element's Style when the mouse is hovering over the
+// Element.
+func (e *Element) SetHoverStyle(style types.Style) {
+	e.hoverStyle = style
+}
+
+// WithHoverStyle sets the Element's Style when the mouse is hovering over the
+// Element and returns the Element.
+func (e *Element) WithHoverStyle(style types.Style) types.Element {
+	e.hoverStyle = style
+	return e
 }
 
 // Bold returns true if the Element is bolded.

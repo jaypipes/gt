@@ -255,6 +255,10 @@ func (t *TextArea) ClearKey() types.Key {
 func (t *TextArea) Render(ctx context.Context, h types.ScreenHandler) {
 	bounds := t.Bounds()
 	gtlog.Debug(ctx, "TextArea.Render[%s]: bounds=%s", t.Tag(), bounds)
+
+	border := t.Border()
+	t.Box.SetBorder(border)
+
 	t.Box.Render(ctx, h)
 
 	screen := h.Screen()
