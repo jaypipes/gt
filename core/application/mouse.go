@@ -107,12 +107,17 @@ func (a *Application) handleMouseEvent(
 		if a.lastMouseClickTime.Add(defaultMouseDoubleClickInterval).Before(time.Now()) {
 			a.lastMouseClickTime = time.Now()
 			if target != nil {
-				ce := mevent.NewClickEvent(ev, false)
-				target.MouseClick(ctx, ce)
+				// we set the focus on the clicked element before firing the
+				// on-mouse-click handlers. this is so elements that release
+				// the focus after processing a mouse click event (like
+				// buttons) won't get that focus release overridden by the
+				// application.
 				f, ok := target.(types.FocusEventHandler)
 				if ok {
 					a.setFocus(ctx, f)
 				}
+				ce := mevent.NewClickEvent(ev, false)
+				target.MouseClick(ctx, ce)
 				redraw = true
 			} else {
 				// mouse was clicked on a part of the screen represented by no
@@ -123,12 +128,17 @@ func (a *Application) handleMouseEvent(
 		} else {
 			a.lastMouseClickTime = time.Time{}
 			if target != nil {
-				ce := mevent.NewClickEvent(ev, true)
-				target.MouseClick(ctx, ce)
+				// we set the focus on the clicked element before firing the
+				// on-mouse-click handlers. this is so elements that release
+				// the focus after processing a mouse click event (like
+				// buttons) won't get that focus release overridden by the
+				// application.
 				f, ok := target.(types.FocusEventHandler)
 				if ok {
 					a.setFocus(ctx, f)
 				}
+				ce := mevent.NewClickEvent(ev, true)
+				target.MouseClick(ctx, ce)
 				redraw = true
 			} else {
 				// mouse was clicked on a part of the screen represented by no

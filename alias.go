@@ -148,6 +148,7 @@ const (
 )
 
 type Event = types.Event
+type FocusEvent = types.FocusEvent
 type ScrollEvent = types.ScrollEvent
 type MouseEvent = types.MouseEvent
 type MouseHoverEvent = types.MouseHoverEvent

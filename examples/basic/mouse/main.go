@@ -10,7 +10,6 @@ import (
 	"github.com/jaypipes/gt"
 	gtapp "github.com/jaypipes/gt/core/application"
 	gtdiv "github.com/jaypipes/gt/element/div"
-	"github.com/jaypipes/gt/types"
 )
 
 const (
@@ -76,7 +75,7 @@ func main() {
 	// focus by adding a callback to the element with the gt.Element.OnFocus()
 	// method.
 	d.OnFocus(
-		func(ctx context.Context, ev types.FocusEvent) {
+		func(ctx context.Context, ev gt.FocusEvent) {
 			// ev.Focused() returns whether the focus is on this element.
 			focused := ev.Focused()
 			if focused {
