@@ -150,6 +150,7 @@ const (
 type Event = types.Event
 type ScrollEvent = types.ScrollEvent
 type MouseEvent = types.MouseEvent
+type MouseHoverEvent = types.MouseHoverEvent
 type MouseClickEvent = types.MouseClickEvent
 type MouseDragEvent = types.MouseDragEvent
 type KeyPressEvent = types.KeyPressEvent
@@ -160,6 +161,7 @@ type WithOption = types.ElementWithOption
 var (
 	NewElement                = element.New
 	WithID                    = element.WithID
+	WithFocusable             = element.WithFocusable
 	WithDisabled              = element.WithDisabled
 	WithBounds                = element.WithBounds
 	WithAbsolutePosition      = element.WithAbsolutePosition

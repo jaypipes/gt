@@ -42,6 +42,10 @@ type Element interface {
 	// WithDisabled sets whether the Element is disabled and returns the
 	// Element.
 	WithDisabled(bool) Element
+
+	// WithFocusable sets whether the Element can receive the focus and returns
+	// the Element.
+	WithFocusable(bool) Element
 	// NextFocusable returns the next focusable thing, or nil if there is no
 	// next focusable thing. The Element's children will first be inspected and
 	// then the next sibling Element.

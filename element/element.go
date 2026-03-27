@@ -63,11 +63,8 @@ type Element struct {
 	onScroll []types.ScrollEventCallback
 	// onMouseHover contains the stack of callbacks that execute when the
 	// Element is hovered over by the mouse but the Element does *not* have the
-	// focus.
-	onMouseHover []types.MouseEventCallback
-	// onMouseLoseHover contains the stack of callbacks that execute when the
-	// mouse is no longer hovering over the Element (but was previously).
-	onMouseLoseHover []types.EventCallback
+	// focus or when the Element no longer has the mouse hovering over it.
+	onMouseHover []types.MouseHoverEventCallback
 	// onMouseClick contains the stack of callbacks that execute when the
 	// Element is clicked on by the mouse.
 	onMouseClick []types.MouseClickEventCallback

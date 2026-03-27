@@ -13,27 +13,45 @@ const (
 )
 
 // setHover sets the currently-hovered thing and calls MouseLoseHover() on the
-// previously-hovered thing if the hovered thing has changed.
+// previously-hovered thing if the hovered thing has changed. Returns whether
+// the screen should redraw.
 func (a *Application) setHover(
 	ctx context.Context,
 	m types.MouseEventHandler,
 	ev types.MouseEvent,
 ) bool {
-	changed := false
-	if a.hovered != nil {
-		if a.hovered != m {
-			a.hovered.MouseLoseHover(ctx)
-			changed = true
+	a.RLock()
+	prev := a.hovered
+	a.RUnlock()
+
+	redraw := false
+	if prev != nil {
+		redraw = true
+		if prev != m {
+			mev := mevent.NewHoverEvent(ev, false)
+			prev.MouseHover(ctx, mev)
+		} else {
+			mev := mevent.NewHoverEvent(ev, true)
+			m.MouseHover(ctx, mev)
 		}
 	} else {
 		// nothing previously being hovered.
 		if m != nil {
-			m.MouseHover(ctx, ev)
-			changed = true
+			mev := mevent.NewHoverEvent(ev, true)
+			m.MouseHover(ctx, mev)
+			redraw = true
 		}
 	}
+
+	if prev == m {
+		// no change to our hovered element.
+		return redraw
+	}
+
+	a.Lock()
+	defer a.Unlock()
 	a.hovered = m
-	return changed
+	return redraw
 }
 
 // handleMouseEvent determines what logical action the user took with the mouse

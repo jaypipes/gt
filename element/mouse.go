@@ -8,30 +8,17 @@ import (
 
 // MouseHover executes any OnMouseHover callbacks that were registered for the
 // Element.
-func (e *Element) MouseHover(ctx context.Context, ev types.MouseEvent) {
+func (e *Element) MouseHover(ctx context.Context, ev types.MouseHoverEvent) {
 	for _, cb := range e.onMouseHover {
 		cb(ctx, ev)
 	}
 }
 
 // OnMouseHover registers a callback that will be executed when the Element is
-// hovered over but does *not* have the focus.
-func (e *Element) OnMouseHover(cb types.MouseEventCallback) {
+// hovered over but does *not* have the focus or when the Element no longer has
+// the mouse hovering over it.
+func (e *Element) OnMouseHover(cb types.MouseHoverEventCallback) {
 	e.onMouseHover = append(e.onMouseHover, cb)
-}
-
-// MouseLoseHover executes any OnMouseLoseHover callbacks that were registered
-// for the Element.
-func (e *Element) MouseLoseHover(ctx context.Context) {
-	for _, cb := range e.onMouseLoseHover {
-		cb(ctx)
-	}
-}
-
-// OnMouseLoseHover registers a callback that will be executed when the mouse
-// is no longer over an Element (but was previously).
-func (e *Element) OnMouseLoseHover(cb types.EventCallback) {
-	e.onMouseLoseHover = append(e.onMouseLoseHover, cb)
 }
 
 // MouseClick executes any OnMouseClick callbacks that were registered for the

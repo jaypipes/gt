@@ -53,6 +53,15 @@ type MouseEvent interface {
 	SetPosition(Point)
 }
 
+// MouseHoverEvent describes events received when the mouse hovers (or stops
+// hovering) over something.
+type MouseHoverEvent interface {
+	MouseEvent
+	// Hovered returns true if the receiver of the event has the mouse hovering
+	// over it.
+	Hovered() bool
+}
+
 // MouseClickEvent describes a mouse event for when the user clicked or
 // double-clicked a mouse button.
 type MouseClickEvent interface {
@@ -78,6 +87,10 @@ type MouseEventWithOption func(MouseEvent)
 // events.
 type MouseEventCallback func(context.Context, MouseEvent)
 
+// MouseHoverEventCallback is the function signature for callbacks executed on
+// mouse hover events.
+type MouseHoverEventCallback func(context.Context, MouseHoverEvent)
+
 // MouseClickEventCallback is the function signature for callbacks executed on
 // mouse click and double-click events.
 type MouseClickEventCallback func(context.Context, MouseClickEvent)
@@ -90,16 +103,10 @@ type MouseDragEventCallback func(context.Context, MouseDragEvent)
 type MouseEventHandler interface {
 	// MouseHover executes any OnMouseHover callbacks that were registered for
 	// the MouseEventHandler.
-	MouseHover(context.Context, MouseEvent)
+	MouseHover(context.Context, MouseHoverEvent)
 	// OnMouseHover registers a callback that will be executed when the mouse
 	// is over top of an element but the element does *not* have the focus.
-	OnMouseHover(MouseEventCallback)
-	// MouseLoseHover executes any OnMouseLoseHover callbacks that were
-	// registered for the MouseEventHandler.
-	MouseLoseHover(context.Context)
-	// OnMouseLoseHover registers a callback that will be executed when the
-	// mouse is no longer over top of an element (but was previously).
-	OnMouseLoseHover(EventCallback)
+	OnMouseHover(MouseHoverEventCallback)
 	// MouseClick executes any OnMouseClick callbacks that were registered for
 	// the MouseEventHandler.
 	MouseClick(context.Context, MouseClickEvent)

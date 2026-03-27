@@ -42,6 +42,13 @@ func WithDisabled(on bool) types.ElementWithOption {
 	}
 }
 
+// WithFocusable sets whether the Element can receive the focus.
+func WithFocusable(on bool) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetFocusable(on)
+	}
+}
+
 // WithBounds sets the types.Element's bounds to the supplied value.
 func WithBounds(bounds types.Rectangle) types.ElementWithOption {
 	return func(e types.Element) {

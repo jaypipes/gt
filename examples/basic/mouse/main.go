@@ -10,6 +10,7 @@ import (
 	"github.com/jaypipes/gt"
 	gtapp "github.com/jaypipes/gt/core/application"
 	gtdiv "github.com/jaypipes/gt/element/div"
+	"github.com/jaypipes/gt/types"
 )
 
 const (
@@ -60,23 +61,29 @@ func main() {
 		gt.WithHeight(gt.Fixed(30)),
 		gt.WithAlignment(gt.AlignmentMiddleCenter),
 		gt.WithWhitespace(gt.WhitespaceNormal),
+		// By default, gt.Div elements are not focusable (only input-accepting
+		// elements like gt.TextArea are focusable by default). Use the
+		// gt.WithFocusable modifier to make this gt.Div able to receive the
+		// focus when the mouse clicks on it.
+		gt.WithFocusable(true),
 	)
 	d.SetTextContent(content(d))
 
 	// The focus is given to an element when the element is clicked on and the
-	// element is not disabled. You can take some action when the element gets
-	// the focus by adding a callback to the element with the
-	// gt.Element.OnFocus() method.
+	// element is focusable. You can take some action when the element gets the
+	// focus by adding a callback to the element with the gt.Element.OnFocus()
+	// method.
 	d.OnFocus(
-		func(ctx context.Context) {
-			d.SetBorderForegroundColor(red)
-			d.SetTextContent(content(d))
-		},
-	)
-	d.OnLoseFocus(
-		func(ctx context.Context) {
-			d.SetBorderForegroundColor(white)
-			d.SetTextContent(content(d))
+		func(ctx context.Context, ev types.FocusEvent) {
+			// ev.Focused() returns whether the focus is on this element.
+			focused := ev.Focused()
+			if focused {
+				d.SetBorderForegroundColor(red)
+				d.SetTextContent(content(d))
+			} else {
+				d.SetBorderForegroundColor(white)
+				d.SetTextContent(content(d))
+			}
 		},
 	)
 
@@ -84,12 +91,20 @@ func main() {
 	// hover fires when the mouse is over an element but the element does *not*
 	// have the focus.
 	d.OnMouseHover(
-		func(ctx context.Context, ev gt.MouseEvent) {
-			d.SetBorderForegroundColor(yellow)
-			lastEventText = fmt.Sprintf(
-				onHoverTextFormat, ev.Position(),
-			)
-			d.SetTextContent(content(d))
+		func(ctx context.Context, ev gt.MouseHoverEvent) {
+			// ev.Hovered() returns whether the mouse is hovering over this
+			// element.
+			hovered := ev.Hovered()
+			if hovered {
+				d.SetBorderForegroundColor(yellow)
+				lastEventText = fmt.Sprintf(
+					onHoverTextFormat, ev.Position(),
+				)
+				d.SetTextContent(content(d))
+			} else if !d.HasFocus() {
+				d.SetBorderForegroundColor(white)
+				d.SetTextContent(content(d))
+			}
 		},
 	)
 
