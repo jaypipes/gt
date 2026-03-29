@@ -23,10 +23,10 @@ func Empty() *Cell {
 	return &Cell{}
 }
 
-// WithContent sets the Cell's content string.
-func WithContent(content string) types.CellWithOption {
+// WithContent sets the Cell's content to the supplied string or rune.
+func WithContent[T string | rune](content T) types.CellWithOption {
 	return func(c types.Cell) {
-		c.SetContent(content)
+		c.SetContent(string(content))
 	}
 }
 
