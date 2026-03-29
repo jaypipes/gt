@@ -134,32 +134,40 @@ func WithBorder(border types.Border) types.ElementWithOption {
 	}
 }
 
-// WithFocusBorder sets the types.Element's border when the Element has the
+// WithDisabledBorder sets the types.Element's border when the Element is
+// disabled.
+func WithDisabledBorder(border types.Border) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetDisabledBorder(border)
+	}
+}
+
+// WithFocusedBorder sets the types.Element's border when the Element has the
 // focus to the supplied value.
-func WithFocusBorder(border types.Border) types.ElementWithOption {
+func WithFocusedBorder(border types.Border) types.ElementWithOption {
 	return func(e types.Element) {
-		e.SetFocusBorder(border)
+		e.SetFocusedBorder(border)
 	}
 }
 
-// WithHoverBorder sets the types.Element's border when the mouse is hovering
+// WithHoveredBorder sets the types.Element's border when the mouse is hovering
 // over the Element to the supplied value.
-func WithHoverBorder(border types.Border) types.ElementWithOption {
+func WithHoveredBorder(border types.Border) types.ElementWithOption {
 	return func(e types.Element) {
-		e.SetHoverBorder(border)
+		e.SetHoveredBorder(border)
 	}
 }
 
-// WithBorderForegroundColor sets the types.Element's border foreground color to the
-// supplied value.
+// WithBorderForegroundColor sets the types.Element's border foreground color
+// to the supplied value.
 func WithBorderForegroundColor(color types.Color) types.ElementWithOption {
 	return func(e types.Element) {
 		e.SetBorderForegroundColor(color)
 	}
 }
 
-// WithBorderBackgroundColor sets the types.Element's border background color to the
-// supplied value.
+// WithBorderBackgroundColor sets the types.Element's border background color
+// to the supplied value.
 func WithBorderBackgroundColor(color types.Color) types.ElementWithOption {
 	return func(e types.Element) {
 		e.SetBorderBackgroundColor(color)
@@ -173,17 +181,25 @@ func WithStyle(style types.Style) types.ElementWithOption {
 	}
 }
 
-// WithFocusStyle sets the types.Element's focus style to the supplied value.
-func WithFocusStyle(style types.Style) types.ElementWithOption {
+// WithDisabledStyle sets the types.Element's disabled style to the supplied
+// value.
+func WithDisabledStyle(style types.Style) types.ElementWithOption {
 	return func(e types.Element) {
-		e.SetFocusStyle(style)
+		e.SetDisabledStyle(style)
 	}
 }
 
-// WithHoverStyle sets the types.Element's hover style to the supplied value.
-func WithHoverStyle(style types.Style) types.ElementWithOption {
+// WithFocusedStyle sets the types.Element's focus style to the supplied value.
+func WithFocusedStyle(style types.Style) types.ElementWithOption {
 	return func(e types.Element) {
-		e.SetHoverStyle(style)
+		e.SetFocusedStyle(style)
+	}
+}
+
+// WithHoveredStyle sets the types.Element's hover style to the supplied value.
+func WithHoveredStyle(style types.Style) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetHoveredStyle(style)
 	}
 }
 

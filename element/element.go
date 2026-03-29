@@ -33,25 +33,10 @@ type Element struct {
 	// class is the Element's type/class, e.g. "gt.div" or "gt.span"
 	class string
 
-	// style is the normal style of the Element's content (i.e. the non-border
-	// cells of the Element). The normal style is the style of the Element when
-	// the focusStyle or hoverStyle are not active for the Element.
-	style types.Style
-	// border is the normal border of the Element. The normal border is the
-	// border of the Element when the focusBorder or hoverBorder are not active
-	// for the Element.
-	border types.Border
-	// focusStyle is the style of the Element's content when the Element has
-	// the focus.
-	focusStyle types.Style
-	// focusBorder is the border of the Element when the Element has the focus.
-	focusBorder types.Border
-	// hoverStyle is the style of the Element's content when the mouse is
-	// currently hovering of the Element.
-	hoverStyle types.Style
-	// hoverBorder is the border of the Element when the mouse is hovering over
-	// the Element.
-	hoverBorder types.Border
+	// motif encapsulates the different styles and borders of the Element in
+	// different states (having the focus, being disabled, being hovered over
+	// by the mouse, and "normal")
+	motif types.Motif
 
 	// textContent is any unstyle raw text content for the Element.
 	textContent string
@@ -159,10 +144,8 @@ func (e *Element) Render(ctx context.Context, h types.ScreenHandler) {
 
 	screen := h.Screen()
 
-	border := e.Border()
-	e.Box.SetBorder(border)
+	e.RenderBox(ctx, h)
 
-	e.Box.Render(ctx, h)
 	content := e.TextContent()
 	if len(content) == 0 {
 		return
@@ -215,6 +198,14 @@ func (e *Element) Render(ctx context.Context, h types.ScreenHandler) {
 			screen.Put(startX+x, startY+y, string(line[x]), style.TCell(s))
 		}
 	}
+}
+
+// RenderBox ensures that the underlying Box has its appropriate border set
+// (depending on the Element's state) and renders the Box.
+func (e *Element) RenderBox(ctx context.Context, h types.ScreenHandler) {
+	border := e.Border()
+	e.Box.SetBorder(border)
+	e.Box.Render(ctx, h)
 }
 
 var _ types.Element = (*Element)(nil)

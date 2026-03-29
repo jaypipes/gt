@@ -6,13 +6,34 @@ import (
 
 	"github.com/jaypipes/gt/core"
 	gtlog "github.com/jaypipes/gt/core/log"
+	"github.com/jaypipes/gt/core/motif"
 	"github.com/jaypipes/gt/core/style"
 	"github.com/jaypipes/gt/types"
 )
 
+// Motif returns the Element's Motif, if any.
+func (e *Element) Motif() types.Motif {
+	return e.motif
+}
+
+// SetMotif sets the Element's Motif.
+func (e *Element) SetMotif(m types.Motif) {
+	e.motif = m
+}
+
+// WithMotif sets the Element's Motif and returns the Element.
+func (e *Element) WithMotif(m types.Motif) types.Element {
+	e.SetMotif(m)
+	return e
+}
+
 // Unstyled returns true if the Element has no styling.
 func (e *Element) Unstyled() bool {
-	return e.style == nil || e.style.Unstyled()
+	m := e.motif
+	if m == nil || m.Unstyled() {
+		return true
+	}
+	return false
 }
 
 // Style returns the Element's Style. If the Element has the focus, returns the
@@ -20,17 +41,35 @@ func (e *Element) Unstyled() bool {
 // Element, returns the Element's HoverStyle, if set. Otherwise, returns the
 // Element's normal Style or if not set, the nearest parent's Style.
 func (e *Element) Style() types.Style {
-	if e.focused && e.focusStyle != nil {
-		return e.focusStyle
+	m := e.motif
+	if e.disabled && m != nil {
+		ds := m.DisabledStyle()
+		if ds != nil {
+			return ds
+		}
 	}
-	if e.hovered && e.hoverStyle != nil {
-		return e.hoverStyle
+	if e.focused && m != nil {
+		fs := m.FocusedStyle()
+		if fs != nil {
+			return fs
+		}
 	}
+	if e.hovered && m != nil {
+		hs := m.HoveredStyle()
+		if hs != nil {
+			return hs
+		}
+	}
+	var s types.Style
+	if m != nil {
+		s = m.NormalStyle()
+	}
+	if s != nil && !s.Unstyled() {
+		return s
+	}
+
 	// If there is no style set, inherit from the nearest parent with non-empty
 	// style.
-	if !e.Unstyled() {
-		return e.style
-	}
 	ctx := context.TODO()
 	parentNode := e.Parent()
 	parent, ok := parentNode.(types.Element)
@@ -46,69 +85,126 @@ func (e *Element) Style() types.Style {
 	return nil
 }
 
-// SetStyle sets the Element's normal Style.  The normal Style is the style of
+// SetStyle sets the Element's normal Style. The normal Style is the style of
 // the Element when the focusStyle or hoverStyle are not active for the
 // Element.
 func (e *Element) SetStyle(style types.Style) {
-	e.style = style
+	if e.motif == nil {
+		e.motif = motif.Empty()
+	}
+	e.motif.SetNormalStyle(style)
 }
 
 // WithStyle sets the Element's normal Style and returns the Element.
 func (e *Element) WithStyle(style types.Style) types.Element {
-	e.style = style
+	if e.motif == nil {
+		e.motif = motif.Empty()
+	}
+	e.motif.SetNormalStyle(style)
 	return e
 }
 
-// FocusStyle returns the Element's Style when it has the focus.
-func (e *Element) FocusStyle() types.Style {
-	return e.focusStyle
+// DisabledStyle returns the Element's Style when it is disabled.
+func (e *Element) DisabledStyle() types.Style {
+	if e.motif == nil {
+		return nil
+	}
+	return e.motif.DisabledStyle()
 }
 
-// SetFocusStyle sets the Element's Style when it has the focus.
-func (e *Element) SetFocusStyle(style types.Style) {
-	e.focusStyle = style
+// SetDisabledStyle sets the Element's Style when it is disabled.
+func (e *Element) SetDisabledStyle(style types.Style) {
+	if e.motif == nil {
+		e.motif = motif.Empty()
+	}
+	e.motif.SetDisabledStyle(style)
 }
 
-// WithFocusStyle sets the Element's Style when it has the focus and returns
+// WithDisabledStyle sets the Element's Style when it is disabled and returns
 // the Element.
-func (e *Element) WithFocusStyle(style types.Style) types.Element {
-	e.focusStyle = style
+func (e *Element) WithDisabledStyle(style types.Style) types.Element {
+	if e.motif == nil {
+		e.motif = motif.Empty()
+	}
+	e.motif.SetDisabledStyle(style)
 	return e
 }
 
-// HoverStyle returns the Element's Style when the mouse is hovering over the
-// Element.
-func (e *Element) HoverStyle() types.Style {
-	return e.hoverStyle
+// FocusedStyle returns the Element's Style when it has the focus.
+func (e *Element) FocusedStyle() types.Style {
+	if e.motif == nil {
+		return nil
+	}
+	return e.motif.FocusedStyle()
 }
 
-// SetHoverStyle sets the Element's Style when the mouse is hovering over the
-// Element.
-func (e *Element) SetHoverStyle(style types.Style) {
-	e.hoverStyle = style
+// SetFocusedStyle sets the Element's Style when it has the focus.
+func (e *Element) SetFocusedStyle(style types.Style) {
+	if e.motif == nil {
+		e.motif = motif.Empty()
+	}
+	e.motif.SetFocusedStyle(style)
 }
 
-// WithHoverStyle sets the Element's Style when the mouse is hovering over the
+// WithFocusedStyle sets the Element's Style when it has the focus and returns
+// the Element.
+func (e *Element) WithFocusedStyle(style types.Style) types.Element {
+	if e.motif == nil {
+		e.motif = motif.Empty()
+	}
+	e.motif.SetFocusedStyle(style)
+	return e
+}
+
+// HoveredStyle returns the Element's Style when the mouse is hovering over the
+// Element.
+func (e *Element) HoveredStyle() types.Style {
+	if e.motif == nil {
+		return nil
+	}
+	return e.motif.HoveredStyle()
+}
+
+// SetHoveredStyle sets the Element's Style when the mouse is hovering over the
+// Element.
+func (e *Element) SetHoveredStyle(style types.Style) {
+	if e.motif == nil {
+		e.motif = motif.Empty()
+	}
+	e.motif.SetHoveredStyle(style)
+}
+
+// WithHoveredStyle sets the Element's Style when the mouse is hovering over the
 // Element and returns the Element.
-func (e *Element) WithHoverStyle(style types.Style) types.Element {
-	e.hoverStyle = style
+func (e *Element) WithHoveredStyle(style types.Style) types.Element {
+	if e.motif == nil {
+		e.motif = motif.Empty()
+	}
+	e.motif.SetHoveredStyle(style)
 	return e
 }
 
 // Bold returns true if the Element is bolded.
 func (e *Element) Bold() bool {
-	if e.style == nil {
+	s := e.Style()
+	if s == nil {
 		return false
 	}
-	return e.style.Bold()
+	return s.Bold()
 }
 
 // SetBold sets the Element's bold attribute.
 func (e *Element) SetBold(on bool) {
-	if e.style == nil {
-		e.style = style.Empty()
+	s := e.Style()
+	if s == nil {
+		e.motif = motif.Empty()
 	}
-	e.style.SetBold(on)
+	s = e.motif.NormalStyle()
+	if s == nil {
+		s = style.Empty()
+	}
+	s.SetBold(on)
+	e.motif.SetNormalStyle(s)
 }
 
 // WithBold sets the Element's bold attribute and returns the Element
@@ -119,18 +215,25 @@ func (e *Element) WithBold(on bool) types.Element {
 
 // Italic returns true if the Element is italicized.
 func (e *Element) Italic() bool {
-	if e.style == nil {
+	s := e.Style()
+	if s == nil {
 		return false
 	}
-	return e.style.Italic()
+	return s.Italic()
 }
 
 // SetItalic sets the Element's italic attribute.
 func (e *Element) SetItalic(on bool) {
-	if e.style == nil {
-		e.style = style.Empty()
+	s := e.Style()
+	if s == nil {
+		e.motif = motif.Empty()
 	}
-	e.style.SetItalic(on)
+	s = e.motif.NormalStyle()
+	if s == nil {
+		s = style.Empty()
+	}
+	s.SetItalic(on)
+	e.motif.SetNormalStyle(s)
 }
 
 // WithItalic sets the Element's italic attribute and returns the Element
@@ -141,18 +244,25 @@ func (e *Element) WithItalic(on bool) types.Element {
 
 // Dim returns true if the Element is dimmed.
 func (e *Element) Dim() bool {
-	if e.style == nil {
+	s := e.Style()
+	if s == nil {
 		return false
 	}
-	return e.style.Dim()
+	return s.Dim()
 }
 
 // SetDim sets the Element's dim attribute.
 func (e *Element) SetDim(on bool) {
-	if e.style == nil {
-		e.style = style.Empty()
+	s := e.Style()
+	if s == nil {
+		e.motif = motif.Empty()
 	}
-	e.style.SetDim(on)
+	s = e.motif.NormalStyle()
+	if s == nil {
+		s = style.Empty()
+	}
+	s.SetDim(on)
+	e.motif.SetNormalStyle(s)
 }
 
 // WithDim sets the Element's dim attribute and returns the Element
@@ -163,18 +273,25 @@ func (e *Element) WithDim(on bool) types.Element {
 
 // Strikethrough returns true if the Element is struckthrough.
 func (e *Element) Strikethrough() bool {
-	if e.style == nil {
+	s := e.Style()
+	if s == nil {
 		return false
 	}
-	return e.style.Strikethrough()
+	return s.Strikethrough()
 }
 
 // SetStrikethrough sets the Element's strikethrough attribute.
 func (e *Element) SetStrikethrough(on bool) {
-	if e.style == nil {
-		e.style = style.Empty()
+	s := e.Style()
+	if s == nil {
+		e.motif = motif.Empty()
 	}
-	e.style.SetStrikethrough(on)
+	s = e.motif.NormalStyle()
+	if s == nil {
+		s = style.Empty()
+	}
+	s.SetStrikethrough(on)
+	e.motif.SetNormalStyle(s)
 }
 
 // WithStrikethrough sets the Element's strikethrough attribute and returns the
@@ -186,18 +303,25 @@ func (e *Element) WithStrikethrough(on bool) types.Element {
 
 // Blink returns true if the Element is blinked.
 func (e *Element) Blink() bool {
-	if e.style == nil {
+	s := e.Style()
+	if s == nil {
 		return false
 	}
-	return e.style.Blink()
+	return s.Blink()
 }
 
 // SetBlink sets the Element's blink attribute.
 func (e *Element) SetBlink(on bool) {
-	if e.style == nil {
-		e.style = style.Empty()
+	s := e.Style()
+	if s == nil {
+		e.motif = motif.Empty()
 	}
-	e.style.SetBlink(on)
+	s = e.motif.NormalStyle()
+	if s == nil {
+		s = style.Empty()
+	}
+	s.SetBlink(on)
+	e.motif.SetNormalStyle(s)
 }
 
 // WithBlink sets the Element's blink attribute and returns the Element
@@ -208,26 +332,34 @@ func (e *Element) WithBlink(on bool) types.Element {
 
 // Underline returns true if the Element is underlined.
 func (e *Element) Underline() bool {
-	if e.style == nil {
+	s := e.Style()
+	if s == nil {
 		return false
 	}
-	return e.style.Underline()
+	return s.Underline()
 }
 
 // UnderlineStyle returns the Element's underline style.
 func (e *Element) UnderlineStyle() types.UnderlineStyle {
-	if e.style == nil {
+	s := e.Style()
+	if s == nil {
 		return types.UnderlineStyleNone
 	}
-	return e.style.UnderlineStyle()
+	return s.UnderlineStyle()
 }
 
 // SetUnderlineStyle sets the Element's underline style.
 func (e *Element) SetUnderlineStyle(us types.UnderlineStyle) {
-	if e.style == nil {
-		e.style = style.Empty()
+	s := e.Style()
+	if s == nil {
+		e.motif = motif.Empty()
 	}
-	e.style.SetUnderlineStyle(us)
+	s = e.motif.NormalStyle()
+	if s == nil {
+		s = style.Empty()
+	}
+	s.SetUnderlineStyle(us)
+	e.motif.SetNormalStyle(s)
 }
 
 // WithUnderlineStyle sets the Element's underline style and returns the
@@ -241,18 +373,25 @@ func (e *Element) WithUnderlineStyle(
 
 // ForegroundColor returns the Element's underline color.
 func (e *Element) ForegroundColor() types.Color {
-	if e.style == nil {
+	s := e.Style()
+	if s == nil {
 		return color.Transparent
 	}
-	return e.style.ForegroundColor()
+	return s.ForegroundColor()
 }
 
 // SetForegroundColor sets the Style's foreground color.
 func (e *Element) SetForegroundColor(color types.Color) {
-	if e.style == nil {
-		e.style = style.Empty()
+	s := e.Style()
+	if s == nil {
+		e.motif = motif.Empty()
 	}
-	e.style.SetForegroundColor(color)
+	s = e.motif.NormalStyle()
+	if s == nil {
+		s = style.Empty()
+	}
+	s.SetForegroundColor(color)
+	e.motif.SetNormalStyle(s)
 }
 
 // WithForegroundColor sets the Element's foreground color and returns the
@@ -264,18 +403,25 @@ func (e *Element) WithForegroundColor(color types.Color) types.Element {
 
 // BackgroundColor returns the Element's background color.
 func (e *Element) BackgroundColor() types.Color {
-	if e.style == nil {
+	s := e.Style()
+	if s == nil {
 		return color.Transparent
 	}
-	return e.style.BackgroundColor()
+	return s.BackgroundColor()
 }
 
 // SetBackgroundColor sets the Style's background color.
 func (e *Element) SetBackgroundColor(color types.Color) {
-	if e.style == nil {
-		e.style = style.Empty()
+	s := e.Style()
+	if s == nil {
+		e.motif = motif.Empty()
 	}
-	e.style.SetBackgroundColor(color)
+	s = e.motif.NormalStyle()
+	if s == nil {
+		s = style.Empty()
+	}
+	s.SetBackgroundColor(color)
+	e.motif.SetNormalStyle(s)
 }
 
 // WithBackgroundColor sets the Element's background color and returns the
@@ -287,18 +433,25 @@ func (e *Element) WithBackgroundColor(color types.Color) types.Element {
 
 // UnderlineColor returns the Element's underline color.
 func (e *Element) UnderlineColor() types.Color {
-	if e.style == nil {
+	s := e.Style()
+	if s == nil {
 		return color.Transparent
 	}
-	return e.style.UnderlineColor()
+	return s.UnderlineColor()
 }
 
 // SetUnderlineColor sets the Style's underline color.
 func (e *Element) SetUnderlineColor(color types.Color) {
-	if e.style == nil {
-		e.style = style.Empty()
+	s := e.Style()
+	if s == nil {
+		e.motif = motif.Empty()
 	}
-	e.style.SetUnderlineColor(color)
+	s = e.motif.NormalStyle()
+	if s == nil {
+		s = style.Empty()
+	}
+	s.SetUnderlineColor(color)
+	e.motif.SetNormalStyle(s)
 }
 
 // WithUnderlineColor sets the Element's underline color and returns the

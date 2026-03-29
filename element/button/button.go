@@ -2,12 +2,8 @@ package button
 
 import (
 	"context"
-	"image/color"
 	"strings"
 
-	"github.com/lucasb-eyer/go-colorful"
-
-	"github.com/jaypipes/gt/core/border"
 	fevent "github.com/jaypipes/gt/core/event/focus"
 	gtlog "github.com/jaypipes/gt/core/log"
 	"github.com/jaypipes/gt/core/style"
@@ -17,38 +13,6 @@ import (
 
 const (
 	ElementClass = "gt.button"
-)
-
-var (
-	veryLightGrey, _       = colorful.Hex("#ececec")
-	black, _               = colorful.Hex("#000000")
-	DefaultBackgroundColor = color.Transparent
-	DefaultForegroundColor = veryLightGrey
-	DefaultStyle           = style.New(
-		style.WithForegroundColor(
-			DefaultForegroundColor,
-		),
-		style.WithBackgroundColor(
-			DefaultBackgroundColor,
-		),
-	)
-	DefaultBorder = border.Rounded().
-			WithBackgroundColor(DefaultBackgroundColor).
-			WithForegroundColor(DefaultForegroundColor)
-	// Default hover is inverse of normal style.
-	DefaultHoverBackgroundColor = veryLightGrey
-	DefaultHoverForegroundColor = black
-	DefaultHoverStyle           = style.New(
-		style.WithForegroundColor(
-			black,
-		),
-		style.WithBackgroundColor(
-			DefaultHoverBackgroundColor,
-		),
-	)
-	DefaultHoverBorder = border.InnerHalfBlock().
-				WithBackgroundColor(color.Transparent).
-				WithForegroundColor(DefaultHoverBackgroundColor)
 )
 
 // New returns a new Button instance with the given options.
@@ -65,11 +29,12 @@ func New(
 	b.SetDisplay(types.DisplayInlineBlock)
 	b.SetAlignment(types.AlignmentTopLeft)
 	b.SetWhitespace(types.WhitespacePreserve)
-	b.SetBorder(DefaultBorder)
-	b.SetHoverBorder(DefaultHoverBorder)
-	b.SetStyle(DefaultStyle)
-	b.SetHoverStyle(DefaultHoverStyle)
-	// Button is an input element so should be able to receive the focus.
+	b.SetMotif(DefaultMotif)
+	// Button is an input element so should be able to receive the focus. Note
+	// that the MouseClick action for a Button releases the focus immediately
+	// after the mouse clicks on the button. This is done so that the hover
+	// effect (which does not fire when the element has the focus) is restored
+	// when the mouse clicks on the button.
 	b.SetFocusable(true)
 	for _, opt := range opts {
 		opt(b)
@@ -97,10 +62,7 @@ func (b *Button) Render(ctx context.Context, h types.ScreenHandler) {
 	bounds := b.Bounds()
 	gtlog.Debug(ctx, "Button.Render[%s]: bounds=%s", b.Tag(), bounds)
 
-	border := b.Border()
-	b.Box.SetBorder(border)
-
-	b.Box.Render(ctx, h)
+	b.RenderBox(ctx, h)
 
 	screen := h.Screen()
 
