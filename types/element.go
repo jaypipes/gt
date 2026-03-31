@@ -20,6 +20,7 @@ type Element interface {
 	Identifiable
 	KeyPressEventHandler
 	Motifable
+	Themeable
 	MouseEventHandler
 	Node
 	Plottable
@@ -131,6 +132,10 @@ type Element interface {
 	// the background color of the border cell's and returns the Element.
 	WithBorderBackgroundColor(Color) Element
 
+	// WithTheme sets the Element's theme class and returns the Element.
+	WithThemeClass(ThemeClass) Element
+	// WithTheme sets the Element's theme and returns the Element.
+	WithTheme(Theme) Element
 	// WithMotif sets the Element's motif and returns the Element.
 	WithMotif(Motif) Element
 

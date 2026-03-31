@@ -11,9 +11,45 @@ import (
 	"github.com/jaypipes/gt/types"
 )
 
+// ThemeClass returns the Element's ThemeClass, if any.
+func (e *Element) ThemeClass() types.ThemeClass {
+	return e.themeClass
+}
+
+// SetThemeClass sets the Element's ThemeClass.
+func (e *Element) SetThemeClass(class types.ThemeClass) {
+	e.themeClass = class
+}
+
+// WithThemeClass sets the Element's ThemeClass and returns the Element.
+func (e *Element) WithThemeClass(class types.ThemeClass) types.Element {
+	e.SetThemeClass(class)
+	return e
+}
+
+// Theme returns the Element's Theme, if any.
+func (e *Element) Theme() types.Theme {
+	return e.theme
+}
+
+// SetTheme sets the Element's Theme.
+func (e *Element) SetTheme(t types.Theme) {
+	e.theme = t
+}
+
+// WithTheme sets the Element's Theme and returns the Element.
+func (e *Element) WithTheme(t types.Theme) types.Element {
+	e.SetTheme(t)
+	return e
+}
+
 // Motif returns the Element's Motif, if any.
 func (e *Element) Motif() types.Motif {
-	return e.motif
+	t := e.Theme()
+	if t == nil {
+		return e.motif
+	}
+	return nil
 }
 
 // SetMotif sets the Element's Motif.
@@ -29,7 +65,7 @@ func (e *Element) WithMotif(m types.Motif) types.Element {
 
 // Unstyled returns true if the Element has no styling.
 func (e *Element) Unstyled() bool {
-	m := e.motif
+	m := e.Motif()
 	if m == nil || m.Unstyled() {
 		return true
 	}

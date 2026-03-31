@@ -40,10 +40,5 @@ var (
 	DefaultHoveredBorder = border.InnerHalfBlock().
 				WithBackgroundColor(color.Transparent).
 				WithForegroundColor(DefaultHoveredBackgroundColor)
-	DefaultMotif = motif.New(
-		motif.WithNormalStyle(DefaultNormalStyle),
-		motif.WithNormalBorder(DefaultNormalBorder),
-		motif.WithHoveredStyle(DefaultHoveredStyle),
-		motif.WithHoveredBorder(DefaultHoveredBorder),
-	)
+	DefaultMotif = motif.Nord
 )

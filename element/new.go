@@ -127,6 +127,27 @@ func WithPadding(padding types.Padding) types.ElementWithOption {
 	}
 }
 
+// WithTheme sets the types.Element's theme class to the supplied value.
+func WithThemeClass(class types.ThemeClass) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetThemeClass(class)
+	}
+}
+
+// WithTheme sets the types.Element's theme to the supplied value.
+func WithTheme(theme types.Theme) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetTheme(theme)
+	}
+}
+
+// WithMotif sets the types.Element's motif to the supplied value.
+func WithMotif(motif types.Motif) types.ElementWithOption {
+	return func(e types.Element) {
+		e.SetMotif(motif)
+	}
+}
+
 // WithBorder sets the types.Element's border to the supplied value.
 func WithBorder(border types.Border) types.ElementWithOption {
 	return func(e types.Element) {

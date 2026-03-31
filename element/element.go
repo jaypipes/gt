@@ -33,6 +33,10 @@ type Element struct {
 	// class is the Element's type/class, e.g. "gt.div" or "gt.span"
 	class string
 
+	// theme is the Theme used when styling the Element.
+	theme types.Theme
+	// themeClass is the ThemeClass this Element belongs to.
+	themeClass types.ThemeClass
 	// motif encapsulates the different styles and borders of the Element in
 	// different states (having the focus, being disabled, being hovered over
 	// by the mouse, and "normal")
