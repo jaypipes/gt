@@ -181,6 +181,8 @@ var (
 	WithHoveredBorder         = element.WithHoveredBorder
 	WithBorderForegroundColor = element.WithBorderForegroundColor
 	WithBorderBackgroundColor = element.WithBorderBackgroundColor
+	WithTheme                 = element.WithTheme
+	WithMotif                 = element.WithMotif
 	WithStyle                 = element.WithStyle
 	WithDisabledStyle         = element.WithDisabledStyle
 	WithFocusedStyle          = element.WithFocusedStyle

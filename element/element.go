@@ -195,13 +195,20 @@ func (e *Element) Render(ctx context.Context, h types.ScreenHandler) {
 		ctx, content, inner, align, whitespace,
 	)
 	lines := strings.Split(content, "\n")
-	startX := inner.Min.X
-	startY := inner.Min.Y
+	innerMinX := inner.Min.X
+	innerMinY := inner.Min.Y
 	for y, line := range lines {
 		for x := range line {
-			screen.Put(startX+x, startY+y, string(line[x]), style.TCell(s))
+			screen.Put(
+				innerMinX+x,
+				innerMinY+y,
+				string(line[x]),
+				style.TCell(s),
+			)
 		}
 	}
+
+	e.RenderPadding(ctx, h)
 }
 
 // RenderBox ensures that the underlying Box has its appropriate border set
@@ -210,6 +217,40 @@ func (e *Element) RenderBox(ctx context.Context, h types.ScreenHandler) {
 	border := e.Border()
 	e.Box.SetBorder(border)
 	e.Box.Render(ctx, h)
+}
+
+// RenderPadding ensures that any padding cells are rendered with their
+// appropriate content style.
+func (e *Element) RenderPadding(ctx context.Context, h types.ScreenHandler) {
+	padding := e.Padding()
+	if padding.Empty() {
+		return
+	}
+	inner := e.InnerBounds()
+	contentHeight := int(e.Height() - e.VerticalSpace())
+	s := e.Style()
+	screen := h.Screen()
+
+	lp := padding.L
+	if lp > 0 {
+		startX := inner.Min.X - int(lp)
+		startY := inner.Min.Y
+		stopY := startY + contentHeight
+		space := strings.Repeat(" ", int(lp))
+		for y := startY; y < stopY; y++ {
+			screen.PutStrStyled(startX, y, space, style.TCell(s))
+		}
+	}
+	rp := padding.R
+	if rp > 0 {
+		startX := inner.Max.X
+		startY := inner.Min.Y
+		stopY := startY + contentHeight
+		space := strings.Repeat(" ", int(rp))
+		for y := startY; y < stopY; y++ {
+			screen.PutStrStyled(startX, y, space, style.TCell(s))
+		}
+	}
 }
 
 var _ types.Element = (*Element)(nil)
